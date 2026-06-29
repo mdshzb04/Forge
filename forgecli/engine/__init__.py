@@ -1,0 +1,75 @@
+"""The ForgeCLI Execution Engine.
+
+This package defines the *contract* for every orchestration stage
+in ForgeCLI. The pipeline is a fixed sequence of eight stages:
+
+    1. Intent Analyzer        — turn the prompt into an Intent
+    2. Repository Analyzer   — query Graphify for relevant context
+    3. Context Optimizer     — apply Ponytail to the prompt + context
+    4. Planning Engine       — produce a SoftwarePlan
+    5. Model Router          — pick (provider, model) for the call
+    6. Execution Engine      — invoke the LLM, extract a diff
+    7. Validation Engine     — apply the diff + run tests + auto-fix
+    8. Git Engine            — stage / commit / push the changes
+
+Every stage is an independent object behind the :class:`Stage`
+Protocol. The :class:`ExecutionEngine` runs them in order, emits
+structured events, supports retries, cancellation, and plugin
+hooks. No business logic lives in this package — the actual
+implementations live in :mod:`forgecli.engine.stages` and may be
+replaced by plugins.
+"""
+
+from forgecli.engine.context import (
+    EngineContext,
+    IntentAnalysis,
+    ModelSelection,
+    RetrievalResult,
+    StageLog,
+)
+from forgecli.engine.events import (
+    EngineEvent,
+    EventBus,
+    LogLevel,
+    ProgressEvent,
+    StageEvent,
+    TextLogEvent,
+)
+from forgecli.engine.execution import (
+    EngineResult,
+    ExecutionEngine,
+    PipelineBuilder,
+    Stage,
+    StageContext,
+    StageResult,
+    StageStatus,
+)
+from forgecli.engine.plugins import (
+    EnginePlugin,
+    PluginHook,
+    register_plugin,
+)
+
+__all__ = [
+    "EngineContext",
+    "EngineEvent",
+    "EnginePlugin",
+    "EngineResult",
+    "EventBus",
+    "ExecutionEngine",
+    "IntentAnalysis",
+    "LogLevel",
+    "ModelSelection",
+    "PipelineBuilder",
+    "PluginHook",
+    "ProgressEvent",
+    "RetrievalResult",
+    "Stage",
+    "StageContext",
+    "StageEvent",
+    "StageLog",
+    "StageResult",
+    "StageStatus",
+    "TextLogEvent",
+    "register_plugin",
+]
