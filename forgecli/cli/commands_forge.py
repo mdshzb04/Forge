@@ -35,6 +35,7 @@ from forgecli.orchestrator import (
     PluginRegistry,
     build_orchestrator,
 )
+
 # A single shared registry so subcommands and the top-level command
 # share the same plugin state.
 _REGISTRY = PluginRegistry()
@@ -90,15 +91,14 @@ app = typer.Typer(
 
 def _build_provider_for(*, live: bool, cwd: Path):
     """Build a :class:`Provider` for the current invocation."""
-    from forgecli.providers.base import Provider
     from forgecli.providers.mock import MockProvider, MockProviderConfig
 
     if not live:
         return MockProvider(MockProviderConfig())
 
-    from forgecli.providers.openai import OpenAIConfig, OpenAIProvider
     from forgecli.providers.anthropic import AnthropicConfig, AnthropicProvider
     from forgecli.providers.google import GeminiConfig, GeminiProvider
+    from forgecli.providers.openai import OpenAIConfig, OpenAIProvider
     from forgecli.providers.router_state import load_state
 
     app_context = bootstrap_context(cwd=str(cwd))
@@ -181,7 +181,7 @@ async def run_forge(
     *,
     live: bool,
     json_output: bool,
-    save_diff: Optional[Path],
+    save_diff: Path | None,
     no_commit: bool,
     no_tests: bool,
 ) -> None:

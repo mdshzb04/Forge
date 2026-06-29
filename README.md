@@ -1,11 +1,49 @@
 # ForgeCLI
 
-> **AI Development Operating System** — orchestrates repository intelligence, context optimization, AI coding workflows, and Git automation from your terminal.
+> **AI Development Operating System** — describe the outcome you want, and ForgeCLI orchestrates Graphify, Ponytail and the selected LLM to achieve it.
+
+The headline command takes a single free-form prompt and runs the
+full pipeline end-to-end:
+
+```bash
+forge --prompt "Build a Meeting Intelligence SaaS with FastAPI, Next.js, PostgreSQL and AI meeting summaries"
+forge --prompt "Create an AI CRM with LangGraph agents"
+forge --prompt "Add JWT authentication and Stripe subscriptions"
+```
+
+ForgeCLI classifies the prompt's intent (build / ask / plan / docs /
+review / explain / commit), picks a workflow, then runs:
+
+1. **Graphify retrieval** — find the relevant nodes/files in the repo.
+2. **Ponytail optimization** — apply the YAGNI "ladder" to the prompt.
+3. **Model selection** — use Claude, OpenAI, Gemini, or `auto` (cheapest).
+4. **Plan** — render the architecture, milestones and affected files.
+5. **Code generation** — call the LLM, extract a unified diff.
+6. **Apply** — write the changes to disk (uses `git apply` when possible).
+7. **Tests** — run the project's test command and capture the result.
+8. **Auto-fix** — if tests fail, ask the LLM for a focused fix and retry.
+9. **Commit** — stage the files; the user runs `forge commit` to record them.
+10. **Summary** — Rich-formatted report of everything that happened.
+
+If the prompt is a question, a plan request, or a docs request, the
+classifier dispatches to a smaller workflow (`ask`, `plan`, `docs`,
+`explain`, `review`, `commit`).
+
+ForgeCLI ships intelligent subcommands for explicit, fine-grained
+control:
+
+* `forge graph` &nbsp; `forge ask` &nbsp; `forge explain` &nbsp; `forge plan` &nbsp; `forge build`
+* `forge review` &nbsp; `forge commit` &nbsp; `forge docs` &nbsp; `forge release` &nbsp; `forge config`
+
+Plugins may register additional workflows, providers, optimizers,
+analyzers, and intent classifiers via the `forgecli.plugins`
+entry-point group — no core changes required.
 
 ---
 
 ## Highlights
 
+- **Free-form top-level command** — `forge --prompt "..."` is the single entry point.
 - **Plugin-based architecture** with first-class extension points (entry-point plugins, provider plugins, custom commands).
 - **Provider abstraction + router** — `forge model claude|openai|gemini|auto` picks a real provider behind a unified interface (OpenAI, Anthropic, Google Gemini). With `auto`, the router picks the cheapest compatible model based on a per-1k-token price table.
 - **Dependency injection** via a lightweight `Container` exposed through `AppContext`.
@@ -13,6 +51,7 @@
 - **Ponytail prompt optimizer** — `forge optimizer on|off|lite|full|ultra` rewrites every chat prompt before it reaches a provider, applying the [Ponytail](https://ponytail.dev/) "ladder" (YAGNI → reuse existing helpers → stdlib → native → installed deps → one-liner → minimum code). Optional external `ponytail` binary is auto-detected and preferred when present.
 - **Context optimizer** that chunks, ranks, and (optionally) summarizes large repositories for LLM context windows.
 - **Planner + Agent** for declarative, multi-step task execution.
+- **Auto-fix loop** — if tests fail, the LLM is asked for a focused fix and the patch is retried up to `max_fix_attempts` times.
 - **Git automation** built on GitPython with typed errors.
 - **Local memory** (SQLite) for history, embeddings cache, and plugin state.
 - **Rich-powered terminal UI** with a small, themed helper layer.
