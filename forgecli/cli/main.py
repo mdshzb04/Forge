@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 import typer
 
 from forgecli import __app_name__, __version__
 from forgecli.cli import (
+    commands_ask,
     commands_build,
     commands_commit,
     commands_config,
+    commands_docs,
     commands_explain,
+    commands_forge,
     commands_git,
     commands_graph,
     commands_history,
@@ -21,9 +25,11 @@ from forgecli.cli import (
     commands_optimizer,
     commands_plan,
     commands_providers,
+    commands_release,
     commands_review,
 )
 from forgecli.cli.bootstrap import bootstrap_context
+from forgecli.cli.commands_forge import run_forge as _run_forge_impl
 from forgecli.cli.ui import error, get_console
 from forgecli.core.errors import ForgeCLIError
 
@@ -46,9 +52,67 @@ app.add_typer(commands_plan.app, name="plan")
 app.add_typer(commands_build.app, name="build")
 app.add_typer(commands_commit.app, name="commit")
 app.add_typer(commands_review.app, name="review")
+app.add_typer(commands_ask.app, name="ask")
+app.add_typer(commands_docs.app, name="docs")
+app.add_typer(commands_release.app, name="release")
 app.add_typer(commands_git.app, name="git")
 app.add_typer(commands_history.app, name="history")
 app.add_typer(commands_explain.app, name="explain")
+
+
+# Top-level `forge "<prompt>"` callback: dispatches to the orchestrator.
+
+
+def _forge_callback(
+    ctx: typer.Context,
+    prompt: list[str] = typer.Argument(
+        None,
+        help=(
+            "Natural-language description of what to build, ask, plan, or "
+            "document. If omitted, prints help."
+        ),
+    ),
+    path: str = typer.Option(".", "--path", "-p", help="Project root."),
+    live: bool = typer.Option(
+        False, "--live", help="Use the real provider chosen by the router (default: mock)."
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Emit a JSON summary."),
+    save_diff: Path | None = typer.Option(
+        None, "--save-diff", help="Write the produced diff to this path."
+    ),
+    no_commit: bool = typer.Option(
+        False, "--no-commit", help="Skip the auto-commit step."
+    ),
+    no_tests: bool = typer.Option(
+        False, "--no-tests", help="Skip the test stage."
+    ),
+) -> None:
+    if not prompt:
+        get_console().print(
+            "Usage: forge \"<your request>\"  -- see `forge --help`."
+        )
+        return
+    text = " ".join(prompt).strip()
+    try:
+        asyncio.run(
+            _run_forge_impl(
+                text,
+                Path(path).resolve(),
+                live=live,
+                json_output=json_output,
+                save_diff=save_diff,
+                no_commit=no_commit,
+                no_tests=no_tests,
+            )
+        )
+    except typer.Exit:
+        raise
+    except Exception as exc:
+        error(f"forge: {exc}")
+        raise typer.Exit(code=1) from exc
+
+
+app.callback(invoke_without_command=True)(_forge_callback)
 
 
 def _version_callback(value: bool) -> None:
