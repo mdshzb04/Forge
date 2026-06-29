@@ -227,9 +227,7 @@ def should_check_on_startup() -> bool:
 
 def upgrade_command() -> str:
     """Return the platform-appropriate upgrade command line."""
-    if is_windows():
-        return "pip install --upgrade forgecli   (or:  uv tool upgrade forgecli)"
-    return "pip install --upgrade forgecli   (or:  uv tool upgrade forgecli)"
+    return "uv tool upgrade forgecli   (or:  pip install --upgrade forgecli)"
 
 
 __all__ = [

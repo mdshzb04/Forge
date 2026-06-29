@@ -21,7 +21,9 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development",
+    "Topic :: Software Development :: Code Generators",
 ]
 dependencies = [
     "typer>=0.12.0",
@@ -35,7 +37,6 @@ dependencies = [
     "tree-sitter>=0.21.0",
     "tree-sitter-languages>=1.10.0",
     "pyyaml>=6.0",
-    "click>=8.1.7",
 ]
 
 [project.optional-dependencies]
@@ -53,6 +54,10 @@ dev = [
 [project.scripts]
 forgecli = "forgecli.cli.main:app"
 forge = "forgecli.cli.main:app"
+
+[project.entry-points."forgecli.plugins"]
+# Third-party plugins register here, e.g.:
+# my_plugin = "my_plugin:register"
 
 [project.urls]
 Homepage = "https://github.com/forgecli/forgecli"

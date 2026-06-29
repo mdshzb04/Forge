@@ -5,8 +5,10 @@ optional / required external tool ForgeCLI integrates with:
 
 * ``git``        — required (we have a ``git`` adapter regardless)
 * ``python``     — the running interpreter
+* ``ponytail``   — **built-in**; the ruleset optimizer ships with
+  ForgeCLI — no external binary required
 * ``graphify``   — optional; powers the knowledge graph
-* ``ponytail``   — optional; powers the prompt optimizer
+  (install via ``uv tool install graphifyy``)
 * ``node``       — optional; needed by some LLM providers
 * ``pip`` / ``uv`` / ``brew`` / ``scoop`` / ``winget`` — package
   managers used to render install hints.
@@ -183,8 +185,19 @@ def check_dependencies() -> DependencyReport:
 
     deps.append(_probe_required("git", has_git, _version_for("git")))
     deps.append(_probe_required("python", has_python, lambda: python_version()))
-    deps.append(_probe_optional("graphify", has_graphify, _version_for("graphify")))
-    deps.append(_probe_optional("ponytail", has_ponytail, _version_for("ponytail")))
+    # Ponytail is built-in — the PonytailRulesetOptimizer ships with
+    # ForgeCLI and requires no external binary.
+    deps.append(Dependency(
+        name="ponytail",
+        status=DependencyStatus.FOUND,
+        version="built-in",
+        required=False,
+        note="Ruleset optimizer ships with ForgeCLI (no external binary needed)",
+    ))
+    deps.append(_probe_optional(
+        "graphify", has_graphify, _version_for("graphify"),
+        note="Optional. Install with: uv tool install graphifyy",
+    ))
     deps.append(_probe_optional("node", has_node, _version_for("node")))
     deps.append(_probe_optional("pip", has_pip, _version_for("pip")))
     deps.append(_probe_optional("uv", has_uv, _version_for("uv")))
@@ -278,10 +291,12 @@ _HINTS: Final[dict[str, dict[OS, tuple[str, ...]]]] = {
         OS.OTHER: ("uv tool install graphifyy",),
     },
     "ponytail": {
-        OS.LINUX: ("uv tool install ponytail",),
-        OS.MACOS: ("brew install ponytail", "or:  uv tool install ponytail"),
-        OS.WINDOWS: ("scoop install ponytail", "or:  winget install ponytail"),
-        OS.OTHER: ("uv tool install ponytail",),
+        # Ponytail is built-in; an external CLI is only used when the
+        # user explicitly sets backend=cli in forgecli.toml.
+        OS.LINUX: ("Built-in — no install needed. External CLI: uv tool install ponytail",),
+        OS.MACOS: ("Built-in — no install needed. External CLI: uv tool install ponytail",),
+        OS.WINDOWS: ("Built-in — no install needed. External CLI: uv tool install ponytail",),
+        OS.OTHER: ("Built-in — no install needed.",),
     },
     "git": {
         OS.LINUX: (
