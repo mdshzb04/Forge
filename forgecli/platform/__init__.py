@@ -54,6 +54,7 @@ from forgecli.platform.update import (
     UpdateInfo,
     check_for_update,
     current_version,
+    upgrade_command,
 )
 
 __all__ = [
@@ -67,6 +68,7 @@ __all__ = [
     "check_dependencies",
     "check_for_update",
     "config_dir",
+    "upgrade_command",
     "current_platform",
     "current_version",
     "data_dir",

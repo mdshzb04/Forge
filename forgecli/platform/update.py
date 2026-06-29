@@ -19,6 +19,7 @@ The check is:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import time
 from dataclasses import dataclass
@@ -91,7 +92,7 @@ def _read_cache() -> dict[str, object] | None:
 
 def _write_cache(latest: str) -> None:
     """Write the latest version to the cache file."""
-    try:
+    with contextlib.suppress(OSError):
         _cache_path().write_text(
             json.dumps(
                 {
@@ -101,9 +102,6 @@ def _write_cache(latest: str) -> None:
             ),
             encoding="utf-8",
         )
-    except OSError:
-        # Cache writes are best-effort.
-        pass
 
 
 def _cache_ttl() -> int:

@@ -30,7 +30,7 @@ from forgecli.cli import (
 )
 from forgecli.cli.bootstrap import bootstrap_context
 from forgecli.cli.commands_forge import run_forge as _run_forge_impl
-from forgecli.cli.ui import error, get_console
+from forgecli.cli.ui import error, get_console, warn
 from forgecli.core.errors import ForgeCLIError
 
 app = typer.Typer(

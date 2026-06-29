@@ -1,0 +1,51 @@
+# ForgeCLI Winget package manifest.
+#
+# To validate locally:
+#   winget validate --manifest .\packaging\winget\mdshzb04.ForgeCli.yaml
+#
+# To submit to winget-pkgs:
+#   1. Fork https://github.com/microsoft/winget-pkgs
+#   2. Copy this file to manifests/m/mdshzb04/ForgeCli/<version>/mdshzb04.ForgeCli.yaml
+#   3. Update the version + installerUrl + installerSha256.
+PackageIdentifier: mdshzb04.ForgeCli
+PackageVersion: 0.1.0
+PackageLocale: en-US
+PackageName: ForgeCLI
+Publisher: mdshzb04
+ShortDescription: AI-first developer operating system that orchestrates Graphify, Ponytail, and any LLM.
+Description: |
+  ForgeCLI is an AI Development Operating System. It runs the full pipeline
+  (Graphify retrieval -> Ponytail optimization -> LLM call -> diff -> apply ->
+  test -> summary) on a free-form prompt like
+  `forge --prompt "Build a FastAPI service for user auth"`.
+License: MIT
+Tags:
+- ai
+- cli
+- developer-tools
+- git
+- code-intelligence
+PackageLocale: en-US
+PublisherUrl: https://github.com/mdshzb04/ForgeCli
+PublisherSupportUrl: https://github.com/mdshzb04/ForgeCli/issues
+PrivacyUrl: https://github.com/mdshzb04/ForgeCli/blob/main/LICENSE
+Author: ForgeCLI Authors
+Moniker: forgecli
+DescriptionUrl: https://github.com/mdshzb04/ForgeCli
+PurchaseUrl: ~
+PurchaseNotes: ~
+Installers:
+- Architecture: x64
+  InstallerType: pip
+  InstallerUrl: https://files.pythonhosted.org/packages/source/f/forgecli/forgecli-0.1.0.tar.gz
+  InstallerSha256: REPLACE_WITH_REAL_SHA256
+  Commands:
+  - Command: pip install --upgrade forgecli
+- Architecture: arm64
+  InstallerType: pip
+  InstallerUrl: https://files.pythonhosted.org/packages/source/f/forgecli/forgecli-0.1.0.tar.gz
+  InstallerSha256: REPLACE_WITH_REAL_SHA256
+  Commands:
+  - Command: pip install --upgrade forgecli
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

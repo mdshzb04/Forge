@@ -1,0 +1,28 @@
+# ForgeCLI Scoop manifest for the mdshzb04/scoop-bucket tap.
+#
+# To install locally:
+#   scoop bucket add mdshzb04 https://github.com/mdshzb04/scoop-bucket
+#   scoop install forgecli
+#
+# To publish a new release, update `version` and the `url`/`hash` below.
+{
+    "version": "0.1.0",
+    "description": "AI-first developer operating system that orchestrates Graphify, Ponytail, and any LLM.",
+    "homepage": "https://github.com/mdshzb04/ForgeCli",
+    "license": "MIT",
+    "depends": "python",
+    "suggest": {
+        "Graphify": "mdshzb04/scoop-bucket/graphify",
+        "Ponytail": "mdshzb04/scoop-bucket/ponytail"
+    },
+    "url": "https://files.pythonhosted.org/packages/source/f/forgecli/forgecli-0.1.0.tar.gz#download",
+    "hash": "REPLACE_WITH_REAL_SHA256",
+    "bin": "forge.exe",
+    "checkver": "github",
+    "autoupdate": {
+        "url": "https://pypi.org/pypi/forgecli/json",
+        "extract": "$version"
+    },
+    "env_add_path": "python_install\\Scripts",
+    "post_install": "pip install --upgrade forgecli"
+}
