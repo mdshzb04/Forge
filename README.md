@@ -437,6 +437,80 @@ The top-level `forge --prompt` then dispatches to the registered
 
 ---
 
+## Execution Engine
+
+The :mod:`forgecli.engine` package defines the *contract* for every
+orchestration stage in ForgeCLI. The pipeline is a fixed sequence of
+eight stages:
+
+    1. **Intent Analyzer**      — turn the prompt into an Intent
+    2. **Repository Analyzer**  — query Graphify for relevant context
+    3. **Context Optimizer**    — apply Ponytail to the prompt + context
+    4. **Planning Engine**      — produce a SoftwarePlan
+    5. **Model Router**         — pick (provider, model) for the call
+    6. **Execution Engine**     — invoke the LLM, extract a diff
+    7. **Validation Engine**    — apply the diff + run tests + auto-fix
+    8. **Git Engine**           — stage / commit / push the changes
+
+Every stage is a small async callable behind the :class:`Stage`
+Protocol. The :class:`ExecutionEngine` runs them in order and is
+responsible for:
+
+* **Structured events** — :class:`StageEvent`, :class:`ProgressEvent`,
+  :class:`TextLogEvent` flow through the :class:`EventBus` so
+  callers can stream progress and logs in real time.
+* **Retries** — each stage has ``max_attempts``; transient failures
+  retry with a backoff (``retry_backoff_seconds * attempt``).
+* **Cancellation** — a single :class:`asyncio.Event` token
+  (``bus.cancellation``) is checked between stages; a stage may also
+  set the token itself to short-circuit the run.
+* **DI / plugins** — stages are looked up by name in a
+  :class:`StageRegistry`. Plugins may register or replace stages
+  via the ``forgecli.plugins`` entry-point group.
+* **Structured output** — every stage returns a
+  :class:`StageResult` (status, data, notes, error), not a string.
+  The engine accumulates them on :class:`EngineContext.log` for
+  reporting.
+
+The engine does *no* business logic. Stages encapsulate the work.
+The default pipeline name list is exposed as
+``ExecutionEngine.DEFAULT_PIPELINE``.
+
+```python
+import asyncio
+from forgecli.engine import (
+    EngineContext, EventBus, ExecutionEngine,
+    PipelineBuilder, StageResult, StageStatus,
+)
+
+class IntentStage:
+    name = "intent-analyzer"
+    async def __call__(self, ctx):
+        # … do work, then return structured output …
+        return StageResult(status=StageStatus.SUCCEEDED, data={"intent": "build"})
+
+engine = (
+    PipelineBuilder()
+    .stage(IntentStage())
+    .with_max_attempts(3)
+    .with_retry_backoff(0.5)
+    .build()
+)
+
+async def main():
+    result = await engine.run(EngineContext(prompt="...", cwd=Path(".")))
+    print("success:", result.success, "stages:", len(result.stage_results))
+
+asyncio.run(main())
+```
+
+Hooks (``before_pipeline`` / ``after_pipeline``) run before/after the
+run via :class:`HookManager`; plugins register them through
+:func:`register_plugin`. Hooks that raise are logged and do *not*
+abort the engine.
+
+---
+
 ## Architecture notes
 
 - **Composition root**: `forgecli/cli/bootstrap.py` builds the

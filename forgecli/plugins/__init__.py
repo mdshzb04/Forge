@@ -124,6 +124,7 @@ class PluginRegistry:
     analyzers: list[type[Analyzer]] = field(default_factory=list)
     classifiers: list[IntentClassifier] = field(default_factory=list)
     workflows: list[Workflow] = field(default_factory=list)
+    stages: dict[str, object] = field(default_factory=dict)  # type: ignore[type-arg]
     configure_hooks: list[Callable[[AppContext], None]] = field(default_factory=list)
 
     def register_provider(self, name: str, provider_cls: type[Provider]) -> None:
@@ -140,6 +141,20 @@ class PluginRegistry:
 
     def register_workflow(self, workflow: Workflow) -> None:
         self.workflows.append(workflow)
+
+    def register_stage(self, stage) -> None:  # type: ignore[no-untyped-def]
+        """Register a :class:`Stage` so the engine can pick it up by name."""
+        if not getattr(stage, "name", None):
+            raise ValueError("Stage.name must be non-empty")
+        if stage.name in self.stages:
+            raise ValueError(f"Stage {stage.name!r} already registered")
+        self.stages[stage.name] = stage
+
+    def replace_stage(self, stage) -> None:  # type: ignore[no-untyped-def]
+        """Replace a registered :class:`Stage` (last-writer-wins)."""
+        if not getattr(stage, "name", None):
+            raise ValueError("Stage.name must be non-empty")
+        self.stages[stage.name] = stage
 
     def register_configure_hook(
         self, hook: Callable[[AppContext], None]

@@ -28,6 +28,7 @@ from forgecli.engine.context import (
     StageLog,
 )
 from forgecli.engine.events import (
+    EngineCancelledError,
     EngineEvent,
     EventBus,
     LogLevel,
@@ -41,22 +42,27 @@ from forgecli.engine.execution import (
     PipelineBuilder,
     Stage,
     StageContext,
+    StageRegistry,
     StageResult,
     StageStatus,
 )
 from forgecli.engine.plugins import (
-    EnginePlugin,
+    EnginePluginFactory,
+    HookManager,
     PluginHook,
     register_plugin,
+    stage_as_plugin,
 )
 
 __all__ = [
+    "EngineCancelledError",
     "EngineContext",
     "EngineEvent",
-    "EnginePlugin",
+    "EnginePluginFactory",
     "EngineResult",
     "EventBus",
     "ExecutionEngine",
+    "HookManager",
     "IntentAnalysis",
     "LogLevel",
     "ModelSelection",
@@ -68,8 +74,10 @@ __all__ = [
     "StageContext",
     "StageEvent",
     "StageLog",
+    "StageRegistry",
     "StageResult",
     "StageStatus",
     "TextLogEvent",
     "register_plugin",
+    "stage_as_plugin",
 ]

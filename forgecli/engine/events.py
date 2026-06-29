@@ -22,9 +22,8 @@ import asyncio
 import contextlib
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
 
 
 class LogLevel(str, Enum):
@@ -40,7 +39,7 @@ class LogLevel(str, Enum):
 class EngineEvent:
     """Abstract base of every event the engine emits."""
 
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     run_id: str = ""
 
 
@@ -133,9 +132,18 @@ class EventBus:
                 # Best-effort: schedule on the running loop if any.
                 try:
                     loop = asyncio.get_running_loop()
-                    loop.create_task(result)
+                    task = loop.create_task(result)
+                    task.add_done_callback(self._discard_task)
                 except RuntimeError:
                     pass
+
+    @staticmethod
+    def _discard_task(task: asyncio.Task) -> None:
+        # Placeholder to keep a strong reference to the task until it
+        # completes. Without this, asyncio may garbage-collect the
+        # task mid-flight and emit "Task was destroyed but it is
+        # pending" warnings.
+        return None
 
     async def publish_and_drain(self, event: EngineEvent) -> None:
         """Publish and await any async handler results."""
@@ -161,12 +169,12 @@ class EventBus:
 # ---------------------------------------------------------------------------
 
 
-class EngineCancelled(Exception):
+class EngineCancelledError(Exception):
     """Raised by the engine when the cancellation token is set."""
 
 
 __all__ = [
-    "EngineCancelled",
+    "EngineCancelledError",
     "EngineEvent",
     "EventBus",
     "EventHandler",
