@@ -38,7 +38,7 @@ _ALLOWED_BUILTIN_NAMES: frozenset[str] = frozenset(
         "bytes", "bytearray", "memoryview", "range", "slice",
         "enumerate", "zip", "map", "filter", "reversed",
         "iter", "next", "len", "min", "max", "sum", "abs", "round",
-        "pow", "divmod", "all", "any", "sorted", "reversed",
+        "pow", "divmod", "all", "any", "sorted",
         # Printing / I/O (controlled)
         "print", "open", "input",
         # Common utilities

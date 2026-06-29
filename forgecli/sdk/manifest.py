@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -87,9 +88,7 @@ class Compatibility:
             return False
         if self.python is not None and not _python_matches(self.python, python_version):
             return False
-        if self.os_targets and os_name not in self.os_targets:
-            return False
-        return True
+        return not (bool(self.os_targets) and os_name not in self.os_targets)
 
 
 def _python_matches(spec: str, version: str) -> bool:

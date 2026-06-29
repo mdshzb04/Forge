@@ -41,7 +41,7 @@ class LoadedPlugin:
     """The result of loading a single plugin from disk or PyPI."""
 
     manifest: PluginManifest
-    entry_point_factories: dict[tuple[str, str], Callable[[PluginManager], None]]
+    entry_point_factories: "dict[tuple[str, str], Callable[[PluginManager], None]]"
     """Map of (kind, name) -> configure(manager) callable.
 
     Each callable is invoked when the plugin is enabled; the
@@ -56,12 +56,16 @@ class LoadedPlugin:
         return self.manifest.name
 
     @property
-    def version(self) -> Version:
+    def version(self) -> "Version":
         return self.manifest.version
 
 
 class PluginManifestNotFound(LookupError):
     """Raised when a plugin's manifest is missing or malformed."""
+
+
+# Backward-compatible alias for the SDK-wide "Error"-suffixed name.
+PluginManifestNotFoundError = PluginManifestNotFound
 
 
 def default_plugins_dir() -> Path:
@@ -174,9 +178,9 @@ def _load_entry_point_distribution(
 
 def _load_entry_point_factories(
     manifest: PluginManifest, plugin_dir: Path
-) -> dict[tuple[str, str], Callable[[PluginManager], None]]:
+) -> "dict[tuple[str, str], Callable[[PluginManager], None]":
     """Import each ``module:attr`` reference declared in the manifest."""
-    factories: dict[tuple[str, str], Callable[[PluginManager], None]] = {}
+    factories: "dict[tuple[str, str], Callable[[PluginManager], None]" = {}
     for ep in manifest.entry_points:
         module_name, _, attr = ep.reference.partition(":")
         if not module_name or not attr:

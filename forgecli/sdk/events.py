@@ -18,10 +18,9 @@ if one raises (failures are logged and isolated).
 
 from __future__ import annotations
 
-from __future__ import annotations
-
 import asyncio
 import contextlib
+import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime

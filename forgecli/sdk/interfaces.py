@@ -12,7 +12,13 @@ name. Plugin authors who want a new category should add a new
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
+
+from forgecli.core.context import AppContext
+from forgecli.providers.base import Provider
+from forgecli.review.analyzer import Analyzer
 
 # ---------------------------------------------------------------------------
 # Configuration protocol
@@ -216,9 +222,6 @@ class NotificationProviderPlugin(Protocol):
 # ---------------------------------------------------------------------------
 # Health issue + summary types
 # ---------------------------------------------------------------------------
-
-
-from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
