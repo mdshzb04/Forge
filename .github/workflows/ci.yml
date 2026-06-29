@@ -1,5 +1,6 @@
 name: ci
-
+env:
+  PYTHONUTF8: "1"
 on:
   push:
     branches: [main]
@@ -104,16 +105,16 @@ jobs:
           uv tool install dist/*.whl
 
       - name: Verify forge --help
-        run: uv tool run forge --help
+        run: forge --help
 
       - name: Verify forge doctor
-        run: uv tool run forge doctor
+        run: forge doctor
 
       - name: Verify forge init
         shell: bash
         run: |
           cd "$RUNNER_TEMP"
-          uv tool run forge init --json
+          forge init --json
 
   # ─── Publish to TestPyPI (on tag) ─────────────────────────────────
   publish-testpypi:
