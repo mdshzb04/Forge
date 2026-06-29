@@ -277,12 +277,15 @@ def test_load_filesystem_missing_manifest(tmp_path: Path) -> None:
 def test_manager_lifecycle_install_enable_disable_uninstall(tmp_path: Path) -> None:
     data_root = tmp_path / "data"
     config_root = tmp_path / "config"
-    (config_root / "plugins" / "acme").mkdir(parents=True)
-    (config_root / "plugins" / "acme" / "forgecli-plugin.toml").write_text(
+    # Source lives outside the manager's plugins dir so install()
+    # copies it cleanly.
+    source = tmp_path / "src" / "acme"
+    source.mkdir(parents=True)
+    (source / "forgecli-plugin.toml").write_text(
         '[plugin]\nname = "acme"\nversion = "0.1.0"\nsummary = "x"\n',
         encoding="utf-8",
     )
-    (config_root / "plugins" / "acme" / "acme_mod.py").write_text(
+    (source / "acme_mod.py").write_text(
         "def register(manager):\n    pass\n",
         encoding="utf-8",
     )
@@ -290,15 +293,10 @@ def test_manager_lifecycle_install_enable_disable_uninstall(tmp_path: Path) -> N
     manager = PluginManager(config_root=config_root, data_root=data_root)
     assert "acme" not in manager.state.plugins
 
-    # Discover picks it up.
-    discovered = manager.discover()
-    names = {p.name for p in discovered}
-    # acme is filesystem-only, so it should be in the discovered set.
-    # (It is not in the persisted state yet.)
-    # Install via the existing directory.
-    plugin = manager.install(str(config_root / "plugins" / "acme"))
+    plugin = manager.install(str(source))
     assert plugin.name == "acme"
     assert "acme" in manager.state.plugins
+    assert (config_root / "plugins" / "acme" / "forgecli-plugin.toml").exists()
 
     manager.enable("acme")
     assert manager.state.plugins["acme"].enabled is True
@@ -315,15 +313,16 @@ def test_manager_lifecycle_install_enable_disable_uninstall(tmp_path: Path) -> N
 def test_manager_install_already_installed_raises(tmp_path: Path) -> None:
     config_root = tmp_path / "config"
     data_root = tmp_path / "data"
-    (config_root / "plugins" / "acme").mkdir(parents=True)
-    (config_root / "plugins" / "acme" / "forgecli-plugin.toml").write_text(
+    source = tmp_path / "src" / "acme"
+    source.mkdir(parents=True)
+    (source / "forgecli-plugin.toml").write_text(
         '[plugin]\nname = "acme"\nversion = "0.1.0"\nsummary = "x"\n',
         encoding="utf-8",
     )
     manager = PluginManager(config_root=config_root, data_root=data_root)
-    manager.install(str(config_root / "plugins" / "acme"))
+    manager.install(str(source))
     with pytest.raises(PluginAlreadyInstalledError):
-        manager.install(str(config_root / "plugins" / "acme"))
+        manager.install(str(source))
 
 
 def test_manager_enable_not_found_raises(tmp_path: Path) -> None:
@@ -335,8 +334,9 @@ def test_manager_enable_not_found_raises(tmp_path: Path) -> None:
 def test_manager_compatibility_check_blocks_install(tmp_path: Path) -> None:
     config_root = tmp_path / "config"
     data_root = tmp_path / "data"
-    (config_root / "plugins" / "acme").mkdir(parents=True)
-    (config_root / "plugins" / "acme" / "forgecli-plugin.toml").write_text(
+    source = tmp_path / "src" / "acme"
+    source.mkdir(parents=True)
+    (source / "forgecli-plugin.toml").write_text(
         textwrap.dedent(
             """
             [plugin]
@@ -352,19 +352,20 @@ def test_manager_compatibility_check_blocks_install(tmp_path: Path) -> None:
     )
     manager = PluginManager(config_root=config_root, data_root=data_root)
     with pytest.raises(PluginCompatibilityError):
-        manager.install(str(config_root / "plugins" / "acme"))
+        manager.install(str(source))
 
 
 def test_manager_configure_persists(tmp_path: Path) -> None:
     config_root = tmp_path / "config"
     data_root = tmp_path / "data"
-    (config_root / "plugins" / "acme").mkdir(parents=True)
-    (config_root / "plugins" / "acme" / "forgecli-plugin.toml").write_text(
+    source = tmp_path / "src" / "acme"
+    source.mkdir(parents=True)
+    (source / "forgecli-plugin.toml").write_text(
         '[plugin]\nname = "acme"\nversion = "0.1.0"\nsummary = "x"\n',
         encoding="utf-8",
     )
     manager = PluginManager(config_root=config_root, data_root=data_root)
-    manager.install(str(config_root / "plugins" / "acme"))
+    manager.install(str(source))
     manager.configure("acme", api_key="secret", enabled=True)
     assert manager.get_config("acme") == {"api_key": "secret", "enabled": True}
     # Reload to ensure persistence.
@@ -375,13 +376,14 @@ def test_manager_configure_persists(tmp_path: Path) -> None:
 def test_manager_doctor_returns_reports(tmp_path: Path) -> None:
     config_root = tmp_path / "config"
     data_root = tmp_path / "data"
-    (config_root / "plugins" / "acme").mkdir(parents=True)
-    (config_root / "plugins" / "acme" / "forgecli-plugin.toml").write_text(
+    source = tmp_path / "src" / "acme"
+    source.mkdir(parents=True)
+    (source / "forgecli-plugin.toml").write_text(
         '[plugin]\nname = "acme"\nversion = "0.1.0"\nsummary = "x"\n',
         encoding="utf-8",
     )
     manager = PluginManager(config_root=config_root, data_root=data_root)
-    manager.install(str(config_root / "plugins" / "acme"))
+    manager.install(str(source))
     reports = manager.doctor()
     assert any(r.plugin_name == "acme" for r in reports)
 

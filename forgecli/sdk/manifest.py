@@ -321,10 +321,58 @@ def _maybe_version(value: Any) -> Version | None:
 
 
 def _simple_toml_dump(data: dict[str, Any]) -> str:
-    """A very small TOML writer used when tomli_w is not installed."""
-    import json
+    """A very small TOML writer used when tomli_w is not installed.
 
-    return json.dumps(data, indent=2)  # not real TOML, but readable
+    Supports the subset we emit: tables, dotted keys, lists, strings,
+    numbers, and booleans. Not a general TOML writer; the
+    ``tomli_w`` dependency is recommended for plugin authors.
+    """
+    out: list[str] = []
+    # First, write the top-level non-table values.
+    inline: list[str] = []
+    tables: dict[str, dict[str, Any]] = {}
+    for key, value in data.items():
+        if isinstance(value, dict):
+            tables[key] = value
+        else:
+            inline.append(f"{key} = {_toml_value(value)}")
+    if inline:
+        out.extend(inline)
+    # Then, write each sub-table.
+    for name, table in tables.items():
+        if out:
+            out.append("")
+        out.append(f"[{name}]")
+        # Nested tables, dotted keys, etc.
+        for key, value in table.items():
+            if isinstance(value, dict):
+                # Emit as a nested table.
+                out.append("")
+                out.append(f"[{name}.{key}]")
+                for k2, v2 in value.items():
+                    out.append(f"{k2} = {_toml_value(v2)}")
+            else:
+                out.append(f"{key} = {_toml_value(value)}")
+    return "\n".join(out) + "\n"
+
+
+def _toml_value(value: Any) -> str:
+    """Render a single TOML scalar / list (best-effort)."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, str):
+        # Escape backslashes and double quotes.
+        escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+        return f'"{escaped}"'
+    if isinstance(value, (list, tuple)):
+        return "[" + ", ".join(_toml_value(item) for item in value) + "]"
+    if isinstance(value, dict):
+        # Inline table: { key = "value", key2 = 42 }
+        inner = ", ".join(f"{k} = {_toml_value(v)}" for k, v in value.items())
+        return f"{{ {inner} }}"
+    raise ValueError(f"cannot serialise value of type {type(value).__name__}")
 
 
 # ---------------------------------------------------------------------------
