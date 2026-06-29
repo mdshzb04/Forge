@@ -14,10 +14,14 @@ from forgecli.sdk import (
     EntryPoint,
     EntryPointKind,
     HealthIssue,
+    HealthIssue,
     HealthReport,
     LoadedPlugin,
     Op,
     Permission,
+    discover_entry_points,
+    discover_filesystem,
+    load_filesystem,
     PluginAlreadyInstalledError,
     PluginCompatibilityError,
     PluginError,
@@ -391,13 +395,14 @@ def test_manager_doctor_returns_reports(tmp_path: Path) -> None:
 def test_manager_list_returns_state_pairs(tmp_path: Path) -> None:
     config_root = tmp_path / "config"
     data_root = tmp_path / "data"
-    (config_root / "plugins" / "acme").mkdir(parents=True)
-    (config_root / "plugins" / "acme" / "forgecli-plugin.toml").write_text(
+    source = tmp_path / "src" / "acme"
+    source.mkdir(parents=True)
+    (source / "forgecli-plugin.toml").write_text(
         '[plugin]\nname = "acme"\nversion = "0.1.0"\nsummary = "x"\n',
         encoding="utf-8",
     )
     manager = PluginManager(config_root=config_root, data_root=data_root)
-    manager.install(str(config_root / "plugins" / "acme"))
+    manager.install(str(source))
     pairs = manager.list()
     assert len(pairs) == 1
     state, loaded = pairs[0]
