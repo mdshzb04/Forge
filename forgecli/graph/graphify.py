@@ -52,6 +52,8 @@ class GraphifyArtifacts:
     output_dir: Path
     graph_json: Path
     manifest_json: Path
+    graph_html: Path
+    graph_report: Path
 
     @classmethod
     def for_root(cls, root: Path) -> GraphifyArtifacts:
@@ -61,6 +63,8 @@ class GraphifyArtifacts:
             output_dir=out,
             graph_json=out / DEFAULT_GRAPH_FILE,
             manifest_json=out / DEFAULT_MANIFEST_FILE,
+            graph_html=out / "graph.html",
+            graph_report=out / "GRAPH_REPORT.md",
         )
 
 
@@ -178,12 +182,27 @@ class GraphifyClient:
             )
 
         artifacts = GraphifyArtifacts.for_root(root)
+        if not no_cluster:
+            await self.cluster_only(root)
+
         return GraphifyBuildOutcome(
             root=root,
             artifacts=artifacts,
             stdout=stdout.decode(errors="replace"),
             stderr=stderr.decode(errors="replace"),
         )
+
+    async def cluster_only(
+        self,
+        root: Path,
+        *,
+        backend: str | None = None,
+    ) -> str:
+        """Run ``graphify cluster-only <root>`` to update HTML viz and Graph Report."""
+        args: list[str] = ["cluster-only", str(root.resolve())]
+        if backend:
+            args.append(f"--backend={backend}")
+        return await self._run_capture(root, args)
 
     # ------------------------------------------------------------------
     # JSON parsers

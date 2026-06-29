@@ -50,6 +50,8 @@ def test_artifacts_paths(tmp_path: Path) -> None:
     assert art.output_dir == tmp_path / "graphify-out"
     assert art.graph_json == tmp_path / "graphify-out" / "graph.json"
     assert art.manifest_json == tmp_path / "graphify-out" / "manifest.json"
+    assert art.graph_html == tmp_path / "graphify-out" / "graph.html"
+    assert art.graph_report == tmp_path / "graphify-out" / "GRAPH_REPORT.md"
 
 
 def test_load_graph_missing_file(tmp_path: Path) -> None:

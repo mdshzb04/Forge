@@ -247,4 +247,28 @@ def status_cmd(
     asyncio.run(_run())
 
 
+@app.command("open")
+def open_cmd(
+    path: str = typer.Option(".", "--path", "-p", help="Project root containing the interactive graph HTML."),
+) -> None:
+    """Launch the interactive graph visualization in the default web browser."""
+    import webbrowser
+
+    html_path = Path(path).resolve() / "graphify-out" / "graph.html"
+    if not html_path.exists():
+        error(
+            f"No interactive graph visualization found at {html_path}.\n"
+            "Please build the graph first using `forge graph build`."
+        )
+        raise typer.Exit(code=1)
+
+    info(f"Opening interactive graph: {html_path} ...")
+    try:
+        webbrowser.open(html_path.as_uri())
+        success("Interactive graph launched.")
+    except Exception as exc:
+        error(f"Failed to open interactive graph: {exc}")
+        raise typer.Exit(code=1) from exc
+
+
 __all__ = ["app"]

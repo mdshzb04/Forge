@@ -104,6 +104,8 @@ class GraphifyRepositoryGraph(RepositoryGraph):
             snapshot=snapshot,
             artifacts={
                 "graph_json": str(outcome.artifacts.graph_json),
+                "graph_html": str(outcome.artifacts.graph_html),
+                "graph_report": str(outcome.artifacts.graph_report),
                 "manifest_json": str(outcome.artifacts.manifest_json),
             },
             raw_output=outcome.stdout,
