@@ -134,7 +134,7 @@ class PluginRegistry:
     workflows: list[Workflow] = field(default_factory=list)
     stages: dict[str, object] = field(default_factory=dict)  # type: ignore[type-arg]
     configure_hooks: list[Callable[[AppContext], None]] = field(default_factory=list)
-    engine_registry: object | None = None  # StageRegistry, kept loose to avoid import cycles
+    engine_registry: StageRegistry | None = None  # StageRegistry, kept loose to avoid import cycles
 
     def register_provider(self, name: str, provider_cls: type[Provider]) -> None:
         self.providers[name] = provider_cls
@@ -151,7 +151,7 @@ class PluginRegistry:
     def register_workflow(self, workflow: Workflow) -> None:
         self.workflows.append(workflow)
 
-    def register_stage(self, stage) -> None:  # type: ignore[no-untyped-def]
+    def register_stage(self, stage: Stage) -> None:
         """Register a :class:`Stage` so the engine can pick it up by name."""
         if not getattr(stage, "name", None):
             raise ValueError("Stage.name must be non-empty")
@@ -160,14 +160,14 @@ class PluginRegistry:
         self.stages[stage.name] = stage
         self._sync_to_engine_registry(stage)
 
-    def replace_stage(self, stage) -> None:  # type: ignore[no-untyped-def]
+    def replace_stage(self, stage: Stage) -> None:
         """Replace a registered :class:`Stage` (last-writer-wins)."""
         if not getattr(stage, "name", None):
             raise ValueError("Stage.name must be non-empty")
         self.stages[stage.name] = stage
         self._sync_to_engine_registry(stage, replace=True)
 
-    def _sync_to_engine_registry(self, stage, *, replace: bool = False) -> None:
+    def _sync_to_engine_registry(self, stage: Stage, *, replace: bool = False) -> None:
         engine_reg = self.engine_registry
         if engine_reg is None:
             return
@@ -184,7 +184,7 @@ class PluginRegistry:
     ) -> None:
         self.configure_hooks.append(hook)
 
-    def link_engine_registry(self, engine_registry) -> None:  # type: ignore[no-untyped-def]
+    def link_engine_registry(self, engine_registry: StageRegistry) -> None:
         """Link this plugin registry to an engine :class:`StageRegistry`.
 
         All existing plugin stages are bulk-registered into the
@@ -192,7 +192,7 @@ class PluginRegistry:
         and :meth:`replace_stage` are mirrored automatically.
         """
         self.engine_registry = engine_registry
-        for name, stage in list(self.stages.items()):
+        for _, stage in list(self.stages.items()):
             try:
                 engine_registry.register(stage)
             except (ValueError, KeyError):

@@ -33,8 +33,10 @@ from forgecli.cli.bootstrap import bootstrap_context
 from forgecli.cli.ui import error, get_console, info, success, table
 from forgecli.engine.runner import (
     engine_result_to_dict,
-    render_engine_result as engine_summary,
     run_engine,
+)
+from forgecli.engine.runner import (
+    render_engine_result as engine_summary,
 )
 from forgecli.optimizer.ponytail import PromptOptimizer
 from forgecli.providers.base import Provider, ProviderRegistry
@@ -172,7 +174,6 @@ async def _run_build(
     # -----------------------------------------------------------------------
     if use_engine:
         import asyncio as _asyncio
-        import concurrent.futures
 
         # run_engine is synchronous (calls asyncio.run internally); we must
         # run it in a thread to avoid "cannot run nested event loop" errors

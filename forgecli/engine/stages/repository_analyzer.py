@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
 
 from forgecli.build import BuildContext
 from forgecli.build.retrieval import graphify_retrieval as _build_retrieval
