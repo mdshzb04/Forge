@@ -41,7 +41,7 @@ class LoadedPlugin:
     """The result of loading a single plugin from disk or PyPI."""
 
     manifest: PluginManifest
-    entry_point_factories: "dict[tuple[str, str], Callable[[PluginManager], None]]"
+    entry_point_factories: dict[tuple[str, str], Callable[[PluginManager], None]]
     """Map of (kind, name) -> configure(manager) callable.
 
     Each callable is invoked when the plugin is enabled; the
@@ -56,7 +56,7 @@ class LoadedPlugin:
         return self.manifest.name
 
     @property
-    def version(self) -> "Version":
+    def version(self) -> Version:
         return self.manifest.version
 
 

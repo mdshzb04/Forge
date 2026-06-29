@@ -185,27 +185,6 @@ class HookManager:
 # ---------------------------------------------------------------------------
 
 
-import contextlib as _contextlib
-
-
-@_contextlib.contextmanager
-def _suppress(*exceptions: type[BaseException]):
-    try:
-        yield
-    except exceptions:
-        pass
-
-
-def _discard_task(task: asyncio.Task) -> None:
-    """Keep a strong reference to a scheduled task until it completes."""
-    return None
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
 @contextlib.contextmanager
 def _suppress(*exceptions: type[BaseException]):
     with contextlib.suppress(*exceptions):

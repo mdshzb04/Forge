@@ -12,13 +12,16 @@ name. Plugin authors who want a new category should add a new
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Protocol, runtime_checkable
 
-from forgecli.core.context import AppContext
-from forgecli.providers.base import Provider
-from forgecli.review.analyzer import Analyzer
+# Re-export the SDK manager for forward references below. The import
+# is intentionally non-binding (TYPE_CHECKING) because the actual
+# PluginManager class lives in :mod:`forgecli.sdk.manager` and would
+# create a circular import at runtime.
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+
+if TYPE_CHECKING:  # pragma: no cover - type hints only
+    from forgecli.sdk.manager import PluginManager
 
 # ---------------------------------------------------------------------------
 # Configuration protocol
