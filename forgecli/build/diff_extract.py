@@ -5,6 +5,10 @@ unified diff block from the response (looking for ``diff --git`` or
 ``--- a/`` / ``+++ b/`` markers) and store the cleaned text in
 ``context.diff_text``. If no diff is found, ``diff_text`` is empty and
 downstream stages short-circuit.
+
+We also strip Markdown code fences (``\`\`\`diff ... \`\`\``) before
+searching, since the system prompt asks for a diff but real models
+often wrap their output anyway.
 """
 
 from __future__ import annotations
@@ -18,6 +22,8 @@ _GIT_DIFF_HEADER = re.compile(r"^diff --git ", re.MULTILINE)
 _UNIFIED_HEADER = re.compile(r"^--- ", re.MULTILINE)
 _DIFF_LINE = re.compile(r"^(?:--- |\+\+\+ |@@ | |\+|-)", re.MULTILINE)
 _DIFF_OR_CONTEXT = re.compile(r"^(?:--- |\+\+\+ |@@ | |\+|-|index )", re.MULTILINE)
+_FENCE_OPEN = re.compile(r"^\s*```(?:\w+)?\s*$")
+_FENCE_CLOSE = re.compile(r"^\s*```\s*$")
 
 
 def extract_diff(text: str) -> str:
@@ -30,6 +36,7 @@ def extract_diff(text: str) -> str:
     """
     if not text:
         return ""
+    text = _strip_code_fences(text)
     match = _GIT_DIFF_HEADER.search(text)
     if not match:
         match = _UNIFIED_HEADER.search(text)
@@ -37,6 +44,26 @@ def extract_diff(text: str) -> str:
         return ""
     candidate = text[match.start():]
     return _trim_to_diff_block(candidate)
+
+
+def _strip_code_fences(text: str) -> str:
+    r"""Drop a single pair of Markdown code fences wrapping the whole text.
+
+    Many models emit fenced diffs (``\`\`\`diff\n<diff>\n\`\`\``); we strip
+    those fences so the header-search below can find ``diff --git``
+    directly. Multi-fence responses (e.g. fences inside fences) are
+    left alone.
+    """
+    lines = text.splitlines()
+    if not lines:
+        return text
+    if not _FENCE_OPEN.match(lines[0]):
+        return text
+    # Find the matching close.
+    for index in range(1, len(lines)):
+        if _FENCE_CLOSE.match(lines[index]):
+            return "\n".join(lines[1:index])
+    return "\n".join(lines[1:])
 
 
 def _trim_to_diff_block(candidate: str) -> str:

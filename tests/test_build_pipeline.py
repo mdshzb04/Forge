@@ -85,6 +85,38 @@ def test_extract_diff_preserves_hunk_body_and_context() -> None:
     assert diff.endswith("+    return not name\n")
 
 
+def test_extract_diff_strips_markdown_code_fence() -> None:
+    """Models often wrap their diff in ```diff ... ``` fences."""
+    text = (
+        "Here you go:\n"
+        "```diff\n"
+        "diff --git a/x.py b/x.py\n"
+        "index 1111..2222 100644\n"
+        "--- a/x.py\n+++ b/x.py\n"
+        "@@ -1 +1 @@\n"
+        "-old\n"
+        "+new\n"
+        "```\n"
+        "All done."
+    )
+    diff = extract_diff(text)
+    assert diff.startswith("diff --git a/x.py b/x.py")
+    assert "+new" in diff
+    assert "Here you go" not in diff
+    assert "```" not in diff
+
+
+def test_extract_diff_strips_plain_fence_without_language() -> None:
+    text = (
+        "```\n"
+        "diff --git a/x.py b/x.py\n"
+        "--- a/x.py\n+++ b/x.py\n@@\n-old\n+new\n"
+        "```"
+    )
+    diff = extract_diff(text)
+    assert diff.startswith("diff --git")
+
+
 # ---------------------------------------------------------------------------
 # Diff application
 # ---------------------------------------------------------------------------
