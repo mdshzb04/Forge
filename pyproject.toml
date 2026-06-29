@@ -1,0 +1,97 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "forgecli"
+version = "0.1.0"
+description = "ForgeCLI - AI Development Operating System that orchestrates repository intelligence, context optimization, AI coding workflows, and Git automation."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+authors = [
+    { name = "ForgeCLI Authors" }
+]
+keywords = ["ai", "cli", "developer-tools", "git", "code-intelligence"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development",
+]
+dependencies = [
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "gitpython>=3.1.42",
+    "httpx>=0.27.0",
+    "aiofiles>=23.2.1",
+    "platformdirs>=4.2.0",
+    "tree-sitter>=0.21.0",
+    "tree-sitter-languages>=1.10.0",
+    "pyyaml>=6.0",
+    "click>=8.1.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+    "types-PyYAML",
+    "respx>=0.21.0",
+]
+
+[project.scripts]
+forgecli = "forgecli.cli.main:app"
+forge = "forgecli.cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/forgecli/forgecli"
+Repository = "https://github.com/forgecli/forgecli"
+Documentation = "https://github.com/forgecli/forgecli#readme"
+Issues = "https://github.com/forgecli/forgecli/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["forgecli"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "B", "UP", "C4", "SIM", "RUF"]
+ignore = [
+    "E501",
+    "N802",   # `Timer` is intentional; a class-like context manager name
+    "UP042",  # `class X(str, Enum)` is intentional for value-equality enums
+    "UP046",  # `class X(Generic[T])` is fine and supported on 3.12+
+    "B008",   # `typer.Option`/`typer.Argument` are intentionally call-site defaults
+    "RUF001", # `ℹ`, `✓`, `✗` icons are intentional in CLI helpers
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["forgecli"]
+omit = ["*/tests/*", "*/__init__.py"]

@@ -1,0 +1,128 @@
+# ForgeCLI configuration example
+# This file demonstrates the structure of `forgecli.toml`.
+# Place it at `~/.config/forgecli/forgecli.toml` or in the project root.
+
+[app]
+name = "forgecli"
+version = "0.1.0"
+log_level = "INFO"
+data_dir = "~/.local/share/forgecli"
+plugins_dir = "~/.config/forgecli/plugins"
+
+[providers]
+default = "auto"  # "auto" | "openai" | "anthropic" | "google" | "mistral" | "groq" | "openrouter" | "azure" | "mock"
+allowed = ["openai", "anthropic", "google", "mistral", "groq", "openrouter", "azure", "mock"]
+
+[providers.openai]
+api_key_env = "OPENAI_API_KEY"
+base_url = "https://api.openai.com/v1"
+default_model = "gpt-4o"
+max_tokens = 8192
+temperature = 0.2
+
+[providers.anthropic]
+api_key_env = "ANTHROPIC_API_KEY"
+base_url = "https://api.anthropic.com"
+default_model = "claude-3-5-sonnet-latest"
+max_tokens = 8192
+temperature = 0.2
+
+[providers.google]
+api_key_env = "GOOGLE_API_KEY"
+base_url = "https://generativelanguage.googleapis.com/v1beta"
+default_model = "gemini-1.5-pro"
+
+[providers.mistral]
+api_key_env = "MISTRAL_API_KEY"
+base_url = "https://api.mistral.ai/v1"
+default_model = "mistral-large-latest"
+
+[providers.groq]
+api_key_env = "GROQ_API_KEY"
+base_url = "https://api.groq.com/openai/v1"
+default_model = "llama-3.1-70b-versatile"
+
+[providers.openrouter]
+api_key_env = "OPENROUTER_API_KEY"
+base_url = "https://openrouter.ai/api/v1"
+default_model = "openai/gpt-4o"
+
+[providers.azure]
+api_key_env = "AZURE_OPENAI_API_KEY"
+base_url_env = "AZURE_OPENAI_ENDPOINT"
+default_model = "gpt-4o"
+
+[providers.mock]
+default_model = "mock-model"
+max_tokens = 1024
+temperature = 0.0
+
+[git]
+default_branch = "main"
+user_name = ""
+user_email = ""
+auto_fetch = true
+push_on_commit = false
+sign_commits = false
+
+[optimizer]
+max_context_tokens = 200000
+chunk_size = 4000
+chunk_overlap = 200
+strategy = "auto"  # auto | sliding | map-reduce | graph
+
+# Ponytail prompt optimizer. Applied to every chat() call before it
+# reaches the provider. Intensity matches the official `/ponytail`
+# command: "off" | "lite" | "full" | "ultra".
+[prompt_optimizer]
+enabled = true
+intensity = "lite"
+backend = "ruleset"       # ruleset | cli | auto
+binary = "ponytail"        # only used when backend = "cli" or "auto"
+timeout_seconds = 30.0
+
+[graph]
+enabled = true
+languages = ["python", "typescript", "javascript", "go", "rust"]
+max_depth = 8
+ignore_patterns = [".git", "node_modules", "venv", ".venv", "dist", "build", "__pycache__"]
+
+# Graphify integration. The binary defaults to "graphify" on PATH.
+# Override the path with FORGECLI_GRAPHIFY_BIN in the environment.
+[graph.backend]
+kind = "graphify"                # "graphify" or "memory"
+binary = "graphify"               # executable name (or absolute path)
+timeout_seconds = 600
+force_rebuild = false
+no_cluster = false
+# extra_args = []                # pass-through flags to `graphify extract`
+
+[memory]
+db_path = "~/.local/share/forgecli/history.db"
+history_limit = 1000
+embedding_provider = "mock"
+
+[review]
+enabled = true
+auto_review = false
+max_diff_lines = 2000
+lint_first = true
+
+[builder]
+auto_format = true
+formatter = "auto"  # auto | ruff | black | prettier | gofmt
+test_command = ""
+max_iterations = 3
+
+[planner]
+default_strategy = "react"  # react | plan-and-execute | reflexion
+max_steps = 20
+allow_shell = false
+
+[prompts]
+dir = "~/.config/forgecli/prompts"
+render_backend = "jinja"
+
+[telemetry]
+enabled = false
+endpoint = ""
