@@ -27,3 +27,44 @@ def test_cli_providers_list() -> None:
     result = runner.invoke(app, ["providers", "list"])
     assert result.exit_code == 0
     assert "mock" in result.output
+
+
+def test_cli_status() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["status"])
+    assert result.exit_code == 0
+    assert "Workspace Status" in result.output
+
+
+def test_cli_info() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["info"])
+    assert result.exit_code == 0
+    assert "Information" in result.output
+
+
+def test_cli_update(monkeypatch) -> None:
+    from datetime import UTC, datetime
+
+    from forgecli.platform.update import UpdateInfo
+
+    dummy_info = UpdateInfo(
+        current="0.1.0",
+        latest="0.2.0",
+        update_available=True,
+        checked_at=datetime.now(UTC),
+    )
+    monkeypatch.setattr("forgecli.cli.commands_update.check_for_update", lambda **kwargs: dummy_info)
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["update"])
+    assert result.exit_code == 0
+    assert "Update Available!" in result.output
+
+
+def test_cli_main_empty() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, [])
+    assert result.exit_code == 0
+    assert "ForgeCLI" in result.output
+    assert "Developer Operating System" in result.output

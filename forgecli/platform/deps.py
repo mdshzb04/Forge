@@ -35,6 +35,7 @@ from typing import Final
 from forgecli.platform.core import (
     OS,
     current_platform,
+    is_macos,
     is_windows,
     python_version,
 )
@@ -206,7 +207,7 @@ def check_dependencies() -> DependencyReport:
     if is_windows():
         deps.append(_probe_optional("scoop", has_scoop, _version_for("scoop")))
         deps.append(_probe_optional("winget", has_winget, _version_for("winget")))
-    else:
+    elif is_macos():
         deps.append(_probe_optional("brew", has_homebrew, _version_for("brew")))
 
     return DependencyReport(dependencies=tuple(deps))

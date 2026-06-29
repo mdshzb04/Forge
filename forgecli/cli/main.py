@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import warnings
 from pathlib import Path
 
 import typer
@@ -20,6 +21,7 @@ from forgecli.cli import (
     commands_graph,
     commands_history,
     commands_index,
+    commands_info,
     commands_init,
     commands_model,
     commands_optimizer,
@@ -28,16 +30,21 @@ from forgecli.cli import (
     commands_providers,
     commands_release,
     commands_review,
+    commands_status,
+    commands_update,
 )
 from forgecli.cli.bootstrap import bootstrap_context
 from forgecli.cli.commands_forge import run_forge as _run_forge_impl
 from forgecli.cli.ui import error, get_console, warn
 from forgecli.core.errors import ForgeCLIError
 
+# Suppress all runtime warnings globally to present a clean, production-grade CLI.
+warnings.filterwarnings("ignore")
+
 app = typer.Typer(
     name=__app_name__,
     help="ForgeCLI - AI Development Operating System.",
-    no_args_is_help=True,
+    no_args_is_help=False,
     add_completion=False,
     rich_markup_mode="rich",
 )
@@ -61,6 +68,9 @@ app.add_typer(commands_history.app, name="history")
 app.add_typer(commands_explain.app, name="explain")
 app.add_typer(commands_doctor.app, name="doctor")
 app.add_typer(commands_plugin.app, name="plugin")
+app.add_typer(commands_status.app, name="status")
+app.add_typer(commands_info.app, name="info")
+app.add_typer(commands_update.app, name="update")
 
 
 def _version_callback(value: bool) -> None:
@@ -152,9 +162,28 @@ def main(
     if ctx.invoked_subcommand is not None:
         return
     if not prompt:
-        # No --prompt and no subcommand: show help.
-        get_console().print(
-            'Usage: forge --prompt "<your request>"  -- see `forge --help`.'
+        # No --prompt and no subcommand: show premium dashboard startup banner.
+        console = get_console()
+        console.print()
+        console.print(
+            "  [bold cyan]_____   ___  ____   ____ _____  ____ _     ___ [/bold cyan]\n"
+            "  [bold cyan]|  ___| / _ \\|  _ \\ / ___| ____|/ ___| |   |_ _|[/bold cyan]\n"
+            "  [bold cyan]| |_   | | | | |_) | |  _|  _| | |   | |    | | [/bold cyan]\n"
+            "  [bold cyan]|  _|  | |_| |  _ <| |_| | |___| |___| |___ | | [/bold cyan]\n"
+            "  [bold cyan]|_|     \\___/|_| \\_\\\\____|_____|\\____|_____|___|[/bold cyan]\n"
+        )
+        console.print(
+            f"  [bold cyan]ForgeCLI[/bold cyan] [dim]v{__version__}[/dim] • [bold white]Developer Operating System[/bold white]"
+        )
+        console.print(
+            "  [dim]Orchestrates code intelligence, prompt optimization, and LLMs.[/dim]\n"
+        )
+        console.print(
+            "  [bold]Usage:[/bold]\n"
+            "    [cyan]forge --prompt \"<your request>\"[/cyan]  Run the AI developer pipeline\n"
+            "    [cyan]forge status[/cyan]                      Show current project and tool status\n"
+            "    [cyan]forge doctor[/cyan]                      Run diagnostic checks and self-checks\n"
+            "    [cyan]forge --help[/cyan]                      List all available subcommands\n"
         )
         return
     text = prompt.strip()
