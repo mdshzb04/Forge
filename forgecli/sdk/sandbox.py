@@ -132,10 +132,14 @@ class Sandbox:
         if Permission.EXEC in self._plugin_permissions:
             # Plugin asked for exec; give it the full power.
             return
-        self._original_builtins = vars(_builtins).copy()
+        # Snapshot the *set* of attribute names *and* their values
+        # before we mutate anything. We use ``dir(builtins)`` to
+        # enumerate names because the scoped table may have
+        # stripped names that ``vars`` depends on.
+        self._original_builtins = {name: getattr(_builtins, name) for name in dir(_builtins)}
         # Replace the host builtins module attributes with the
         # scoped table for the duration of the block.
-        for name in list(vars(_builtins).keys()):
+        for name in list(self._original_builtins.keys()):
             if name in self._scoped.table:
                 setattr(_builtins, name, self._scoped.table[name])
             else:
@@ -149,15 +153,24 @@ class Sandbox:
     def __exit__(self, *exc: Any) -> None:
         if self._original_builtins is None:
             return
-        # Restore the original builtins.
-        for name in list(vars(_builtins).keys()):
-            if name not in self._original_builtins:
+        # Remove any names that exist now but did not exist when we
+        # entered. We use ``dir`` rather than ``vars`` to enumerate,
+        # because ``vars`` itself may have been stripped from the
+        # sandbox.
+        original = self._original_builtins
+        for name in list(dir(_builtins)):
+            if name not in original:
                 try:
                     delattr(_builtins, name)
                 except AttributeError:
                     pass
-        for name, value in self._original_builtins.items():
-            setattr(_builtins, name, value)
+        # Restore every original name. Even if a name was removed
+        # during the block, ``__import__`` is back in the table.
+        for name, value in original.items():
+            try:
+                setattr(_builtins, name, value)
+            except AttributeError:
+                pass
         self._original_builtins = None
 
 

@@ -46,19 +46,29 @@ class Version:
     def parse(cls, value: str) -> "Version":
         if not value or not isinstance(value, str):
             raise VersionParseError(f"invalid version: {value!r}")
+        # Accept both ``1.2.3a1`` (PEP-440-ish) and ``1.2.3-a1``
+        # (semver-style). We normalise to the second form so the
+        # pre-release parsing below sees a single canonical shape.
+        normalised = value.strip()
         m = re.match(
-            r"^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z-.]+))?(?:\+([0-9A-Za-z-.]+))?$",
-            value.strip(),
+            r"^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?"
+            r"(?:(-[0-9A-Za-z-.]+)|([0-9]+[A-Za-z]+[0-9A-Za-z-]*))?"
+            r"(?:\+([0-9A-Za-z-.]+))?$",
+            normalised,
         )
         if not m:
             raise VersionParseError(f"invalid version: {value!r}")
-        major, minor, patch, pre, build = m.groups()
+        major, minor, patch, dash_pre, no_dash_pre, build = m.groups()
         pre_tuple: tuple[tuple[str, int], ...] = ()
-        if pre:
-            for chunk in pre.split("."):
+        # ``dash_pre`` is the canonical ``-foo.bar`` form. ``no_dash_pre``
+        # is the bare ``1.2.3a1`` form; we prefix a dash so the
+        # downstream splitter sees a single shape.
+        pre_str = dash_pre or ("-" + no_dash_pre if no_dash_pre else "")
+        if pre_str:
+            for chunk in pre_str.lstrip("-").split("."):
                 match = re.match(r"^([0-9A-Za-z]+)(\d*)$", chunk)
                 if not match:
-                    raise VersionParseError(f"invalid pre-release: {pre!r}")
+                    raise VersionParseError(f"invalid pre-release: {pre_str!r}")
                 ident, num = match.groups()
                 pre_tuple = pre_tuple + ((ident, int(num) if num else -1),)
         return cls(
@@ -79,6 +89,9 @@ class Version:
         if self.build:
             base += f"+{self.build}"
         return base
+
+    def __repr__(self) -> str:
+        return f"Version({self})"
 
     def is_prerelease(self) -> bool:
         return bool(self.pre)
