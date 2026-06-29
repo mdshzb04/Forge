@@ -15,7 +15,6 @@ from forgecli.cli import (
     commands_config,
     commands_docs,
     commands_explain,
-    commands_forge,
     commands_git,
     commands_graph,
     commands_history,
@@ -60,19 +59,24 @@ app.add_typer(commands_history.app, name="history")
 app.add_typer(commands_explain.app, name="explain")
 
 
-# Top-level `forge "<prompt>"` callback: dispatches to the orchestrator.
+def _version_callback(value: bool) -> None:
+    if value:
+        get_console().print(f"{__app_name__} [muted]v{__version__}[/muted]")
+        raise typer.Exit()
 
 
-def _forge_callback(
+# Top-level `forge --prompt "<request>"` callback: dispatches to the
+# orchestrator. This is the headline command.
+@app.callback(invoke_without_command=True)
+def main(
     ctx: typer.Context,
-    prompt: list[str] = typer.Argument(
+    prompt: str = typer.Option(
         None,
-        help=(
-            "Natural-language description of what to build, ask, plan, or "
-            "document. If omitted, prints help."
-        ),
+        "--prompt",
+        "-p",
+        help="Natural-language description of what to build, ask, plan, etc.",
     ),
-    path: str = typer.Option(".", "--path", "-p", help="Project root."),
+    path: str = typer.Option(".", "--path", help="Project root."),
     live: bool = typer.Option(
         False, "--live", help="Use the real provider chosen by the router (default: mock)."
     ),
@@ -86,13 +90,42 @@ def _forge_callback(
     no_tests: bool = typer.Option(
         False, "--no-tests", help="Skip the test stage."
     ),
+    config: Path | None = typer.Option(
+        None,
+        "--config",
+        "-c",
+        help="Path to a forgecli.toml file.",
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging."),
+    version: bool = typer.Option(
+        False,
+        "--version",
+        callback=_version_callback,
+        is_eager=True,
+        help="Show the version and exit.",
+    ),
 ) -> None:
+    """ForgeCLI global entry point.
+
+    With ``--prompt "<request>"`` (no subcommand) the orchestrator
+    runs the full Graphify -> Ponytail -> LLM -> apply -> test ->
+    auto-fix -> summary pipeline. With a subcommand, ForgeCLI
+    dispatches to that subcommand.
+    """
+    extras: dict[str, object] = {"verbose": verbose}
+    bootstrap_context(config_path=config, extras=extras)
+    if version:  # _version_callback raises typer.Exit
+        return
+    # If a subcommand was invoked, let it handle the request.
+    if ctx.invoked_subcommand is not None:
+        return
     if not prompt:
+        # No --prompt and no subcommand: show help.
         get_console().print(
-            "Usage: forge \"<your request>\"  -- see `forge --help`."
+            'Usage: forge --prompt "<your request>"  -- see `forge --help`.'
         )
         return
-    text = " ".join(prompt).strip()
+    text = prompt.strip()
     try:
         asyncio.run(
             _run_forge_impl(
@@ -110,42 +143,6 @@ def _forge_callback(
     except Exception as exc:
         error(f"forge: {exc}")
         raise typer.Exit(code=1) from exc
-
-
-app.callback(invoke_without_command=True)(_forge_callback)
-
-
-def _version_callback(value: bool) -> None:
-    if value:
-        get_console().print(f"{__app_name__} [muted]v{__version__}[/muted]")
-        raise typer.Exit()
-
-
-@app.callback()
-def main(
-    ctx: typer.Context,
-    config: Path | None = typer.Option(
-        None,
-        "--config",
-        "-c",
-        help="Path to a forgecli.toml file.",
-    ),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging."),
-    version: bool = typer.Option(
-        False,
-        "--version",
-        callback=_version_callback,
-        is_eager=True,
-        help="Show the version and exit.",
-    ),
-) -> None:
-    """ForgeCLI global options.
-
-    These options are available to every subcommand.
-    """
-    extras: dict[str, object] = {"verbose": verbose}
-    context = bootstrap_context(config_path=config, extras=extras)
-    ctx.obj = context
 
 
 def _run() -> None:

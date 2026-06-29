@@ -35,33 +35,45 @@ from forgecli.orchestrator import (
     PluginRegistry,
     build_orchestrator,
 )
-
 # A single shared registry so subcommands and the top-level command
 # share the same plugin state.
 _REGISTRY = PluginRegistry()
 _REGISTRY.register_classifier(HeuristicIntentClassifier())
 
-# Importing these here also registers their default workflows.
-from forgecli.orchestrator import (  # noqa: E402
-    AskWorkflow,
-    BuildWorkflow,
-    CommitWorkflow,
-    DocsWorkflow,
-    ExplainWorkflow,
-    PlanWorkflow,
-    ReviewWorkflow,
-)
 
-_REGISTRY.register_workflow(BuildWorkflow)
-_REGISTRY.register_workflow(PlanWorkflow)
-_REGISTRY.register_workflow(AskWorkflow)
-_REGISTRY.register_workflow(DocsWorkflow)
-_REGISTRY.register_workflow(ReviewWorkflow)
-_REGISTRY.register_workflow(ExplainWorkflow)
-_REGISTRY.register_workflow(CommitWorkflow)
+def _register_default_workflows(provider) -> None:
+    """Register the seven default workflow *instances* under their
+    canonical names. Idempotent: re-registering with a different
+    provider replaces the previous binding.
+    """
+    from forgecli.orchestrator import (
+        AskWorkflow,
+        BuildWorkflow,
+        CommitWorkflow,
+        DocsWorkflow,
+        ExplainWorkflow,
+        PlanWorkflow,
+        ReviewWorkflow,
+    )
+
+    defaults = [
+        BuildWorkflow(provider=provider),
+        PlanWorkflow(),
+        AskWorkflow(),
+        DocsWorkflow(),
+        ReviewWorkflow(),
+        ExplainWorkflow(),
+        CommitWorkflow(),
+    ]
+    existing = {w.name for w in _REGISTRY.workflows}
+    for workflow in defaults:
+        if workflow.name in existing:
+            _REGISTRY.workflows[:] = [
+                w for w in _REGISTRY.workflows if w.name != workflow.name
+            ]
+        _REGISTRY.register_workflow(workflow)
 
 
-# Hook for tests to reset the registry.
 def get_registry() -> PluginRegistry:
     return _REGISTRY
 
@@ -76,38 +88,41 @@ app = typer.Typer(
 )
 
 
+def _build_provider_for(*, live: bool, cwd: Path):
+    """Build a :class:`Provider` for the current invocation."""
+    from forgecli.providers.base import Provider
+    from forgecli.providers.mock import MockProvider, MockProviderConfig
+
+    if not live:
+        return MockProvider(MockProviderConfig())
+
+    from forgecli.providers.openai import OpenAIConfig, OpenAIProvider
+    from forgecli.providers.anthropic import AnthropicConfig, AnthropicProvider
+    from forgecli.providers.google import GeminiConfig, GeminiProvider
+    from forgecli.providers.router_state import load_state
+
+    app_context = bootstrap_context(cwd=str(cwd))
+    state = load_state(app_context.paths.data_dir / "router.json")
+    chosen = state.choice
+    config_map = {
+        "openai": (OpenAIProvider, OpenAIConfig()),
+        "anthropic": (AnthropicProvider, AnthropicConfig()),
+        "google": (GeminiProvider, GeminiConfig()),
+    }
+    if chosen in config_map:
+        provider_cls, config = config_map[chosen]
+        return provider_cls(config)
+    return MockProvider(MockProviderConfig())
+
+
 def _build_orchestrator_for(
     *,
     live: bool,
     cwd: Path,
 ) -> Orchestrator:
-    """Build an :class:`Orchestrator` for the current invocation."""
-    from forgecli.providers.base import Provider
-    from forgecli.providers.mock import MockProvider, MockProviderConfig
-
-    if live:
-        from forgecli.providers.anthropic import AnthropicConfig, AnthropicProvider
-        from forgecli.providers.google import GeminiConfig, GeminiProvider
-        from forgecli.providers.openai import OpenAIConfig, OpenAIProvider
-
-        config_map = {
-            "openai": (OpenAIProvider, OpenAIConfig()),
-            "anthropic": (AnthropicProvider, AnthropicConfig()),
-            "google": (GeminiProvider, GeminiConfig()),
-        }
-        app_context = bootstrap_context(cwd=str(cwd))
-        from forgecli.providers.router_state import load_state
-
-        state = load_state(app_context.paths.data_dir / "router.json")
-        chosen = state.choice
-        if chosen in config_map:
-            provider_cls, config = config_map[chosen]
-            provider: Provider = provider_cls(config)
-        else:
-            provider = MockProvider(MockProviderConfig())
-    else:
-        provider = MockProvider(MockProviderConfig())
-
+    """Backwards-compatible shim that returns an :class:`Orchestrator`."""
+    provider = _build_provider_for(live=live, cwd=cwd)
+    _register_default_workflows(provider)
     return build_orchestrator(_REGISTRY, provider=provider)
 
 
@@ -166,7 +181,7 @@ async def run_forge(
     *,
     live: bool,
     json_output: bool,
-    save_diff: Path | None,
+    save_diff: Optional[Path],
     no_commit: bool,
     no_tests: bool,
 ) -> None:
@@ -176,7 +191,9 @@ async def run_forge(
     internal Typer sub-app in :mod:`commands_forge` is still wired
     for forward-compatibility.
     """
-    orchestrator = _build_orchestrator_for(live=live, cwd=path)
+    provider = _build_provider_for(live=live, cwd=path)
+    _register_default_workflows(provider)
+    orchestrator = Orchestrator(_REGISTRY, provider=provider)
     result = await orchestrator.run(text)
 
     if save_diff and result.diff:

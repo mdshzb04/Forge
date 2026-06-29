@@ -89,9 +89,15 @@ class Workflow(ABC):
     async def run(self, context: PluginContext) -> dict[str, Any]:
         """Execute the workflow; return a result payload for the CLI."""
 
-    def can_handle(self, intent: Intent, prompt: str) -> bool:
-        """Return True if this workflow should run for ``intent``."""
-        return intent in self.intents
+    @classmethod
+    def can_handle(cls, intent: Intent, prompt: str) -> bool:
+        """Return True if this workflow should run for ``intent``.
+
+        Implemented as a classmethod so the registry can iterate
+        over the workflow *classes* (not instances) and call
+        ``can_handle`` directly.
+        """
+        return intent in cls.intents
 
 
 class IntentClassifier(ABC):
