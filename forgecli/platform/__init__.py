@@ -68,7 +68,6 @@ __all__ = [
     "check_dependencies",
     "check_for_update",
     "config_dir",
-    "upgrade_command",
     "current_platform",
     "current_version",
     "data_dir",
@@ -88,4 +87,5 @@ __all__ = [
     "run",
     "shell_quote",
     "state_dir",
+    "upgrade_command",
 ]

@@ -92,7 +92,7 @@ class PluginEventBus:
         for handler in list(self._subscribers.get(event.kind, ())):
             try:
                 result = handler(event)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _logger.exception("plugin event handler raised")
                 continue
             if asyncio.iscoroutine(result):
@@ -108,7 +108,7 @@ class PluginEventBus:
         for handler in list(self._subscribers.get(event.kind, ())):
             try:
                 result = handler(event)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _logger.exception("plugin event handler raised")
                 continue
             if asyncio.iscoroutine(result):
@@ -150,14 +150,14 @@ class HookManager:
         for hook in self._before:
             try:
                 hook.callback(*args, **kwargs)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _logger.exception("hook %s failed (before)", hook.name)
 
     def fire_after(self, *args: Any, **kwargs: Any) -> None:
         for hook in self._after:
             try:
                 hook.callback(*args, **kwargs)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _logger.exception("hook %s failed (after)", hook.name)
 
     async def fire_before_async(self, *args: Any, **kwargs: Any) -> None:
@@ -166,7 +166,7 @@ class HookManager:
                 result = hook.callback(*args, **kwargs)
                 if asyncio.iscoroutine(result):
                     await result
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _logger.exception("hook %s failed (before)", hook.name)
 
     async def fire_after_async(self, *args: Any, **kwargs: Any) -> None:
@@ -175,7 +175,7 @@ class HookManager:
                 result = hook.callback(*args, **kwargs)
                 if asyncio.iscoroutine(result):
                     await result
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _logger.exception("hook %s failed (after)", hook.name)
 
 

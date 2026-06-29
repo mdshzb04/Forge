@@ -131,7 +131,7 @@ class PluginManifest:
     # ------------------------------------------------------------------
 
     @classmethod
-    def load(cls, path: Path) -> "PluginManifest":
+    def load(cls, path: Path) -> PluginManifest:
         """Read ``path`` and return a :class:`PluginManifest`."""
         path = Path(path)
         if not path.exists():
@@ -147,14 +147,14 @@ class PluginManifest:
         try:
             import tomli_w  # type: ignore[import-untyped]
 
-            return tomli_w.dumps(self._to_dict())  # noqa: RET506
+            return tomli_w.dumps(self._to_dict())
         except ImportError:
             # Fall back to a hand-rolled minimal TOML writer. Plugins
             # typically have tomli_w installed; this is for tests.
             return _simple_toml_dump(self._to_dict())
 
     @classmethod
-    def _from_dict(cls, data: dict[str, Any], *, source: Path | None) -> "PluginManifest":
+    def _from_dict(cls, data: dict[str, Any], *, source: Path | None) -> PluginManifest:
         if not isinstance(data, dict):
             raise ValueError("manifest root must be a table")
         plugin = data.get("plugin") or data

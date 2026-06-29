@@ -18,10 +18,9 @@ Missing version specifier means "any version".
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable
-
 
 # ---------------------------------------------------------------------------
 # Version parsing
@@ -43,7 +42,7 @@ class Version:
     build: str = ""
 
     @classmethod
-    def parse(cls, value: str) -> "Version":
+    def parse(cls, value: str) -> Version:
         if not value or not isinstance(value, str):
             raise VersionParseError(f"invalid version: {value!r}")
         # Accept both ``1.2.3a1`` (PEP-440-ish) and ``1.2.3-a1``
@@ -96,7 +95,7 @@ class Version:
     def is_prerelease(self) -> bool:
         return bool(self.pre)
 
-    def without_prerelease(self) -> "Version":
+    def without_prerelease(self) -> Version:
         return Version(self.major, self.minor, self.patch)
 
 
@@ -163,7 +162,7 @@ class Requirement:
         return all(spec.matches(version) for spec in self.specs)
 
     @classmethod
-    def parse(cls, name: str, spec_string: str = "") -> "Requirement":
+    def parse(cls, name: str, spec_string: str = "") -> Requirement:
         if not name:
             raise ValueError("requirement name must be non-empty")
         specs: list[Spec] = []

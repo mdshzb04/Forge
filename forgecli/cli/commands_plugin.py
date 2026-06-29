@@ -5,11 +5,10 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 
-from forgecli.cli.ui import error, get_console, info, success, table, warn
+from forgecli.cli.ui import error, get_console, info, success, table
 from forgecli.sdk import (
     PluginAlreadyInstalledError,
     PluginCompatibilityError,
@@ -17,7 +16,6 @@ from forgecli.sdk import (
     PluginManager,
     PluginNotFoundError,
 )
-
 
 app = typer.Typer(
     help="Manage plugins (install, enable, disable, update, doctor).",
@@ -35,7 +33,7 @@ def _manager(data_root: Path | None = None) -> PluginManager:
 @app.callback(invoke_without_command=True)
 def plugin_cmd(
     ctx: typer.Context,
-    data_root: Optional[Path] = typer.Option(
+    data_root: Path | None = typer.Option(
         None, "--data-root", help="Override the SDK data root (tests)."
     ),
     json_output: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
@@ -49,7 +47,7 @@ def plugin_cmd(
 @app.command("list")
 def list_cmd(
     json_output: bool = typer.Option(False, "--json", help="Emit JSON."),
-    data_root: Optional[Path] = typer.Option(
+    data_root: Path | None = typer.Option(
         None, "--data-root", help="Override the SDK data root."
     ),
 ) -> None:
@@ -95,7 +93,7 @@ def list_cmd(
 @app.command("install")
 def install_cmd(
     source: str = typer.Argument(..., help="Path or git URL."),
-    data_root: Optional[Path] = typer.Option(
+    data_root: Path | None = typer.Option(
         None, "--data-root", help="Override the SDK data root."
     ),
 ) -> None:
@@ -115,7 +113,7 @@ def install_cmd(
 @app.command("enable")
 def enable_cmd(
     name: str = typer.Argument(..., help="Plugin name."),
-    data_root: Optional[Path] = typer.Option(
+    data_root: Path | None = typer.Option(
         None, "--data-root", help="Override the SDK data root."
     ),
 ) -> None:
@@ -138,7 +136,7 @@ def enable_cmd(
 @app.command("disable")
 def disable_cmd(
     name: str = typer.Argument(..., help="Plugin name."),
-    data_root: Optional[Path] = typer.Option(
+    data_root: Path | None = typer.Option(
         None, "--data-root", help="Override the SDK data root."
     ),
 ) -> None:
@@ -158,7 +156,7 @@ def uninstall_cmd(
     keep_files: bool = typer.Option(
         False, "--keep-files", help="Only remove from the registry."
     ),
-    data_root: Optional[Path] = typer.Option(
+    data_root: Path | None = typer.Option(
         None, "--data-root", help="Override the SDK data root."
     ),
 ) -> None:
@@ -175,12 +173,12 @@ def uninstall_cmd(
 @app.command("update")
 def update_cmd(
     name: str = typer.Argument(..., help="Plugin name."),
-    source: Optional[str] = typer.Option(
+    source: str | None = typer.Option(
         None,
         "--source",
         help="Override the install source (path or git URL).",
     ),
-    data_root: Optional[Path] = typer.Option(
+    data_root: Path | None = typer.Option(
         None, "--data-root", help="Override the SDK data root."
     ),
 ) -> None:
@@ -201,7 +199,7 @@ def update_cmd(
 def info_cmd(
     name: str = typer.Argument(..., help="Plugin name."),
     json_output: bool = typer.Option(False, "--json", help="Emit JSON."),
-    data_root: Optional[Path] = typer.Option(
+    data_root: Path | None = typer.Option(
         None, "--data-root", help="Override the SDK data root."
     ),
 ) -> None:
@@ -250,7 +248,7 @@ def info_cmd(
 @app.command("doctor")
 def doctor_cmd(
     json_output: bool = typer.Option(False, "--json", help="Emit JSON."),
-    data_root: Optional[Path] = typer.Option(
+    data_root: Path | None = typer.Option(
         None, "--data-root", help="Override the SDK data root."
     ),
 ) -> None:

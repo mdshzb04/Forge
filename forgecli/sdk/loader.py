@@ -27,11 +27,9 @@ from importlib.machinery import ModuleSpec
 from pathlib import Path
 from types import ModuleType
 
-from forgecli.platform.core import is_linux, is_macos, is_windows, python_version
 from forgecli.platform.paths import config_dir
-from forgecli.sdk.manifest import EntryPoint, PluginManifest
+from forgecli.sdk.manifest import PluginManifest
 from forgecli.sdk.version import Version
-
 
 _MANIFEST_FILENAME = "forgecli-plugin.toml"
 _PLUGINS_DIRNAME = "plugins"
@@ -43,7 +41,7 @@ class LoadedPlugin:
     """The result of loading a single plugin from disk or PyPI."""
 
     manifest: PluginManifest
-    entry_point_factories: dict[tuple[str, str], Callable[["PluginManager"], None]]
+    entry_point_factories: dict[tuple[str, str], Callable[[PluginManager], None]]
     """Map of (kind, name) -> configure(manager) callable.
 
     Each callable is invoked when the plugin is enabled; the
@@ -109,7 +107,7 @@ def discover_entry_points() -> list[LoadedPlugin]:
     plugins: list[LoadedPlugin] = []
     try:
         entries = importlib_metadata.entry_points(group=_ENTRY_POINT_GROUP)
-    except Exception:  # noqa: BLE001
+    except Exception:
         return plugins
     # Group by distribution to load one synthetic manifest per
     # distribution. This is a pragmatic choice that lets users ship
@@ -122,7 +120,7 @@ def discover_entry_points() -> list[LoadedPlugin]:
             plugins.append(_load_entry_point_distribution(dist_name, ep_list))
         except PluginManifestNotFound:
             continue
-        except Exception:  # noqa: BLE001
+        except Exception:
             continue
     return plugins
 
@@ -176,9 +174,9 @@ def _load_entry_point_distribution(
 
 def _load_entry_point_factories(
     manifest: PluginManifest, plugin_dir: Path
-) -> dict[tuple[str, str], Callable[["PluginManager"], None]]:
+) -> dict[tuple[str, str], Callable[[PluginManager], None]]:
     """Import each ``module:attr`` reference declared in the manifest."""
-    factories: dict[tuple[str, str], Callable[["PluginManager"], None]] = {}
+    factories: dict[tuple[str, str], Callable[[PluginManager], None]] = {}
     for ep in manifest.entry_points:
         module_name, _, attr = ep.reference.partition(":")
         if not module_name or not attr:
@@ -214,7 +212,7 @@ def _coerce_name(value: str | None, fallback: str) -> str:
 def _coerce_version(value: str | None) -> Version | None:
     if not value:
         return None
-    from forgecli.sdk.version import VersionParseError, Version
+    from forgecli.sdk.version import Version, VersionParseError
 
     try:
         return Version.parse(value)

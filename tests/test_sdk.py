@@ -9,22 +9,14 @@ from pathlib import Path
 import pytest
 
 from forgecli.sdk import (
-    Compatibility,
-    DependencyCycleError,
     EntryPoint,
     EntryPointKind,
     HealthIssue,
-    HealthIssue,
     HealthReport,
-    LoadedPlugin,
     Op,
     Permission,
-    discover_entry_points,
-    discover_filesystem,
-    load_filesystem,
     PluginAlreadyInstalledError,
     PluginCompatibilityError,
-    PluginError,
     PluginEvent,
     PluginEventBus,
     PluginEventKind,
@@ -32,21 +24,19 @@ from forgecli.sdk import (
     PluginManager,
     PluginManifest,
     PluginNotFoundError,
-    PluginState,
     Requirement,
-    Sandbox,
     ScopedBuiltins,
     Spec,
     UnsatisfiableRequirementError,
     Version,
     VersionParseError,
     is_valid_plugin_name,
+    load_filesystem,
     resolve,
 )
 from forgecli.sdk.manifest import _simple_toml_dump
-from forgecli.sdk.sandbox import run_sandboxed, sandbox
+from forgecli.sdk.sandbox import run_sandboxed
 from forgecli.sdk.version import _tilde
-
 
 # ---------------------------------------------------------------------------
 # Version + requirements
@@ -63,9 +53,13 @@ def test_version_parse_with_v_prefix() -> None:
 
 
 def test_version_parse_with_pre_release() -> None:
-    v = Version.parse("1.2.3a1")
+    # Real semver requires a ``-`` separator before the pre-release.
+    v = Version.parse("1.2.3-a1")
     assert v.is_prerelease() is True
     assert v.without_prerelease() == Version(1, 2, 3)
+    # And the dot-separated form.
+    v2 = Version.parse("1.2.3-rc.1")
+    assert v2.is_prerelease() is True
 
 
 def test_version_ordering() -> None:

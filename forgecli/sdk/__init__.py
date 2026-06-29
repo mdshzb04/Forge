@@ -75,7 +75,6 @@ from forgecli.sdk.version import (
     resolve,
 )
 
-
 __all__ = [
     "AIProviderPlugin",
     "CodeGeneratorPlugin",
@@ -98,11 +97,11 @@ __all__ = [
     "PluginAlreadyInstalledError",
     "PluginCompatibilityError",
     "PluginConfigurable",
+    "PluginError",
     "PluginEvent",
     "PluginEventBus",
     "PluginEventKind",
     "PluginHealthCheck",
-    "PluginError",
     "PluginHook",
     "PluginManager",
     "PluginManifest",

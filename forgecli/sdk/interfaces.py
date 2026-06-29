@@ -12,13 +12,7 @@ name. Plugin authors who want a new category should add a new
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
 from typing import Any, Protocol, runtime_checkable
-
-from forgecli.core.context import AppContext
-from forgecli.providers.base import Provider
-from forgecli.review.analyzer import Analyzer
-
 
 # ---------------------------------------------------------------------------
 # Configuration protocol
@@ -52,7 +46,7 @@ class PluginHealthCheck(Protocol):
     surfaced in the doctor report.
     """
 
-    def health(self) -> list["HealthIssue"]: ...
+    def health(self) -> list[HealthIssue]: ...
 
 
 # ---------------------------------------------------------------------------
@@ -71,7 +65,7 @@ class AIProviderPlugin(Protocol):
 
     name: str
 
-    def register(self, manager: "PluginManager") -> None: ...
+    def register(self, manager: PluginManager) -> None: ...
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +83,7 @@ class RepositoryAnalyzerPlugin(Protocol):
 
     name: str
 
-    def register(self, manager: "PluginManager") -> None: ...
+    def register(self, manager: PluginManager) -> None: ...
 
 
 # ---------------------------------------------------------------------------
@@ -103,7 +97,7 @@ class ContextOptimizerPlugin(Protocol):
 
     name: str
 
-    def register(self, manager: "PluginManager") -> None: ...
+    def register(self, manager: PluginManager) -> None: ...
 
 
 # ---------------------------------------------------------------------------
@@ -117,7 +111,7 @@ class CodeGeneratorPlugin(Protocol):
 
     name: str
 
-    def register(self, manager: "PluginManager") -> None: ...
+    def register(self, manager: PluginManager) -> None: ...
 
 
 # ---------------------------------------------------------------------------
@@ -137,7 +131,7 @@ class TestRunnerPlugin(Protocol):
 
     name: str
 
-    def register(self, manager: "PluginManager") -> None: ...
+    def register(self, manager: PluginManager) -> None: ...
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +150,7 @@ class GitProviderPlugin(Protocol):
 
     name: str
 
-    def register(self, manager: "PluginManager") -> None: ...
+    def register(self, manager: PluginManager) -> None: ...
 
 
 # ---------------------------------------------------------------------------
@@ -174,7 +168,7 @@ class DocumentationGeneratorPlugin(Protocol):
 
     name: str
 
-    def register(self, manager: "PluginManager") -> None: ...
+    def register(self, manager: PluginManager) -> None: ...
 
 
 # ---------------------------------------------------------------------------
@@ -188,7 +182,7 @@ class DeploymentProviderPlugin(Protocol):
 
     name: str
 
-    def register(self, manager: "PluginManager") -> None: ...
+    def register(self, manager: PluginManager) -> None: ...
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +196,7 @@ class ObservabilityProviderPlugin(Protocol):
 
     name: str
 
-    def register(self, manager: "PluginManager") -> None: ...
+    def register(self, manager: PluginManager) -> None: ...
 
 
 # ---------------------------------------------------------------------------
@@ -216,7 +210,7 @@ class NotificationProviderPlugin(Protocol):
 
     name: str
 
-    def register(self, manager: "PluginManager") -> None: ...
+    def register(self, manager: PluginManager) -> None: ...
 
 
 # ---------------------------------------------------------------------------

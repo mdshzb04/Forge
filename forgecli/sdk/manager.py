@@ -33,9 +33,6 @@ from typing import Any
 
 from forgecli.platform.core import (
     current_platform,
-    is_linux,
-    is_macos,
-    is_windows,
     python_version,
 )
 from forgecli.platform.paths import config_dir, data_dir
@@ -46,7 +43,6 @@ from forgecli.sdk.events import (
     PluginEvent,
     PluginEventBus,
     PluginEventKind,
-    PluginHook,
 )
 from forgecli.sdk.interfaces import HealthIssue, HealthReport
 from forgecli.sdk.loader import (
@@ -59,7 +55,6 @@ from forgecli.sdk.manifest import (
     Compatibility,
     EntryPoint,
     EntryPointKind,
-    Permission,
     PluginManifest,
     is_valid_plugin_name,
 )
@@ -70,7 +65,6 @@ from forgecli.sdk.version import (
     VersionParseError,
     resolve,
 )
-
 
 _logger = logging.getLogger("forgecli.sdk.manager")
 _STATE_FILENAME = "plugins.json"
@@ -266,7 +260,7 @@ class PluginManager:
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmp:
-            result = subprocess.run(  # noqa: S603
+            result = subprocess.run(
                 ["git", "clone", "--depth=1", url, str(target)],
                 cwd=tmp,
                 capture_output=True,
@@ -380,7 +374,7 @@ class PluginManager:
             issues: list[HealthIssue] = []
             try:
                 plugin = self._load_for(name, state)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 issues.append(HealthIssue("error", f"could not load: {exc}"))
                 reports.append(HealthReport(name, tuple(issues), healthy=False))
                 continue
@@ -392,7 +386,7 @@ class PluginManager:
                         reported = list(plugin.entry_point_factories[  # type: ignore[attr-defined]
                             (EntryPointKind.OBSERVABILITY.value, "health")
                         ]())
-                    except Exception:  # noqa: BLE001
+                    except Exception:
                         reported = []
                 for issue in reported:
                     issues.append(
@@ -416,7 +410,7 @@ class PluginManager:
         for state in self._state.plugins.values():
             try:
                 loaded = self._load_for(state.name, state)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 loaded = None
             result.append((state, loaded))
         return result
@@ -488,15 +482,13 @@ class PluginManager:
                 continue
         try:
             resolve(requirements, candidates)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning("dependency resolution failed for %s: %s", manifest.name, exc)
 
     def _load_for(self, name: str, state: PluginState) -> LoadedPlugin:
         if name in self._loaded:
             return self._loaded[name]
-        if state.source == "filesystem" and state.install_path:
-            loaded = load_filesystem(Path(state.install_path))
-        elif state.source == "git" and state.install_path:
+        if (state.source == "filesystem" and state.install_path) or (state.source == "git" and state.install_path):
             loaded = load_filesystem(Path(state.install_path))
         else:
             # Entry-point plugin; fall back to discovery.
@@ -520,7 +512,7 @@ class PluginManager:
                 try:
                     if enabled:
                         factory(self)
-                except Exception:  # noqa: BLE001
+                except Exception:
                     _logger.exception(
                         "plugin %s: %s.%s failed", plugin.name, kind.value, name
                     )
@@ -549,7 +541,7 @@ class PluginManager:
                     installed_at=str(data.get("installed_at", "")),
                     enabled_at=data.get("enabled_at"),
                 )
-            except Exception:  # noqa: BLE001
+            except Exception:
                 continue
         return PluginRegistryState(plugins=plugins, schema_version=raw.get("schema_version", 1))
 
@@ -576,7 +568,7 @@ class PluginManager:
             )
 
     def _git_origin(self, path: Path) -> str:
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             ["git", "config", "--get", "remote.origin.url"],
             cwd=path,
             capture_output=True,

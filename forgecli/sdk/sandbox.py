@@ -27,7 +27,6 @@ from typing import Any
 
 from forgecli.sdk.manifest import Permission
 
-
 # Names that are always available; everything else is dropped.
 _ALLOWED_BUILTIN_NAMES: frozenset[str] = frozenset(
     {
@@ -43,8 +42,7 @@ _ALLOWED_BUILTIN_NAMES: frozenset[str] = frozenset(
         # Printing / I/O (controlled)
         "print", "open", "input",
         # Common utilities
-        "len", "iter", "next", "map", "filter", "zip", "reversed",
-        "enumerate", "range", "sorted", "all", "any", "min", "max",
+        "max",
         # Exceptions
         "BaseException", "Exception", "ValueError", "TypeError",
         "KeyError", "IndexError", "StopIteration", "RuntimeError",
@@ -143,12 +141,8 @@ class Sandbox:
             if name in self._scoped.table:
                 setattr(_builtins, name, self._scoped.table[name])
             else:
-                # Remove names that aren't in the scoped table.
-                if hasattr(_builtins, name):
-                    try:
-                        delattr(_builtins, name)
-                    except AttributeError:
-                        pass
+                with contextlib.suppress(AttributeError):
+                    delattr(_builtins, name)
 
     def __exit__(self, *exc: Any) -> None:
         if self._original_builtins is None:
@@ -160,17 +154,13 @@ class Sandbox:
         original = self._original_builtins
         for name in list(dir(_builtins)):
             if name not in original:
-                try:
+                with contextlib.suppress(AttributeError):
                     delattr(_builtins, name)
-                except AttributeError:
-                    pass
         # Restore every original name. Even if a name was removed
         # during the block, ``__import__`` is back in the table.
         for name, value in original.items():
-            try:
+            with contextlib.suppress(AttributeError):
                 setattr(_builtins, name, value)
-            except AttributeError:
-                pass
         self._original_builtins = None
 
 
