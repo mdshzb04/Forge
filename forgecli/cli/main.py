@@ -9,6 +9,7 @@ import typer
 from forgecli import __app_name__, __version__
 from forgecli.cli import (
     commands_build,
+    commands_commit,
     commands_config,
     commands_explain,
     commands_git,
@@ -43,6 +44,7 @@ app.add_typer(commands_graph.app, name="graph")
 app.add_typer(commands_optimizer.app, name="optimizer")
 app.add_typer(commands_plan.app, name="plan")
 app.add_typer(commands_build.app, name="build")
+app.add_typer(commands_commit.app, name="commit")
 app.add_typer(commands_review.app, name="review")
 app.add_typer(commands_git.app, name="git")
 app.add_typer(commands_history.app, name="history")
