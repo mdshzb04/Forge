@@ -45,6 +45,7 @@ entry-point group — no core changes required.
 
 - **Free-form top-level command** — `forge --prompt "..."` is the single entry point.
 - **Plugin-based architecture** with first-class extension points (entry-point plugins, provider plugins, custom commands).
+- **Fully cross-platform** — Windows 10/11 (PowerShell, Command Prompt, Windows Terminal), macOS (Intel + Apple Silicon), and Linux (Ubuntu, Fedora, Debian, Arch, Kali, openSUSE). OS detection, XDG-style config dirs, `pathlib` everywhere, `shutil.which()` for tool discovery, and a single shell adapter that never hardcodes POSIX-only commands. Install via `pip`, `uv tool`, Homebrew, Scoop, or Winget.
 - **Provider abstraction + router** — `forge model claude|openai|gemini|auto` picks a real provider behind a unified interface (OpenAI, Anthropic, Google Gemini). With `auto`, the router picks the cheapest compatible model based on a per-1k-token price table.
 - **Dependency injection** via a lightweight `Container` exposed through `AppContext`.
 - **Graphify-powered knowledge graph** — `forge graph build / query / explain` shells out to the [Graphify](https://graphifylabs.ai/) CLI behind a clean `RepositoryGraph` interface. No Graphify code is modified or vendored.
@@ -554,6 +555,88 @@ mypy forgecli
 ```
 
 Continuous integration should run all three.
+
+---
+
+## Cross-platform support
+
+ForgeCLI is built to run identically on Windows, macOS and Linux.
+The :mod:`forgecli.platform` package is the only place that may
+import :mod:`sys` / :mod:`platform` / :mod:`subprocess` directly;
+everything else goes through the platform layer.
+
+### Detection
+
+```python
+from forgecli.platform import (
+    current_platform, is_windows, is_macos, is_linux,
+    python_version, has_git, has_graphify, has_ponytail,
+)
+
+print(current_platform().os)        # OS.linux | OS.macos | OS.windows
+print(is_windows())                  # bool
+print(python_version())              # "3.12.3"
+print(has_git(), has_graphify())     # bool, bool
+```
+
+### Config and data directories
+
+ForgeCLI uses platform-appropriate locations for state, honoring
+environment variable overrides:
+
+* Linux: ``$XDG_DATA_HOME/forgecli`` (default
+  ``~/.local/share/forgecli``)
+* macOS: ``~/Library/Application Support/ForgeCLI``
+* Windows: ``%LOCALAPPDATA%\forgecli``
+
+Override with ``FORGECLI_DATA_DIR``, ``FORGECLI_CONFIG_DIR``,
+``FORGECLI_CACHE_DIR`` for tests and CI.
+
+### Install
+
+```bash
+# pip / uv
+pip install forgecli
+uv tool install forgecli
+
+# macOS / Linux
+brew install mdshzb04/tap/forgecli   # once a tap exists
+
+# Windows (Scoop)
+scoop bucket add mdshzb04 https://github.com/mdshzb04/scoop-bucket
+scoop install forgecli
+
+# Windows (Winget)
+winget install mdshzb04.ForgeCli
+```
+
+Packaging manifests live in :file:`packaging/`.
+
+### Self-check
+
+Run ``forge doctor`` to print a structured report of the host
+(OS, arch, Python version, all known external dependencies).
+Exit non-zero with ``--strict`` if any required dep is missing.
+
+```bash
+forge doctor --json | jq .
+forge doctor --strict   # exit 1 if git is missing
+```
+
+### Update check
+
+```bash
+forge --check-update     # queries PyPI once; result is cached for 24h
+```
+
+Set ``FORGECLI_CHECK_UPDATE=1`` to opt into startup checks;
+``FORGECLI_PYPI_URL`` to point at a staging index.
+
+### CI
+
+GitHub Actions matrix runs the full test suite on
+``ubuntu-latest``, ``macos-latest`` and ``windows-latest`` with
+Python 3.12 and 3.13. See :file:`.github/workflows/ci.yml`.
 
 ---
 
