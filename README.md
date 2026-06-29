@@ -104,6 +104,7 @@ Environment variables are documented in [`.env.example`](.env.example).
 | `forge optimizer preview`  | Show what would be prepended to a system message          |
 | `forge explain X`          | Top-level alias for `forge graph explain X`              |
 | `forge plan <goal>`        | Build a software plan (architecture, milestones, tasks, risks, prompts) |
+| `forge commit`             | Analyze the git diff, generate a semantic commit + changelog entry, optional push |
 | `forge build`              | Run the builder pipeline                                 |
 | `forge review`             | Review code changes                                      |
 | `forge git`                | Inspect / operate on the git repository                  |
@@ -266,6 +267,44 @@ no real provider has credentials, the router falls back to the
 `mock` provider and the CLI prints a warning. The selection persists
 to `data_dir/router.json` and is read on every subsequent CLI
 invocation.
+
+---
+
+## Semantic commits
+
+`forge commit` runs against the current git diff and produces a
+Conventional Commits-style message, a changelog entry, and an
+optional release-notes document. It is fully self-contained: it
+subprocesses `git` directly and never imports a Python git library.
+
+```bash
+# Inspect the proposed message + changelog draft; make no changes.
+forge commit --dry-run
+
+# Stage everything in the working tree, commit, update CHANGELOG.md.
+forge commit --all --yes --changelog
+
+# Override the auto-generated message and sign off.
+forge commit --all --yes -m "feat(graph): add Graphify integration" --signoff
+
+# Render release notes from the current Unreleased entries.
+forge commit release 1.2.0 --notes-path release-notes.md
+```
+
+What the analyzer infers:
+
+* **Kind** (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`,
+  `build`, `ci`, `style`) from the file kinds in the diff.
+* **Scope** from the top-level directory under the project source root
+  (e.g. `forgecli/graph/...` → scope `graph`).
+* **Summary** as `verb(scope): payload` — `add(graph): graph.py`.
+* **Breaking** when the diff contains a Conventional Commits footer
+  (`BREAKING CHANGE: …` on its own line) or a `feat!:`-style subject.
+
+The `--changelog` flag appends the entry to `CHANGELOG.md` under an
+"Unreleased" section. `forge commit release <version>` promotes those
+entries to a versioned section (`## [1.2.0] - 2024-05-12`) and writes
+the release notes to the path of your choice.
 
 ---
 
