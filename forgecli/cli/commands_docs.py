@@ -41,40 +41,15 @@ def docs_cmd(
 
 
 async def _run_docs(path: Path, output: Path | None, live: bool) -> None:
-    from forgecli.providers.base import Provider
+    from forgecli.cli.bootstrap import resolve_provider_and_decision
+    from forgecli.providers.mock import MockProvider
 
-    provider: Provider = MockProvider(MockProviderConfig())
-    if live:
-        from forgecli.providers.base import ProviderRegistry
-        from forgecli.providers.router_state import load_state
-
-        app_context = bootstrap_context(cwd=str(path))
-        state = load_state(app_context.paths.data_dir / "router.json")
-        registry: ProviderRegistry = app_context.container.resolve(ProviderRegistry)
-
-        chosen = state.choice or state.provider
-        if not chosen:
-            from forgecli.config.loader import ConfigLoader
-            try:
-                settings = ConfigLoader().load()
-                chosen = settings.providers.default
-            except Exception:
-                pass
-        if not chosen:
-            raise ValueError(
-                "No active provider configured. Please authenticate first (e.g. 'forge auth login'), "
-                "then set your active provider using 'forge provider use <provider>' and active model using 'forge model use <model>'."
-            )
-
-        if not registry.has(chosen):
-            raise ValueError(f"Unknown provider '{chosen}'.")
-        provider_cls = registry.get(chosen)
-        provider = provider_cls()  # type: ignore[call-arg]
+    provider, decision = resolve_provider_and_decision(live=live, cwd=path)
 
     plugin_registry = PluginRegistry()
     plugin_registry.register_classifier(HeuristicIntentClassifier())
     plugin_registry.register_workflow(DocsWorkflow())
-    orchestrator = Orchestrator(plugin_registry, provider=provider)
+    orchestrator = Orchestrator(plugin_registry, provider=provider, decision=decision)
 
     try:
         if isinstance(provider, MockProvider):

@@ -14,4 +14,4 @@ enabled = true
 intensity = "lite"
 
 [providers]
-allowed = ["openai"]
+allowed = ["mock"]

@@ -135,26 +135,10 @@ async def _run_build(
     paths: ProjectPaths = context.paths
     target = path.resolve()
 
-    router: ModelRouter = context.container.resolve(ModelRouter)
-    state = load_state(paths.data_dir / "router.json")
-    decision = router.select(state.choice)
+    from forgecli.cli.bootstrap import resolve_provider_and_decision
+    provider, decision = resolve_provider_and_decision(live=live, cwd=path)
     if not live:
         info("Offline mode: using the mock provider. Pass --live to use the real one.")
-        provider: Provider = MockProvider(MockProviderConfig())
-        decision = type(decision)(
-            provider_name=provider.name,
-            model=decision.model,
-            mode=decision.mode,
-            cost_in=0.0,
-            cost_out=0.0,
-        )
-    else:
-        registry: ProviderRegistry = context.container.resolve(ProviderRegistry)
-        try:
-            provider = registry.create(decision.provider_name, _config_for(decision.provider_name))
-        except Exception as exc:
-            error(f"Could not build provider: {exc}")
-            raise typer.Exit(code=1) from exc
     optimizer: PromptOptimizer | None = (
         None
         if no_ponytail

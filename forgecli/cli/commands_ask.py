@@ -41,63 +41,19 @@ def ask_cmd(
 
 
 async def _run_ask(question: str, path: Path, live: bool) -> None:
-    from forgecli.providers.base import Provider
-    from forgecli.providers.mock import MockProvider, MockProviderConfig
+    from forgecli.cli.bootstrap import resolve_provider_and_decision
+    from forgecli.providers.mock import MockProvider
 
-    provider: Provider = MockProvider(MockProviderConfig())
-    if live:
-        from forgecli.cli.bootstrap import bootstrap_context
-        from forgecli.providers.base import ProviderRegistry
-        from forgecli.providers.router_state import load_state
+    provider, decision = resolve_provider_and_decision(live=live, cwd=path)
 
-        app_context = bootstrap_context(cwd=str(path))
-        state = load_state(app_context.paths.data_dir / "router.json")
-        registry: ProviderRegistry = app_context.container.resolve(ProviderRegistry)
-
-        chosen = state.choice or state.provider
-        if not chosen:
-            from forgecli.config.loader import ConfigLoader
-            try:
-                settings = ConfigLoader().load()
-                chosen = settings.providers.default
-            except Exception:
-                pass
-
-        if not chosen or chosen == "mock":
-            error(
-                "No active provider configured.\n"
-                "Please configure a provider first:\n"
-                "  1. Authenticate using 'forge auth login'\n"
-                "  2. Select your active provider using 'forge provider use <provider>'\n"
-                "  3. Select your active model using 'forge model use <model>'"
-            )
-            raise typer.Exit(code=1)
-
-        if not registry.has(chosen):
-            error(f"Unknown provider '{chosen}'.")
-            raise typer.Exit(code=1)
-
-        provider_cls = registry.get(chosen)
-        provider = provider_cls()  # type: ignore[call-arg]
-
-    if isinstance(provider, MockProvider):
-        if live:
-            error(
-                "No active provider configured.\n"
-                "Please configure a provider first:\n"
-                "  1. Authenticate using 'forge auth login'\n"
-                "  2. Select your active provider using 'forge provider use <provider>'\n"
-                "  3. Select your active model using 'forge model use <model>'"
-            )
-            raise typer.Exit(code=1)
-        else:
-            from forgecli.cli.ui import info
-            info("Offline mode: using the mock provider. Pass --live to use the real one.")
+    if isinstance(provider, MockProvider) and not live:
+        from forgecli.cli.ui import info
+        info("Offline mode: using the mock provider. Pass --live to use the real one.")
 
     plugin_registry = PluginRegistry()
     plugin_registry.register_classifier(HeuristicIntentClassifier())
     plugin_registry.register_workflow(AskWorkflow())
-    orchestrator = Orchestrator(plugin_registry, provider=provider)
+    orchestrator = Orchestrator(plugin_registry, provider=provider, decision=decision)
 
     try:
         from forgecli.plugins import Intent

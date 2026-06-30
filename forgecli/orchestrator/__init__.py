@@ -298,11 +298,13 @@ class Orchestrator:
         registry: PluginRegistry,
         *,
         provider: Provider,
+        decision: Any | None = None,
         workflow_factory: Callable[[Intent], Workflow] | None = None,
         classifier: IntentClassifier | None = None,
     ) -> None:
         self._registry = registry
         self._provider = provider
+        self._decision = decision
         self._workflow_factory = workflow_factory or _default_workflow_factory
         self._classifier = classifier or HeuristicIntentClassifier()
         if self._classifier not in self._registry.classifiers:
@@ -338,6 +340,7 @@ class Orchestrator:
                 "optimizer": opt,
                 "graph": graph,
                 "intent": prediction.intent,
+                "decision": self._decision,
             }
 
             plugin_context = PluginContext(
@@ -428,7 +431,8 @@ class AskWorkflow(Workflow):
         from forgecli.build.summarize import summarize
 
         # Reuse the early stages of the build pipeline: graph -> opt -> llm.
-        build_context = BuildContext(prompt=context.prompt, root=Path.cwd())
+        decision = context.extras.get("build_extras", {}).get("decision")
+        build_context = BuildContext(prompt=context.prompt, root=Path.cwd(), decision=decision)
         build_context.extras.update(context.extras.get("build_extras", {}))
         pipeline = BuildPipeline(
             [
@@ -439,6 +443,13 @@ class AskWorkflow(Workflow):
             ]
         )
         result = await pipeline.run(build_context)
+        if not result.success:
+            err = "Pipeline stage failed"
+            for r in result.context.stages:
+                if r.error:
+                    err = r.error
+                    break
+            raise Exception(f"Stage '{result.failure_stage}' failed: {err}")
         answer = result.context.response.message.content if result.context.response else ""
         return {"summary": answer, "files_touched": [], "diff": ""}
 
@@ -491,7 +502,8 @@ class DocsWorkflow(Workflow):
             "3. Key modules and entry points."
         )
 
-        build_context = BuildContext(prompt=prompt, root=Path.cwd())
+        decision = context.extras.get("build_extras", {}).get("decision")
+        build_context = BuildContext(prompt=prompt, root=Path.cwd(), decision=decision)
         build_context.extras.update(context.extras.get("build_extras", {}))
 
         pipeline = BuildPipeline(
@@ -502,6 +514,13 @@ class DocsWorkflow(Workflow):
             ]
         )
         result = await pipeline.run(build_context)
+        if not result.success:
+            err = "Pipeline stage failed"
+            for r in result.context.stages:
+                if r.error:
+                    err = r.error
+                    break
+            raise Exception(f"Stage '{result.failure_stage}' failed: {err}")
         ai_docs = result.context.response.message.content if result.context.response else ""
 
         output_dir = root / "docs"
@@ -536,7 +555,8 @@ class ReviewWorkflow(Workflow):
             f"Summarize the findings and provide key quality improvement recommendations."
         )
 
-        build_context = BuildContext(prompt=prompt, root=Path.cwd())
+        decision = context.extras.get("build_extras", {}).get("decision")
+        build_context = BuildContext(prompt=prompt, root=Path.cwd(), decision=decision)
         build_context.extras.update(context.extras.get("build_extras", {}))
 
         pipeline = BuildPipeline(
@@ -547,6 +567,13 @@ class ReviewWorkflow(Workflow):
             ]
         )
         result = await pipeline.run(build_context)
+        if not result.success:
+            err = "Pipeline stage failed"
+            for r in result.context.stages:
+                if r.error:
+                    err = r.error
+                    break
+            raise Exception(f"Stage '{result.failure_stage}' failed: {err}")
         ai_summary = result.context.response.message.content if result.context.response else ""
 
         summary = (
@@ -574,7 +601,8 @@ class ExplainWorkflow(Workflow):
         from forgecli.build.summarize import summarize
 
         prompt = f"Explain the node, file, or symbol: {context.prompt}"
-        build_context = BuildContext(prompt=prompt, root=Path.cwd())
+        decision = context.extras.get("build_extras", {}).get("decision")
+        build_context = BuildContext(prompt=prompt, root=Path.cwd(), decision=decision)
         build_context.extras.update(context.extras.get("build_extras", {}))
 
         pipeline = BuildPipeline(
@@ -586,6 +614,13 @@ class ExplainWorkflow(Workflow):
             ]
         )
         result = await pipeline.run(build_context)
+        if not result.success:
+            err = "Pipeline stage failed"
+            for r in result.context.stages:
+                if r.error:
+                    err = r.error
+                    break
+            raise Exception(f"Stage '{result.failure_stage}' failed: {err}")
         explanation = result.context.response.message.content if result.context.response else ""
         return {"summary": explanation, "files_touched": [], "diff": ""}
 
@@ -656,6 +691,7 @@ def build_orchestrator(
     registry: PluginRegistry,
     *,
     provider: Provider,
+    decision: Any | None = None,
 ) -> Orchestrator:
     """Build a default :class:`Orchestrator` for the given registry + provider.
 
@@ -676,4 +712,4 @@ def build_orchestrator(
     for workflow in defaults:
         if workflow.name not in existing:
             registry.register_workflow(workflow)
-    return Orchestrator(registry, provider=provider)
+    return Orchestrator(registry, provider=provider, decision=decision)

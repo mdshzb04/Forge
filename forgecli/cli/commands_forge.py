@@ -91,35 +91,9 @@ app = typer.Typer(
 
 def _build_provider_for(*, live: bool, cwd: Path):
     """Build a :class:`Provider` for the current invocation."""
-    from forgecli.providers.mock import MockProvider, MockProviderConfig
-
-    if not live:
-        return MockProvider(MockProviderConfig())
-
-    from forgecli.providers.base import ProviderRegistry
-    from forgecli.providers.router_state import load_state
-
-    app_context = bootstrap_context(cwd=str(cwd))
-    state = load_state(app_context.paths.data_dir / "router.json")
-    chosen = state.choice or state.provider
-    if not chosen:
-        from forgecli.config.loader import ConfigLoader
-        try:
-            settings = ConfigLoader().load()
-            chosen = settings.providers.default
-        except Exception:
-            pass
-    if not chosen:
-        raise ValueError(
-            "No active provider configured. Please authenticate first (e.g. 'forge auth login'), "
-            "then set your active provider using 'forge provider use <provider>' and active model using 'forge model use <model>'."
-        )
-
-    registry = app_context.container.resolve(ProviderRegistry)
-    if not registry.has(chosen):
-        raise ValueError(f"Unknown provider '{chosen}'.")
-    provider_cls = registry.get(chosen)
-    return provider_cls()  # type: ignore[call-arg]
+    from forgecli.cli.bootstrap import resolve_provider_and_decision
+    provider, _ = resolve_provider_and_decision(live=live, cwd=cwd)
+    return provider
 
 
 def _build_orchestrator_for(
@@ -128,9 +102,10 @@ def _build_orchestrator_for(
     cwd: Path,
 ) -> Orchestrator:
     """Backwards-compatible shim that returns an :class:`Orchestrator`."""
-    provider = _build_provider_for(live=live, cwd=cwd)
+    from forgecli.cli.bootstrap import resolve_provider_and_decision
+    provider, decision = resolve_provider_and_decision(live=live, cwd=cwd)
     _register_default_workflows(provider)
-    return build_orchestrator(_REGISTRY, provider=provider)
+    return build_orchestrator(_REGISTRY, provider=provider, decision=decision)
 
 
 @app.callback(invoke_without_command=True)
@@ -201,9 +176,10 @@ async def run_forge(
     # When tests are disabled, pass a no-op test command so the
     # build workflow's test stage succeeds instantly.
     test_command = "true" if no_tests else None
-    provider = _build_provider_for(live=live, cwd=path)
+    from forgecli.cli.bootstrap import resolve_provider_and_decision
+    provider, decision = resolve_provider_and_decision(live=live, cwd=path)
     _register_default_workflows(provider, test_command=test_command)
-    orchestrator = Orchestrator(_REGISTRY, provider=provider)
+    orchestrator = Orchestrator(_REGISTRY, provider=provider, decision=decision)
     result = await orchestrator.run(text)
 
     if save_diff and result.diff:

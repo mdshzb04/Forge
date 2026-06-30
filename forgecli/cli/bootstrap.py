@@ -216,3 +216,60 @@ def _build_default_summarizer(container: Container) -> Summarizer:
 
     provider = MockProvider(MockProviderConfig())
     return Summarizer(provider=provider)
+
+
+def resolve_provider_and_decision(
+    *,
+    live: bool,
+    cwd: Path | str,
+) -> tuple[Any, Any]:
+    """Unified provider and route decision resolver for all AI commands.
+
+    If live is True and no provider has credentials (which resolves to mock),
+    it displays the error requesting configuration and exits with code 1.
+    """
+    from forgecli.providers.mock import MockProvider, MockProviderConfig
+    from forgecli.providers.router import ModelRouter, RouteDecision, SelectionMode, _provider_has_credentials
+    from forgecli.providers.router_state import load_state as load_router_state
+    from forgecli.providers.base import ProviderRegistry
+    import typer
+
+    if isinstance(cwd, str):
+        cwd = Path(cwd)
+
+    app_context = bootstrap_context(cwd=cwd)
+    state = load_router_state(app_context.paths.data_dir / "router.json")
+    router = app_context.container.resolve(ModelRouter)
+    decision = router.select(state.choice)
+
+    if not live:
+        provider = MockProvider(MockProviderConfig())
+        decision = RouteDecision(
+            provider_name="mock",
+            model=decision.model,
+            mode=SelectionMode.FALLBACK,
+        )
+        return provider, decision
+
+    if decision.provider_name == "mock" or not _provider_has_credentials(decision.provider_name):
+        from forgecli.cli.ui import error
+        error(
+            "No AI provider configured.\n\n"
+            "Run:\n"
+            "  forge auth login\n"
+            "  forge provider use <provider>\n"
+            "  forge model use <model>\n\n"
+            "Then retry."
+        )
+        raise typer.Exit(code=1)
+
+    registry = app_context.container.resolve(ProviderRegistry)
+    if not registry.has(decision.provider_name):
+        from forgecli.cli.ui import error
+        error(f"Unknown provider '{decision.provider_name}'.")
+        raise typer.Exit(code=1)
+
+    provider_cls = registry.get(decision.provider_name)
+    provider = provider_cls()  # type: ignore[call-arg]
+    return provider, decision
+
