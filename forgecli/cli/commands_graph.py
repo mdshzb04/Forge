@@ -150,12 +150,12 @@ def query_cmd(
             get_console().print(await backend.install_hint())
             raise typer.Exit(code=1)
         result = await backend.query(question, budget=budget)
-        
+
         # Count nodes and edges in the response
         lines = result.answer.splitlines()
         node_count = sum(1 for line in lines if line.strip().startswith("NODE "))
         edge_count = sum(1 for line in lines if line.strip().startswith("EDGE "))
-        
+
         get_console().print(f"[bold cyan]Graph traversal results for query '{question}':[/bold cyan]")
         get_console().print(f"[muted]Traversed {node_count} nodes and {edge_count} edges.[/muted]\n")
         get_console().print(result.answer)

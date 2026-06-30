@@ -436,7 +436,7 @@ def test_render_findings_capping_and_grouping() -> None:
     group_default = _render_findings(findings, full=False)
     header_panel = group_default.renderables[0]
     assert "Top 10" in str(header_panel.renderable)
-    
+
     group_full = _render_findings(findings, full=True)
     header_panel_full = group_full.renderables[0]
     assert "Findings" in str(header_panel_full.renderable)

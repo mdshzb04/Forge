@@ -38,9 +38,12 @@ def bootstrap_context(
     except Exception:
         click_ctx = None
 
-    if click_ctx is not None and click_ctx.obj is not None:
-        if isinstance(click_ctx.obj, AppContext):
-            return click_ctx.obj
+    if (
+        click_ctx is not None
+        and click_ctx.obj is not None
+        and isinstance(click_ctx.obj, AppContext)
+    ):
+        return click_ctx.obj
 
     paths = ProjectPaths.from_env(cwd=cwd).ensure()
 
