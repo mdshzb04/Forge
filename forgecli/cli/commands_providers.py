@@ -16,10 +16,16 @@ app = typer.Typer(
 PROVIDERS_DISPLAY = {
     "openai": "OpenAI",
     "anthropic": "Anthropic",
-    "openrouter": "OpenRouter",
     "google": "Google Gemini",
+    "openrouter": "OpenRouter",
     "groq": "Groq",
     "mistral": "Mistral",
+    "minimax": "MiniMax",
+    "xai": "xAI (Grok)",
+    "together": "Together AI",
+    "fireworks": "Fireworks AI",
+    "cohere": "Cohere",
+    "nvidia": "NVIDIA NIM",
     "ollama": "Ollama",
     "lmstudio": "LM Studio",
     "vllm": "vLLM",
@@ -35,9 +41,11 @@ def list_cmd() -> None:
 
     try:
         settings = ConfigLoader().load()
-        default_p = settings.providers.default.lower().strip()
+        default_p = settings.providers.default
+        if default_p:
+            default_p = default_p.lower().strip()
     except Exception:
-        default_p = "mock"
+        default_p = None
 
     auth_list = list_authenticated_providers()
 
@@ -45,7 +53,6 @@ def list_cmd() -> None:
         is_auth = p_id in auth_list
         # Local providers can be active/used even without auth (e.g. no key required)
         if p_id in ("ollama", "lmstudio", "vllm"):
-            # Check if active in env/default or check if authenticated
             is_auth = is_auth or (default_p == p_id)
 
         status_char = "✓" if is_auth else "✗"
@@ -93,8 +100,13 @@ def current() -> None:
         default_p = settings.providers.default
         default_m = settings.providers.default_model
     except Exception:
-        default_p = "mock"
-        default_m = "auto"
+        default_p = None
+        default_m = None
+
+    if not default_p:
+        console.print("[bold]No active provider is configured.[/bold]")
+        console.print("Set one using 'forge provider use <provider>'.")
+        return
 
     router = ModelRouter(registry=context.container.resolve(ProviderRegistry))
     if not default_m or default_m == "auto":
@@ -104,7 +116,7 @@ def current() -> None:
 
     console.print("[bold]Current Provider[/bold]\n")
     console.print(f"[bold cyan]{display_name}[/bold cyan]")
-    console.print(f"Model: {default_m}")
+    console.print(f"Model: {default_m or 'Not configured'}")
 
 
 __all__ = ["app"]

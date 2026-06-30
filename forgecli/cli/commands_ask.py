@@ -55,23 +55,25 @@ async def _run_ask(question: str, path: Path, live: bool) -> None:
         app_context = bootstrap_context(cwd=str(path))
         state = load_state(app_context.paths.data_dir / "router.json")
         registry: ProviderRegistry = app_context.container.resolve(ProviderRegistry)
-        from forgecli.providers.anthropic import AnthropicConfig, AnthropicProvider
-        from forgecli.providers.google import GeminiConfig, GeminiProvider
-        from forgecli.providers.openai import OpenAIConfig, OpenAIProvider
 
-        config = {
-            "openai": OpenAIConfig(),
-            "anthropic": AnthropicConfig(),
-            "google": GeminiConfig(),
-        }.get(state.choice)
-        if config is not None:
-            provider = (
-                OpenAIProvider(config)
-                if state.choice == "openai"
-                else AnthropicProvider(config)
-                if state.choice == "anthropic"
-                else GeminiProvider(config)
+        chosen = state.choice or state.provider
+        if not chosen:
+            from forgecli.config.loader import ConfigLoader
+            try:
+                settings = ConfigLoader().load()
+                chosen = settings.providers.default
+            except Exception:
+                pass
+        if not chosen:
+            raise ValueError(
+                "No active provider configured. Please authenticate first (e.g. 'forge auth login'), "
+                "then set your active provider using 'forge provider use <provider>' and active model using 'forge model use <model>'."
             )
+
+        if not registry.has(chosen):
+            raise ValueError(f"Unknown provider '{chosen}'.")
+        provider_cls = registry.get(chosen)
+        provider = provider_cls()
 
     registry = PluginRegistry()
     registry.register_classifier(HeuristicIntentClassifier())

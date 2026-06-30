@@ -9,18 +9,30 @@ from forgecli.providers.base import ChatMessage, ChatRequest, Role
 from forgecli.providers.google import GeminiConfig, GeminiProvider
 from forgecli.providers.openai import OpenAIConfig, OpenAIProvider
 from forgecli.providers.openai_compatible import (
+    CohereConfig,
+    CohereProvider,
+    FireworksConfig,
+    FireworksProvider,
     GroqConfig,
     GroqProvider,
     LMStudioConfig,
     LMStudioProvider,
+    MiniMaxConfig,
+    MiniMaxProvider,
     MistralConfig,
     MistralProvider,
+    NvidiaConfig,
+    NvidiaProvider,
     OllamaConfig,
     OllamaProvider,
     OpenRouterConfig,
     OpenRouterProvider,
+    TogetherConfig,
+    TogetherProvider,
     VllmConfig,
     VllmProvider,
+    XaiConfig,
+    XaiProvider,
 )
 
 
@@ -93,6 +105,36 @@ async def verify_provider_key(provider_name: str, api_key: str) -> bool:
 
             elif provider_name == "vllm":
                 p = VllmProvider(config=VllmConfig(), api_key=api_key, client=client)
+                await p.list_models()
+                return True
+
+            elif provider_name == "minimax":
+                p = MiniMaxProvider(config=MiniMaxConfig(), api_key=api_key, client=client)
+                await p.list_models()
+                return True
+
+            elif provider_name == "xai":
+                p = XaiProvider(config=XaiConfig(), api_key=api_key, client=client)
+                await p.list_models()
+                return True
+
+            elif provider_name == "together":
+                p = TogetherProvider(config=TogetherConfig(), api_key=api_key, client=client)
+                await p.list_models()
+                return True
+
+            elif provider_name == "fireworks":
+                p = FireworksProvider(config=FireworksConfig(), api_key=api_key, client=client)
+                await p.list_models()
+                return True
+
+            elif provider_name == "cohere":
+                p = CohereProvider(config=CohereConfig(), api_key=api_key, client=client)
+                await p.list_models()
+                return True
+
+            elif provider_name == "nvidia":
+                p = NvidiaProvider(config=NvidiaConfig(), api_key=api_key, client=client)
                 await p.list_models()
                 return True
 

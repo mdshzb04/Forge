@@ -191,14 +191,45 @@ class GeminiProvider(HTTPChatProvider):
             vectors=[values],
         )
 
+    async def list_models(self) -> list[ModelInfo]:
+        try:
+            url = f"{self._base_url}/models?key={self._api_key or ''}"
+            response = await self._client.get(url, timeout=5.0)
+            if response.status_code == 200:
+                data = response.json()
+                models_list = data.get("models", [])
+                if models_list:
+                    out = []
+                    for m in models_list:
+                        m_name = m.get("name", "")
+                        if m_name.startswith("models/"):
+                            m_id = m_name.replace("models/", "")
+                            out.append(
+                                ModelInfo(
+                                    id=m_id,
+                                    name=m.get("displayName", m_id),
+                                    context_window=m.get("inputTokenLimit", 1_000_000),
+                                    supports_tools=True,
+                                    supports_vision=True
+                                )
+                            )
+                    if out:
+                        return out
+        except Exception:
+            pass
+        return self._known_models()
+
     def _known_models(self) -> list[ModelInfo]:
+        from forgecli.core.models import MODEL_CATALOG
         return [
-            ModelInfo(id="gemini-2.5-pro", context_window=2_000_000, supports_tools=True, supports_vision=True),
-            ModelInfo(id="gemini-2.5-flash", context_window=2_000_000, supports_tools=True, supports_vision=True),
-            ModelInfo(id="gemini-2.5-flash-lite", context_window=1_000_000, supports_tools=True, supports_vision=True),
-            ModelInfo(id="gemini-1.5-pro", context_window=2_000_000, supports_tools=True, supports_vision=True),
-            ModelInfo(id="gemini-1.5-flash", context_window=1_000_000, supports_tools=True, supports_vision=True),
-            ModelInfo(id="gemini-2.0-flash-exp", context_window=1_000_000, supports_tools=True, supports_vision=True),
+            ModelInfo(
+                id=m.id,
+                name=m.display_name,
+                context_window=2_000_000 if "pro" in m.id else 1_000_000,
+                supports_tools=True,
+                supports_vision=True
+            )
+            for m in MODEL_CATALOG if m.provider == "google"
         ]
 
 

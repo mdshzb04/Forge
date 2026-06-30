@@ -125,13 +125,10 @@ Environment variables are documented in [`.env.example`](.env.example).
 | `forge init`               | Initialize a ForgeCLI project                            |
 | `forge config`             | Show / validate configuration                            |
 | `forge providers list`     | List registered AI providers                             |
-| `forge model status`       | Show current selection, costs, and credentials           |
-| `forge model list`         | List all registered providers and their defaults         |
-| `forge model preview`      | Print the routing decision the current selection would make |
-| `forge model auto`         | Auto-select the cheapest provider with creds             |
-| `forge model openai`       | Use OpenAI as the active provider                        |
-| `forge model anthropic`    | Use Anthropic Claude as the active provider              |
-| `forge model gemini`       | Use Google Gemini as the active provider                 |
+| `forge model list`         | List all registered providers, configuration status, and models grouped by tier |
+| `forge model use <model>`  | Set the default model and update its provider            |
+| `forge model current`      | Print the currently active model                        |
+| `forge model search <kw>`  | Search for models across all providers by keyword       |
 | `forge index`              | Build the in-memory code graph (lightweight)             |
 | `forge graph build`        | Build the Graphify knowledge graph for a project         |
 | `forge graph status`       | Show whether Graphify is installed and graph.json exists |
@@ -297,15 +294,18 @@ implemented in `forgecli.providers.openai`, `.anthropic`, and `.google`
 and are all `httpx`-based async clients.
 
 ```bash
-# Pick a provider for the current project
-forge model claude                                # -> anthropic / claude-3-5-haiku-latest
-forge model openai --model gpt-4o                 # explicit model override
-forge model gemini --model gemini-1.5-pro
-forge model auto                                  # cheapest with creds
-
-# Inspect the active selection and cost model
-forge model status
+# List all registered providers, configuration status, and tiered models
 forge model list
+
+# Set the default model (automatically updates its provider)
+forge model use gpt-5.5
+forge model use claude-sonnet-4.6
+
+# Search for models across all providers
+forge model search deepseek
+
+# Inspect the active selection
+forge model current
 ```
 
 Environment variables drive credentials:

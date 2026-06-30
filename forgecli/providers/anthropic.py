@@ -143,13 +143,16 @@ class AnthropicProvider(HTTPChatProvider):
         return ""
 
     def _known_models(self) -> list[ModelInfo]:
+        from forgecli.core.models import MODEL_CATALOG
         return [
-            ModelInfo(id="claude-opus-4.1", context_window=200_000, supports_tools=True, supports_vision=True),
-            ModelInfo(id="claude-sonnet-4.5", context_window=200_000, supports_tools=True, supports_vision=True),
-            ModelInfo(id="claude-haiku-4.5", context_window=200_000, supports_tools=True),
-            ModelInfo(id="claude-3-5-sonnet-latest", context_window=200_000, supports_tools=True, supports_vision=True),
-            ModelInfo(id="claude-3-5-haiku-latest", context_window=200_000, supports_tools=True),
-            ModelInfo(id="claude-3-opus-latest", context_window=200_000, supports_tools=True, supports_vision=True),
+            ModelInfo(
+                id=m.id,
+                name=m.display_name,
+                context_window=200_000,
+                supports_tools=True,
+                supports_vision="haiku" not in m.id
+            )
+            for m in MODEL_CATALOG if m.provider == "anthropic"
         ]
 
 

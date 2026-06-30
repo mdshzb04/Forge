@@ -19,7 +19,7 @@ from forgecli.providers.router import ModelCapabilities, RouteDecision, Selectio
 class RouterState:
     """The user-chosen provider/model selection."""
 
-    choice: str = "auto"
+    choice: str | None = None
     model: str | None = None
     provider: str | None = None
 
@@ -38,7 +38,9 @@ class RouterState:
         return state
 
     def to_extras(self) -> dict[str, str]:
-        out: dict[str, str] = {"router.choice": self.choice}
+        out: dict[str, str] = {}
+        if self.choice:
+            out["router.choice"] = self.choice
         if self.model:
             out["router.model"] = self.model
         if self.provider:

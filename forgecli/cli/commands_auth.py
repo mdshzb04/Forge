@@ -32,6 +32,12 @@ def login(
         ("openrouter", "OpenRouter"),
         ("groq", "Groq"),
         ("mistral", "Mistral"),
+        ("minimax", "MiniMax"),
+        ("xai", "xAI (Grok)"),
+        ("together", "Together AI"),
+        ("fireworks", "Fireworks AI"),
+        ("cohere", "Cohere"),
+        ("nvidia", "NVIDIA NIM"),
         ("ollama", "Ollama (Local)"),
         ("lmstudio", "LM Studio (Local)"),
         ("vllm", "vLLM (Local)"),
@@ -45,7 +51,7 @@ def login(
         console.print()
 
         while True:
-            selection = typer.prompt("Select a provider (1-9)")
+            selection = typer.prompt("Select a provider (1-15)")
             try:
                 sel_idx = int(selection) - 1
                 if 0 <= sel_idx < len(providers_list):
@@ -58,7 +64,7 @@ def login(
             if matched:
                 provider = matched[0]
                 break
-            console.print("[red]Invalid selection. Please choose a number from 1 to 9.[/red]")
+            console.print("[red]Invalid selection. Please choose a number from 1 to 15.[/red]")
     else:
         provider = provider.lower().strip()
         matched = [p[0] for p in providers_list if p[0] == provider]
@@ -98,7 +104,6 @@ def login(
     # Step 3: Verify
     console.print(f"\n[bold cyan]Step 3 — Verify Connection to {provider.capitalize()}[/bold cyan]")
 
-    from forgecli.config.writer import update_config
     from forgecli.core.credentials import set_api_key
     from forgecli.core.verification import verify_provider_key
 
@@ -109,12 +114,9 @@ def login(
         is_keyring = set_api_key(provider, key)
         storage_type = "OS keychain" if is_keyring else "encrypted credentials file"
 
-        # Save provider as default in forgecli.toml
-        update_config(default_provider=provider)
-
+        # Neither provider nor model should be automatically selected during authentication.
         console.print("\n[bold green]✓ Connection successful[/bold green]")
         console.print(f"[bold green]✓ API key saved securely[/bold green] ({storage_type})")
-        console.print(f"[bold green]✓ Default provider:[/bold green] {provider.capitalize()}")
     else:
         console.print("\n[bold red]✗ Connection failed[/bold red]")
         console.print("[red]Verification failed. Please check your API key and network connection.[/red]")
@@ -151,16 +153,22 @@ def status_cmd() -> None:
         default_p = settings.providers.default
         default_m = settings.providers.default_model
     except Exception:
-        default_p = "mock"
-        default_m = "auto"
+        default_p = None
+        default_m = None
 
     auth_list = list_authenticated_providers()
 
     console.print("[bold]ForgeCLI Authentication Status[/bold]")
-    console.print(f"Default Provider: [bold cyan]{default_p}[/bold cyan]")
-    console.print(f"Default Model:    [bold cyan]{default_m}[/bold cyan]")
+    console.print(f"Default Provider: [bold cyan]{default_p or 'Not configured'}[/bold cyan]")
+    console.print(f"Default Model:    [bold cyan]{default_m or 'Not configured'}[/bold cyan]")
     console.print("\n[bold]Authenticated Credentials:[/bold]")
-    for p in ["openai", "anthropic", "google", "openrouter", "groq", "mistral", "ollama", "lmstudio", "vllm"]:
+
+    all_providers = [
+        "openai", "anthropic", "google", "openrouter", "groq", "mistral",
+        "minimax", "xai", "together", "fireworks", "cohere", "nvidia",
+        "ollama", "lmstudio", "vllm"
+    ]
+    for p in all_providers:
         status = "✓ Authenticated" if p in auth_list else "✗ Unauthenticated"
         color = "green" if p in auth_list else "red"
         console.print(f"  [{color}]{status:<15}[/{color}] {p.capitalize()}")

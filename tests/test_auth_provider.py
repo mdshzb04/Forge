@@ -215,6 +215,13 @@ def test_provider_use_gemini_maps_to_google(monkeypatch, tmp_path: Path) -> None
 
 def test_provider_current(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.chdir(tmp_path)
+    from forgecli.config.settings import ForgeSettings
+    mock_settings = ForgeSettings()
+    mock_settings.providers.default = "mock"
+    monkeypatch.setattr(
+        "forgecli.config.loader.ConfigLoader.load",
+        lambda self: mock_settings,
+    )
     runner = CliRunner()
     result = runner.invoke(app, ["provider", "current"])
     assert result.exit_code == 0

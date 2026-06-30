@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import typer
 
 from forgecli.cli.bootstrap import bootstrap_context
 from forgecli.cli.ui import get_console
+from forgecli.core.credentials import list_authenticated_providers
+from forgecli.core.models import MODEL_CATALOG, get_display_name, get_model_def
 from forgecli.providers.base import ProviderRegistry
 
 app = typer.Typer(
@@ -16,97 +16,24 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
-MODEL_DISPLAY_NAMES = {
-    # OpenAI
-    "gpt-5": "GPT-5",
-    "gpt-5-mini": "GPT-5 Mini",
-    "gpt-4.1": "GPT-4.1",
-    "gpt-4.1-mini": "GPT-4.1 Mini",
-    "gpt-4o": "GPT-4o",
-    "gpt-4o-mini": "GPT-4o Mini",
-    "gpt-4-turbo": "GPT-4 Turbo",
-    "o1-preview": "o1 Preview",
-    "o1-mini": "o1 Mini",
-    # Anthropic
-    "claude-opus-4.1": "Claude Opus 4.1",
-    "claude-sonnet-4.5": "Claude Sonnet 4.5",
-    "claude-haiku-4.5": "Claude Haiku 4.5",
-    "claude-3-5-sonnet-latest": "Claude 3.5 Sonnet",
-    "claude-3-5-haiku-latest": "Claude 3.5 Haiku",
-    "claude-3-opus-latest": "Claude 3 Opus",
-    # Google
-    "gemini-2.5-pro": "Gemini 2.5 Pro",
-    "gemini-2.5-flash": "Gemini 2.5 Flash",
-    "gemini-2.5-flash-lite": "Gemini 2.5 Flash Lite",
-    "gemini-1.5-pro": "Gemini 1.5 Pro",
-    "gemini-1.5-flash": "Gemini 1.5 Flash",
-    "gemini-2.0-flash-exp": "Gemini 2.0 Flash Exp",
-    # OpenRouter
-    "glm-5.2": "GLM 5.2",
-    "deepseek-v3": "DeepSeek V3",
-    "deepseek-r1": "DeepSeek R1",
-    "qwen3-coder": "Qwen3 Coder",
-    "qwen3-32b": "Qwen3 32B",
-    "kimi-k2": "Kimi K2",
-    "llama-4-maverick": "Llama 4 Maverick",
-    "llama-3.3-70b": "Llama 3.3 70B",
-    "gemma-3": "Gemma 3",
-    "devstral": "Devstral",
-    "codestral": "Codestral",
-    # Groq
-    "llama-4-scout": "Llama 4 Scout",
-    # Mistral
-    "mistral-large": "Mistral Large",
-    "magistral": "Magistral",
-    "mistral-small": "Mistral Small",
-    # Local
-    "llama3": "Llama 3",
-    "local-model": "Local Model",
-}
-
-STATIC_GROUPS = {
-    "OpenAI": [
-        "gpt-5",
-        "gpt-5-mini",
-        "gpt-4.1",
-        "gpt-4.1-mini",
-        "gpt-4o",
-        "gpt-4o-mini",
-        "gpt-4-turbo",
-        "o1-preview",
-        "o1-mini",
-    ],
-    "Anthropic": [
-        "claude-opus-4.1",
-        "claude-sonnet-4.5",
-        "claude-haiku-4.5",
-        "claude-3-5-sonnet-latest",
-        "claude-3-5-haiku-latest",
-        "claude-3-opus-latest",
-    ],
-    "Google": [
-        "gemini-2.5-pro",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-1.5-pro",
-        "gemini-1.5-flash",
-        "gemini-2.0-flash-exp",
-    ],
-    "OpenRouter": [
-        "glm-5.2",
-        "deepseek-v3",
-        "deepseek-r1",
-        "qwen3-coder",
-        "qwen3-32b",
-        "kimi-k2",
-        "llama-4-maverick",
-        "llama-3.3-70b",
-        "gemma-3",
-        "devstral",
-        "codestral",
-    ],
-    "Groq": ["llama-4-scout", "deepseek-r1", "qwen3-32b"],
-    "Mistral": ["mistral-large", "magistral", "mistral-small"],
+# Friendly mapping for printing provider names
+PROVIDER_DISPLAY_NAMES = {
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "google": "Google Gemini",
+    "openrouter": "OpenRouter",
+    "groq": "Groq",
+    "mistral": "Mistral",
+    "minimax": "MiniMax",
+    "xai": "xAI (Grok)",
+    "together": "Together AI",
+    "fireworks": "Fireworks AI",
+    "cohere": "Cohere",
+    "nvidia": "NVIDIA NIM",
+    "ollama": "Ollama",
+    "lmstudio": "LM Studio",
+    "vllm": "vLLM",
+    "mock": "Mock",
 }
 
 
@@ -115,45 +42,86 @@ def list_cmd() -> None:
     """List every registered provider and its supported models."""
     console = get_console()
 
-    # Print static groups
-    for group_name, models in STATIC_GROUPS.items():
-        console.print(f"\n[bold]{group_name}[/bold]")
-        console.print("-" * 40)
-        for m in models:
-            disp = MODEL_DISPLAY_NAMES.get(m, m)
-            console.print(f"  {disp}")
+    from forgecli.config.loader import ConfigLoader
 
-    # Query local/dynamic models
-    console.print("\n[bold]Local Providers[/bold]")
-    console.print("-" * 40)
+    bootstrap_context()
 
-    from forgecli.providers.openai_compatible import (
-        LMStudioProvider,
-        OllamaProvider,
-        VllmProvider,
-    )
+    try:
+        settings = ConfigLoader().load()
+        default_p = settings.providers.default
+        default_m = settings.providers.default_model
+    except Exception:
+        default_p = None
+        default_m = None
 
-    locals_map = {
-        "Ollama": (OllamaProvider, "ollama"),
-        "LM Studio": (LMStudioProvider, "lmstudio"),
-        "vLLM": (VllmProvider, "vllm"),
-    }
+    if default_p:
+        active_p_disp = PROVIDER_DISPLAY_NAMES.get(default_p, default_p.capitalize())
+    else:
+        active_p_disp = "Not configured"
 
-    for name, (cls, _) in locals_map.items():
-        console.print(f"\n  [bold]{name}[/bold]")
-        try:
-            p_inst = cls()
-            dynamic_models = asyncio.run(p_inst.list_models())
-            if dynamic_models:
-                for dm in dynamic_models:
-                    console.print(f"    {dm.id}")
-            else:
-                for sm in p_inst._known_models():
-                    console.print(f"    {sm.id}")
-        except Exception:
-            p_inst = cls()
-            for sm in p_inst._known_models():
-                console.print(f"    {sm.id}")
+    active_m_disp = get_display_name(default_m) if default_m else "Not configured"
+
+    console.print(f"[bold]Default Provider:[/bold] {active_p_disp}")
+    console.print(f"[bold]Default Model:[/bold]    {active_m_disp}\n")
+
+    auth_list = list_authenticated_providers()
+
+    # Providers order
+    providers_order = [
+        "openai",
+        "anthropic",
+        "google",
+        "openrouter",
+        "groq",
+        "mistral",
+        "minimax",
+        "xai",
+        "together",
+        "fireworks",
+        "cohere",
+        "nvidia",
+        "ollama",
+        "lmstudio",
+        "vllm",
+    ]
+
+    for p_id in providers_order:
+        p_name = PROVIDER_DISPLAY_NAMES.get(p_id, p_id.capitalize())
+        is_default = (p_id == default_p)
+        is_configured = (p_id in auth_list) or (p_id in ["ollama", "lmstudio", "vllm"])
+
+        status_char = "✓" if is_configured else "✗"
+        color = "green" if is_configured else "red"
+        default_suffix = " (Default)" if is_default else ""
+
+        console.print(f"[{color}]{status_char}[/{color}] [bold]{p_name}[/bold]{default_suffix}")
+
+        p_models = [m for m in MODEL_CATALOG if m.provider == p_id]
+
+        latest_group = [m for m in p_models if m.tier == "latest"]
+        rec_group = [m for m in p_models if m.tier == "recommended"]
+        normal_group = [m for m in p_models if m.tier == "normal"]
+        legacy_group = [m for m in p_models if m.tier == "legacy"]
+        deprecated_group = [m for m in p_models if m.tier == "deprecated"]
+
+        for m in latest_group:
+            console.print(f"  ★ {m.display_name}")
+        for m in rec_group:
+            console.print(f"  ✓ {m.display_name}")
+        for m in normal_group:
+            console.print(f"  {m.display_name}")
+
+        if legacy_group:
+            console.print("  Legacy")
+            for m in legacy_group:
+                console.print(f"    {m.display_name}")
+
+        if deprecated_group:
+            console.print("  Deprecated")
+            for m in deprecated_group:
+                console.print(f"    {m.display_name}")
+
+        console.print("")
 
 
 @app.command("use")
@@ -164,36 +132,29 @@ def use(
     console = get_console()
     model_lower = model.lower().strip()
 
-    found_provider = None
-    display_model = MODEL_DISPLAY_NAMES.get(model_lower, model)
+    found_m = get_model_def(model_lower)
+    if not found_m:
+        for m in MODEL_CATALOG:
+            if m.display_name.lower() == model_lower or m.id.lower() == model_lower:
+                found_m = m
+                break
 
-    for provider, models in STATIC_GROUPS.items():
-        if model_lower in models or any(m.lower() == model_lower for m in models):
-            found_provider = provider.lower()
-            for m in models:
-                if m.lower() == model_lower:
-                    model_lower = m
-                    display_model = MODEL_DISPLAY_NAMES.get(m, m)
-                    break
-            break
-
-    if not found_provider:
-        if model_lower == "llama3":
-            found_provider = "ollama"
-        elif model_lower == "local-model":
-            found_provider = "lmstudio"
-        else:
-            from forgecli.config.loader import ConfigLoader
-
-            try:
-                settings = ConfigLoader().load()
-                found_provider = settings.providers.default
-            except Exception:
-                found_provider = "mock"
+    if found_m:
+        found_provider = found_m.provider
+        model_id = found_m.id
+        display_model = found_m.display_name
+    else:
+        model_id = model_lower
+        display_model = model
+        from forgecli.config.loader import ConfigLoader
+        try:
+            settings = ConfigLoader().load()
+            found_provider = settings.providers.default
+        except Exception:
+            found_provider = "mock"
 
     from forgecli.config.writer import update_config
-
-    update_config(default_provider=found_provider, default_model=model_lower)
+    update_config(default_provider=found_provider, default_model=model_id)
     console.print(f"[bold green]✓[/bold green] Default model changed to [bold]{display_model}[/bold]")
 
 
@@ -211,15 +172,22 @@ def current() -> None:
         default_p = settings.providers.default
         default_m = settings.providers.default_model
     except Exception:
-        default_p = "mock"
-        default_m = "auto"
+        default_p = None
+        default_m = None
 
-    router = ModelRouter(registry=context.container.resolve(ProviderRegistry))
     if not default_m or default_m == "auto":
-        default_m = router.default_model_for(default_p)
+        if default_p:
+            router = ModelRouter(registry=context.container.resolve(ProviderRegistry))
+            default_m = router.default_model_for(default_p)
+        else:
+            default_m = None
 
-    display_model = MODEL_DISPLAY_NAMES.get(default_m.lower(), default_m)
-    console.print(f"Current Model: [bold cyan]{display_model}[/bold cyan] ({default_p.capitalize()})")
+    if default_m:
+        display_model = get_display_name(default_m)
+        p_disp = PROVIDER_DISPLAY_NAMES.get(default_p, default_p.capitalize()) if default_p else "Unknown"
+        console.print(f"Current Model: [bold cyan]{display_model}[/bold cyan] ({p_disp})")
+    else:
+        console.print("Current Model: [bold cyan]Not configured[/bold cyan]")
 
 
 @app.command("search")
@@ -233,14 +201,14 @@ def search(
     console.print(f"[bold]Search results for '{keyword}':[/bold]\n")
     matches = 0
 
-    for provider, models in STATIC_GROUPS.items():
-        for m in models:
-            display_name = MODEL_DISPLAY_NAMES.get(m, m)
-            if keyword in m.lower() or keyword in display_name.lower():
-                console.print(
-                    f"  • [cyan]{display_name}[/cyan] ({m}) - Provider: [bold]{provider}[/bold]"
-                )
-                matches += 1
+    for m in MODEL_CATALOG:
+        if keyword in m.id.lower() or keyword in m.display_name.lower():
+            p_name = PROVIDER_DISPLAY_NAMES.get(m.provider, m.provider.capitalize())
+            tier_suffix = f" [{m.tier}]" if m.tier != "normal" else ""
+            console.print(
+                f"  • [cyan]{m.display_name}[/cyan] ({m.id}){tier_suffix} - Provider: [bold]{p_name}[/bold]"
+            )
+            matches += 1
 
     if matches == 0:
         console.print("No matching models found.")
@@ -256,7 +224,6 @@ def claude_cmd(
     model: str | None = typer.Option(None, "--model", "-m")
 ) -> None:
     from forgecli.config.writer import update_config
-
     update_config(default_provider="anthropic", default_model=model or "auto")
     get_console().print("[green]✓ Switched default provider to Anthropic[/green]")
 
@@ -266,7 +233,6 @@ def openai_cmd(
     model: str | None = typer.Option(None, "--model", "-m")
 ) -> None:
     from forgecli.config.writer import update_config
-
     update_config(default_provider="openai", default_model=model or "auto")
     get_console().print("[green]✓ Switched default provider to OpenAI[/green]")
 
@@ -276,7 +242,6 @@ def gemini_cmd(
     model: str | None = typer.Option(None, "--model", "-m")
 ) -> None:
     from forgecli.config.writer import update_config
-
     update_config(default_provider="google", default_model=model or "auto")
     get_console().print("[green]✓ Switched default provider to Google[/green]")
 
@@ -284,7 +249,6 @@ def gemini_cmd(
 @app.command("auto", hidden=True)
 def auto_cmd() -> None:
     from forgecli.config.writer import update_config
-
     update_config(default_provider="mock", default_model="auto")
     get_console().print("[green]✓ Set to auto (mock fallback)[/green]")
 

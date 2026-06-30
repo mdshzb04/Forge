@@ -64,9 +64,9 @@ def test_router_auto_picks_cheapest(monkeypatch) -> None:
     router = ModelRouter(registry=_registry_with_mock())
     decision = router.select("auto")
     assert decision.mode is SelectionMode.CHEAPEST
-    # google/gemini-1.5-flash is the cheapest of the three default models.
+    # google/gemini-2.5-flash is the cheapest of the three default models.
     assert decision.provider_name == "google"
-    assert decision.model == "gemini-1.5-flash"
+    assert decision.model == "gemini-2.5-flash"
 
 
 def test_router_auto_falls_back_to_mock_when_no_creds(monkeypatch) -> None:

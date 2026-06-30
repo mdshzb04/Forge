@@ -54,12 +54,18 @@ def bootstrap_context(
     loader = ConfigLoader(config_path) if config_path else ConfigLoader()
 
     from forgecli.providers.openai_compatible import (
+        CohereProvider,
+        FireworksProvider,
         GroqProvider,
         LMStudioProvider,
+        MiniMaxProvider,
         MistralProvider,
+        NvidiaProvider,
         OllamaProvider,
         OpenRouterProvider,
+        TogetherProvider,
         VllmProvider,
+        XaiProvider,
     )
 
     provider_registry: ProviderRegistry = default_registry
@@ -71,6 +77,12 @@ def bootstrap_context(
         ("openrouter", OpenRouterProvider),
         ("groq", GroqProvider),
         ("mistral", MistralProvider),
+        ("minimax", MiniMaxProvider),
+        ("xai", XaiProvider),
+        ("together", TogetherProvider),
+        ("fireworks", FireworksProvider),
+        ("cohere", CohereProvider),
+        ("nvidia", NvidiaProvider),
         ("ollama", OllamaProvider),
         ("lmstudio", LMStudioProvider),
         ("vllm", VllmProvider),

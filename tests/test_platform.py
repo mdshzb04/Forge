@@ -291,8 +291,19 @@ def test_check_for_update_handles_network_error(monkeypatch, tmp_path: Path) -> 
 
 def test_check_for_update_graceful_offline_fallback(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path))
-    _write_cache("9.9.9")
-    monkeypatch.setenv("FORGECLI_UPDATE_CACHE_TTL", "0")
+    import json
+    import time
+
+    from forgecli.platform.update import _cache_path
+    _cache_path().parent.mkdir(parents=True, exist_ok=True)
+    _cache_path().write_text(
+        json.dumps({
+            "checked_at": time.time() - 100,
+            "latest": "9.9.9",
+        }),
+        encoding="utf-8"
+    )
+    monkeypatch.setenv("FORGECLI_UPDATE_CACHE_TTL", "10")
 
     def boom():
         raise OSError("offline")

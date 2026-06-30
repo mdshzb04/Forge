@@ -96,23 +96,30 @@ def _build_provider_for(*, live: bool, cwd: Path):
     if not live:
         return MockProvider(MockProviderConfig())
 
-    from forgecli.providers.anthropic import AnthropicConfig, AnthropicProvider
-    from forgecli.providers.google import GeminiConfig, GeminiProvider
-    from forgecli.providers.openai import OpenAIConfig, OpenAIProvider
+    from forgecli.providers.base import ProviderRegistry
     from forgecli.providers.router_state import load_state
 
     app_context = bootstrap_context(cwd=str(cwd))
     state = load_state(app_context.paths.data_dir / "router.json")
-    chosen = state.choice
-    config_map = {
-        "openai": (OpenAIProvider, OpenAIConfig()),
-        "anthropic": (AnthropicProvider, AnthropicConfig()),
-        "google": (GeminiProvider, GeminiConfig()),
-    }
-    if chosen in config_map:
-        provider_cls, config = config_map[chosen]
-        return provider_cls(config)
-    return MockProvider(MockProviderConfig())
+    chosen = state.choice or state.provider
+    if not chosen:
+        from forgecli.config.loader import ConfigLoader
+        try:
+            settings = ConfigLoader().load()
+            chosen = settings.providers.default
+        except Exception:
+            pass
+    if not chosen:
+        raise ValueError(
+            "No active provider configured. Please authenticate first (e.g. 'forge auth login'), "
+            "then set your active provider using 'forge provider use <provider>' and active model using 'forge model use <model>'."
+        )
+
+    registry = app_context.container.resolve(ProviderRegistry)
+    if not registry.has(chosen):
+        raise ValueError(f"Unknown provider '{chosen}'.")
+    provider_cls = registry.get(chosen)
+    return provider_cls()
 
 
 def _build_orchestrator_for(

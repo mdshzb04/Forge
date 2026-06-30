@@ -151,6 +151,31 @@ class HTTPChatProvider(Provider[Any]):
         return self._parse_embeddings(response.json())
 
     async def list_models(self) -> list[ModelInfo]:
+        try:
+            # Skip for mock provider
+            if self.name == "mock":
+                return self._known_models()
+            response = await self._client.get(
+                f"{self._base_url}/models",
+                headers=self._auth_headers(),
+                timeout=5.0
+            )
+            if response.status_code == 200:
+                data = response.json()
+                models_list = data.get("data", [])
+                if models_list:
+                    return [
+                        ModelInfo(
+                            id=m.get("id"),
+                            name=m.get("id"),
+                            context_window=128_000,
+                            supports_tools=True,
+                            supports_vision=True
+                        )
+                        for m in models_list if isinstance(m, dict) and "id" in m
+                    ]
+        except Exception:
+            pass
         return self._known_models()
 
     def _known_models(self) -> list[ModelInfo]:
