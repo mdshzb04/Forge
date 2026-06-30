@@ -3,7 +3,7 @@
 ## Executive Summary
 - **Pytest**: PASS
 - **Ruff**: PASS
-- **Mypy**: FAIL
+- **Mypy**: PASS
 - **E2E Commands Passed**: 7/7
 
 ## CLI Command Discovery & Help Verification
@@ -35,7 +35,7 @@ tests/test_auth_provider.py::test_provider_list
   See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-383 passed, 4 deselected, 2 warnings in 12.36s
+381 passed, 4 deselected in 11.10s
 
 ```
 
@@ -47,16 +47,7 @@ All checks passed!
 
 ### Mypy Output
 ```
- "ModelRouter" has incompatible type "str | None"; expected "str"  [arg-type]
-forgecli/cli/commands_build.py:161: error: Only concrete class can be given where "type[PromptOptimizer]" is expected  [type-abstract]
-forgecli/cli/commands_explain.py:5: error: Cannot find implementation or library stub for module named "typer"  [import-not-found]
-forgecli/cli/commands_explain.py:5: note: Did you mean "types"?
-forgecli/cli/main.py:12: error: Cannot find implementation or library stub for module named "typer"  [import-not-found]
-forgecli/cli/main.py:12: note: Did you mean "types"?
-forgecli/cli/main.py:111: error: Cannot find implementation or library stub for module named "typer.main"  [import-not-found]
-forgecli/cli/main.py:111: note: Did you mean "types"?
-forgecli/cli/main.py:187: error: Cannot find implementation or library stub for module named "typer.testing"  [import-not-found]
-forgecli/cli/main.py:187: note: Did you mean "types"?
-Found 184 errors in 68 files (checked 168 source files)
+Success: no issues found in 168 source files
 
 ```
+

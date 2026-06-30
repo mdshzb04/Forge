@@ -17,6 +17,8 @@ import asyncio
 import logging
 
 from forgecli.build import BuildContext
+from typing import Any
+
 from forgecli.core.errors import ProviderError
 from forgecli.providers.base import (
     ChatMessage,
@@ -51,6 +53,8 @@ async def llm_call(context: BuildContext) -> BuildContext:
     if provider is None:
         raise RuntimeError("no provider wired into the build context")
 
+    intent = context.extras.get("intent")
+
     retries = int(context.extras.get("retries", 0) or 0)
     user_content = _format_user_prompt(context)
     base_request: ChatRequest = context.optimized_request or ChatRequest(
@@ -59,7 +63,7 @@ async def llm_call(context: BuildContext) -> BuildContext:
     request = base_request.model_copy(
         update={
             "model": context.decision.model if context.decision else None,
-            "messages": _assemble_messages(base_request.messages, user_content),
+            "messages": _assemble_messages(base_request.messages, user_content, intent),
         }
     )
 
@@ -99,33 +103,52 @@ def _format_user_prompt(context: BuildContext) -> str:
     parts: list[str] = [context.prompt]
     if context.retrieval:
         parts.append("\n" + context.retrieval)
-    parts.append(
-        "\nRespond with a unified diff only. "
-        "Use the file paths implied by the retrieval above. "
-        "Do not include prose."
-    )
+    intent = context.extras.get("intent")
+    if intent is None or intent == "build":
+        parts.append(
+            "\nRespond with a unified diff only. "
+            "Use the file paths implied by the retrieval above. "
+            "Do not include prose."
+        )
     return "\n".join(parts)
 
 
 def _assemble_messages(
-    base: list[ChatMessage], user_content: str
+    base: list[ChatMessage], user_content: str, intent: Any
 ) -> list[ChatMessage]:
     """Insert the system prompt at the head, replace the user message.
 
     Ponytail prepended a system message of its own; we layer our
-    strict diff-formatting instruction on top by *replacing* the first
-    user message with our assembled content.
+    instructions on top by *replacing* the first user message with our
+    assembled content.
     """
     out: list[ChatMessage] = []
     replaced_user = False
+    has_system = any(m.role is Role.SYSTEM for m in base)
+
+    if not has_system:
+        if intent is None or intent == "build":
+            out.append(ChatMessage(role=Role.SYSTEM, content=_SYSTEM_PROMPT))
+        else:
+            out.append(ChatMessage(role=Role.SYSTEM, content=(
+                "You are a senior software engineer. "
+                "Answer the user's query or perform the request clearly and concisely in natural language / Markdown. "
+                "Use the codebase retrieval context provided if relevant."
+            )))
+
     for message in base:
         if not replaced_user and message.role is Role.USER:
             out.append(ChatMessage(role=Role.USER, content=user_content))
             replaced_user = True
             continue
         if message.role is Role.SYSTEM:
-            # Keep the Ponytail guidance; append our diff-formatting rule.
-            extra = "\n\n" + _SYSTEM_PROMPT
+            if intent is None or intent == "build":
+                extra = "\n\n" + _SYSTEM_PROMPT
+            else:
+                extra = (
+                    "\n\nAnswer the user's query or perform the request clearly and concisely in natural language / Markdown. "
+                    "Use the codebase retrieval context provided if relevant."
+                )
             out.append(
                 ChatMessage(
                     role=Role.SYSTEM,

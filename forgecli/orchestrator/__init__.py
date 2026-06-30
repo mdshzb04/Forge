@@ -312,10 +312,13 @@ class Orchestrator:
     def registry(self) -> PluginRegistry:
         return self._registry
 
-    async def run(self, prompt: str) -> ForgeResult:
+    async def run(self, prompt: str, *, intent: Intent | None = None) -> ForgeResult:
         started = time.perf_counter()
         try:
-            prediction = self._classify(prompt)
+            if intent is not None:
+                prediction = IntentPrediction(intent, 1.0, ("forced intent",))
+            else:
+                prediction = self._classify(prompt)
             workflow = self._workflow_for(prediction)
 
             app_ctx = _bootstrap_app_context()
@@ -334,6 +337,7 @@ class Orchestrator:
                 "provider": self._provider,
                 "optimizer": opt,
                 "graph": graph,
+                "intent": prediction.intent,
             }
 
             plugin_context = PluginContext(

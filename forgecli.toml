@@ -15,5 +15,3 @@ intensity = "lite"
 
 [providers]
 allowed = ["openai"]
-default = "openai"
-default_model = "gpt-5"

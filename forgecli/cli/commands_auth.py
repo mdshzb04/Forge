@@ -185,15 +185,32 @@ def remove(
     delete_api_key(provider)
     console.print(f"✓ Removed credentials for {provider.capitalize()}")
 
+    # Clear active provider/model choices if they are no longer valid
+    import contextlib
+
+    from forgecli.config.loader import ConfigLoader
+    from forgecli.config.writer import update_config
+    with contextlib.suppress(Exception):
+        settings = ConfigLoader().load()
+        default_p = settings.providers.default
+        if default_p and default_p.lower().strip() == provider.lower().strip():
+            update_config(clear_provider=True, clear_model=True)
+            console.print("✓ Active provider and model configuration cleared (no longer authenticated).")
+
 
 @app.command("logout")
 def logout() -> None:
     """Remove all securely stored credentials and log out."""
-    console = get_console()
+    import contextlib
+
+    from forgecli.config.writer import update_config
     from forgecli.core.credentials import delete_all_api_keys
 
+    console = get_console()
     delete_all_api_keys()
-    console.print("✓ Logged out. All stored API keys have been removed securely.")
+    with contextlib.suppress(Exception):
+        update_config(clear_provider=True, clear_model=True)
+    console.print("✓ Logged out. All stored API keys have been removed securely and active configuration cleared.")
 
 
 @app.command("verify")

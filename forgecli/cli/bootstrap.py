@@ -188,7 +188,7 @@ def _build_container(
     )
     container.register(
         PromptOptimizer,  # type: ignore[type-abstract]
-        lambda _c: build_optimizer(_load_optimizer_state(paths)),
+        lambda _c: build_optimizer(_load_optimizer_state(paths), ConfigLoader().load()),
     )
     container.register(
         ModelRouter,

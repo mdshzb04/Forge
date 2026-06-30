@@ -46,7 +46,12 @@ def dump_toml(data: dict[str, Any]) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
-def update_config(default_provider: str | None = None, default_model: str | None = None) -> Path:
+def update_config(
+    default_provider: str | None = None,
+    default_model: str | None = None,
+    clear_provider: bool = False,
+    clear_model: bool = False,
+) -> Path:
     """Update defaults in the active forgecli.toml configuration file."""
     from forgecli.config.loader import ConfigLoader
 
@@ -70,10 +75,14 @@ def update_config(default_provider: str | None = None, default_model: str | None
     if "providers" not in data:
         data["providers"] = {}
 
-    if default_provider is not None:
+    if clear_provider:
+        data["providers"].pop("default", None)
+    elif default_provider is not None:
         data["providers"]["default"] = default_provider
 
-    if default_model is not None:
+    if clear_model:
+        data["providers"].pop("default_model", None)
+    elif default_model is not None:
         data["providers"]["default_model"] = default_model
 
     content = dump_toml(data)
