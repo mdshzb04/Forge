@@ -22,8 +22,6 @@ def build_summary(context: BuildContext) -> str:
             f"(mode={d.mode.value}, "
             f"in=${d.cost_in:.5f}/1k, out=${d.cost_out:.5f}/1k)"
         )
-    if context.optimized_notes:
-        lines.append("Optimizer: " + ", ".join(context.optimized_notes))
     if context.applied_files:
         rel = [str(p.relative_to(context.root)) for p in context.applied_files]
         lines.append(f"Files touched ({len(rel)}):")

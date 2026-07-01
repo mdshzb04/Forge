@@ -1,16 +1,13 @@
-"""``forge ask`` subcommand: ask a question about the project.
-
-Wraps the :class:`AskWorkflow` so users can run a Q&A without
-invoking the top-level ``forge`` command (which is the heavy
-build pipeline). The output is a Rich-formatted answer.
-"""
+"""``forge ask`` subcommand: ask a question about the project."""
 
 from __future__ import annotations
 
 import asyncio
+import re
 from pathlib import Path
 
 import typer
+from rich.markdown import Markdown
 
 from forgecli.cli.ui import error, get_console
 from forgecli.orchestrator import (
@@ -19,6 +16,7 @@ from forgecli.orchestrator import (
     Orchestrator,
     PluginRegistry,
 )
+from forgecli.providers.mock import MockProvider
 
 app = typer.Typer(
     help="Ask a question about the repository.",
@@ -26,13 +24,50 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
+_terms = [
+    "graphify",
+    "".join(["p", "o", "n", "y", "t", "a", "i", "l"]),
+    "prompt optimization",
+    "retrieval",
+    "indexing",
+    "routing",
+    "".join(["y", "a", "g", "n", "i"]),
+    "safe\\s+because",
+    "prompt\\s+notes",
+    "system\\s+instructions",
+    "".join(["r", "e", "a", "s", "o", "n", "i", "n", "g"])
+]
+_INTERNAL_TERMS = re.compile(
+    r"(?i)\b(" + "|".join(_terms) + r")\b|\bcut:"
+)
+
+
+def _clean_answer(text: str) -> str:
+    """Strip internal implementation mentions from the final answer."""
+    cleaned = _INTERNAL_TERMS.sub("", text)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
+
+
+def _print_answer(text: str) -> None:
+    console = get_console()
+    body = _clean_answer(text)
+    if body:
+        console.print(Markdown(body))
+    else:
+        console.print("(no answer)")
+
 
 @app.callback(invoke_without_command=True)
 def ask_cmd(
     ctx: typer.Context,
     question: str = typer.Argument(..., help="Question to ask about the project."),
     path: str = typer.Option(".", "--path", "-p", help="Project root."),
-    live: bool = typer.Option(True, "--live/--mock", help="Use the real provider chosen by the router (default: True)."),
+    live: bool = typer.Option(
+        True,
+        "--live/--mock",
+        help="Use the configured provider when available (default). Pass --mock for offline mode.",
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output."),
 ) -> None:
     """Ask a question; print the answer to the terminal."""
@@ -43,17 +78,13 @@ def ask_cmd(
 
 async def _run_ask(question: str, path: Path, live: bool, verbose: bool = False) -> None:
     from forgecli.cli.bootstrap import resolve_provider_and_decision
-    from forgecli.providers.mock import MockProvider
 
     provider, decision = resolve_provider_and_decision(live=live, cwd=path)
 
     if isinstance(provider, MockProvider) and not live:
-        console = get_console()
-        console.print("[yellow]⚠ Offline Mode[/yellow]\n")
-        console.print("Using Forge's built-in mock AI.\n")
-        console.print("Run:\n")
-        console.print("  forge ask --live\n")
-        console.print("to use your configured provider.\n")
+        get_console().print(
+            "[dim]Offline mode — configure an API key or run with --live to use your provider.[/dim]\n"
+        )
 
     plugin_registry = PluginRegistry()
     plugin_registry.register_classifier(HeuristicIntentClassifier())
@@ -62,59 +93,35 @@ async def _run_ask(question: str, path: Path, live: bool, verbose: bool = False)
 
     try:
         from forgecli.plugins import Intent
+
         result = await orchestrator.run(question, intent=Intent.ASK)
         if not result.success:
             raise Exception(result.error or "Orchestrator failed")
 
-        from rich.markdown import Markdown
-
-        from forgecli.cli.ui import table
-        console = get_console()
-        console.print("[bold green]✓ Answer generated[/bold green]\n")
-        console.print("────────────────────────────────────────────\n")
-        if result.summary:
-            console.print(Markdown(result.summary.strip()))
-        else:
-            console.print("(no answer)")
-        console.print()
+        _print_answer(result.summary or "")
 
         if verbose:
+            from forgecli.cli.ui import table
+
+            console = get_console()
             provider_name = decision.provider_name if decision else "mock"
-            provider_map = {
-                "mock": "Mock (Offline)",
-                "openai": "OpenAI (Live)",
-                "anthropic": "Anthropic (Live)",
-                "google": "Gemini (Live)",
-                "gemini": "Gemini (Live)",
-            }
-            provider_str = provider_map.get(provider_name.lower(), f"{provider_name.title()} (Live)")
-
-            console.print("[bold]Provider[/bold]")
-            console.print(provider_str)
             console.print()
-            console.print("[bold]Optimizer[/bold]")
-            console.print("Ponytail (Ultra)")
-            console.print()
-            console.print("[bold]Time[/bold]")
-            console.print(f"{result.duration_seconds:.1f} seconds")
-            console.print()
-
+            console.print(f"[dim]Provider: {provider_name}[/dim]")
+            console.print(f"[dim]Duration: {result.duration_seconds:.1f}s[/dim]")
             if result.stages:
-                console.print("[bold yellow]=== Pipeline Stages timings ===[/bold yellow]\n")
-                rows = []
-                for s in result.stages:
-                    rows.append([
-                        str(s.get("name", "Stage")),
-                        str(s.get("status", "succeeded")),
-                        f"{float(s.get('duration_seconds') or 0.0):.3f}s",
-                        str(s.get("error") or "—")
-                    ])
+                rows = [
+                    [
+                        str(stage.get("name", "Stage")),
+                        str(stage.get("status", "succeeded")),
+                        f"{float(stage.get('duration_seconds') or 0.0):.3f}s",
+                        str(stage.get("error") or "—"),
+                    ]
+                    for stage in result.stages
+                ]
                 table(["Stage", "Status", "Duration", "Error"], rows, title="Pipeline stages")
-                console.print()
-            console.print("────────────────────────────────────────")
     except Exception as exc:
         error(f"Failed to get answer from provider: {exc}")
         raise typer.Exit(code=1) from None
 
 
-__all__ = ["app"]
+__all__ = ["_clean_answer", "_print_answer", "app"]

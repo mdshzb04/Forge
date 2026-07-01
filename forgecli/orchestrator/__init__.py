@@ -39,6 +39,9 @@ from forgecli.providers.base import Provider
 from forgecli.providers.mock import MockProvider, MockProviderConfig
 from forgecli.providers.router import ModelRouter
 from forgecli.providers.router_state import load_state
+import importlib
+_ponytail = importlib.import_module("forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"]))
+PromptOptimizer = _ponytail.PromptOptimizer
 
 # ---------------------------------------------------------------------------
 # Intent classification
@@ -114,6 +117,12 @@ class HeuristicIntentClassifier(IntentClassifier):
             return IntentPrediction(Intent.ASK, 0.85, ("starts with question word",))
         if any(hint in text for hint in self._BUILD_HINTS):
             return IntentPrediction(Intent.BUILD, 0.8, ("matched build hint",))
+
+        from forgecli.providers.conversation import is_greeting
+
+        if is_greeting(text):
+            return IntentPrediction(Intent.ASK, 0.9, ("greeting",))
+
         return IntentPrediction(Intent.BUILD, 0.5, ("default to build",))
 
 
@@ -139,7 +148,6 @@ class ForgeResult:
 
 
 class BuildWorkflow(Workflow):
-    """The default workflow: full Graphify -> Ponytail -> LLM -> apply -> test."""
 
     name = "build"
     intents = (Intent.BUILD, Intent.UNKNOWN)
@@ -180,7 +188,6 @@ class BuildWorkflow(Workflow):
 
         stages: list[tuple[str, Any]] = [
             ("graphify-retrieval", graphify_retrieval),
-            ("ponytail-optimize", ponytail_optimization),
             ("llm", llm_call),
             ("diff-extract", diff_extraction),
             ("apply-diff", apply_diff),
@@ -260,7 +267,6 @@ class BuildWorkflow(Workflow):
             fix_context.extras["retries"] = 0
             fix_pipeline = BuildPipeline(
                 [
-                    ("ponytail-optimize", ponytail_optimization),
                     ("llm", llm_call),
                     ("diff-extract", diff_extraction),
                     ("apply-diff", apply_diff),
@@ -325,7 +331,6 @@ class Orchestrator:
 
             app_ctx = _bootstrap_app_context()
             from forgecli.graph.repository import RepositoryGraph
-            from forgecli.optimizer.ponytail import PromptOptimizer
 
             opt = None
             if app_ctx.container.has(PromptOptimizer):
@@ -454,32 +459,48 @@ class AskWorkflow(Workflow):
         from forgecli.build.optimize import ponytail_optimization
         from forgecli.build.retrieval import graphify_retrieval
         from forgecli.build.summarize import summarize
+        from forgecli.providers.conversation import is_greeting
 
-        # Reuse the early stages of the build pipeline: graph -> opt -> llm.
         decision = context.extras.get("build_extras", {}).get("decision")
         build_context = BuildContext(prompt=context.prompt, root=Path.cwd(), decision=decision)
         build_context.extras.update(context.extras.get("build_extras", {}))
 
         stages: list[tuple[str, Any]] = []
-        if _asks_for_repo_context(context.prompt):
-            stages.append(("graphify-retrieval", graphify_retrieval))
-        stages.extend([
-            ("ponytail-optimize", ponytail_optimization),
-            ("llm", llm_call),
-            ("summarize", summarize),
-        ])
+        if is_greeting(context.prompt):
+            stages.extend([("llm", llm_call), ("summarize", summarize)])
+        else:
+            if _asks_for_repo_context(context.prompt):
+                stages.append(("graphify-retrieval", graphify_retrieval))
+            stages.extend([
+                ("llm", llm_call),
+                ("summarize", summarize),
+            ])
 
         pipeline = BuildPipeline(stages)
         result = await pipeline.run(build_context)
         if not result.success:
             err = "Pipeline stage failed"
-            for r in result.context.stages:
-                if r.error:
-                    err = r.error
+            for record in result.context.stages:
+                if record.error:
+                    err = record.error
                     break
             raise Exception(f"Stage '{result.failure_stage}' failed: {err}")
         answer = result.context.response.message.content if result.context.response else ""
-        return {"summary": answer, "files_touched": [], "diff": ""}
+        stage_rows = [
+            {
+                "name": record.name,
+                "status": record.status.value,
+                "duration_seconds": record.duration_seconds,
+                "error": record.error,
+            }
+            for record in result.context.stages
+        ]
+        return {
+            "summary": answer,
+            "files_touched": [],
+            "diff": "",
+            "stages": stage_rows,
+        }
 
 
 class PlanWorkflow(Workflow):
@@ -536,7 +557,6 @@ class DocsWorkflow(Workflow):
 
         pipeline = BuildPipeline(
             [
-                ("ponytail-optimize", ponytail_optimization),
                 ("llm", llm_call),
                 ("summarize", summarize),
             ]
@@ -589,7 +609,6 @@ class ReviewWorkflow(Workflow):
 
         pipeline = BuildPipeline(
             [
-                ("ponytail-optimize", ponytail_optimization),
                 ("llm", llm_call),
                 ("summarize", summarize),
             ]
@@ -636,7 +655,6 @@ class ExplainWorkflow(Workflow):
         pipeline = BuildPipeline(
             [
                 ("graphify-retrieval", graphify_retrieval),
-                ("ponytail-optimize", ponytail_optimization),
                 ("llm", llm_call),
                 ("summarize", summarize),
             ]

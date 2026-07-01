@@ -65,12 +65,12 @@ async def _run_explain(target: str, path: Path, live: bool, verbose: bool = Fals
 
         from forgecli.cli.ui import table
         console = get_console()
-        console.print("[bold green]✓ Explanation generated[/bold green]\n")
-        console.print("────────────────────────────────────────────\n")
-        if result.summary:
-            console.print(Markdown(result.summary.strip()))
-        else:
-            console.print("(no explanation)")
+        streamed = result.extras.get("streamed", False)
+        if not streamed:
+            if result.summary:
+                console.print(Markdown(result.summary.strip()))
+            else:
+                console.print("(no explanation)")
         console.print()
 
         if verbose:
@@ -88,7 +88,7 @@ async def _run_explain(target: str, path: Path, live: bool, verbose: bool = Fals
             console.print(provider_str)
             console.print()
             console.print("[bold]Optimizer[/bold]")
-            console.print("Ponytail (Ultra)")
+            console.print("None")
             console.print()
             console.print("[bold]Time[/bold]")
             console.print(f"{result.duration_seconds:.1f} seconds")

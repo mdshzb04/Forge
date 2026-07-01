@@ -34,15 +34,42 @@ def test_registry_rejects_non_provider() -> None:
         registry.register("bad", _NotAProvider)  # type: ignore[arg-type]
 
 
-def test_mock_chat_echoes_user_message() -> None:
+def test_mock_chat_offline_conversation() -> None:
     provider = MockProvider(MockProviderConfig())
     request = ChatRequest(
         model="mock-model",
         messages=[ChatMessage(role=Role.USER, content="hello world")],
     )
     response = asyncio.run(provider.chat(request))
-    assert response.message.content == "[mock] hello world"
-    assert response.model == "mock-model"
+    assert response.message.content.startswith("Hi!")
+    assert "[mock]" not in response.message.content
+
+
+def test_mock_chat_greeting() -> None:
+    provider = MockProvider(MockProviderConfig())
+    request = ChatRequest(
+        model="mock-model",
+        messages=[ChatMessage(role=Role.USER, content="how are you")],
+    )
+    response = asyncio.run(provider.chat(request))
+    assert "doing well" in response.message.content.lower()
+
+
+def test_mock_build_without_provider_returns_notice() -> None:
+    provider = MockProvider(MockProviderConfig())
+    request = ChatRequest(
+        model="mock-model",
+        messages=[
+            ChatMessage(
+                role=Role.SYSTEM,
+                content="Return ONLY a unified diff in the response.",
+            ),
+            ChatMessage(role=Role.USER, content="Create main.go with hello world"),
+        ],
+    )
+    response = asyncio.run(provider.chat(request))
+    assert "No AI provider is configured" in response.message.content
+    assert "main.go" not in response.message.content
 
 
 def test_mock_embed_returns_vectors() -> None:
@@ -53,7 +80,7 @@ def test_mock_embed_returns_vectors() -> None:
     assert all(len(v) == 16 for v in response.vectors)
 
 
-def test_mock_stream_yields_chunks() -> None:
+def test_mock_stream_yields_full_response() -> None:
     provider = MockProvider(MockProviderConfig())
     request = ChatRequest(
         model="mock-model",
@@ -67,4 +94,5 @@ def test_mock_stream_yields_chunks() -> None:
         return parts
 
     parts = asyncio.run(_collect())
-    assert any("mock" in p for p in parts)
+    combined = "".join(parts)
+    assert "Hi!" in combined

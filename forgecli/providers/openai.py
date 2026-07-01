@@ -14,6 +14,8 @@ from typing import Any
 
 import httpx
 
+from collections.abc import AsyncIterator
+
 from forgecli.providers.base import (
     ChatMessage,
     ChatRequest,
@@ -22,6 +24,7 @@ from forgecli.providers.base import (
     EmbeddingResponse,
     ModelInfo,
     Role,
+    StreamChunk,
 )
 from forgecli.providers.http_base import HTTPChatProvider, messages_to_openai
 
@@ -124,6 +127,47 @@ class OpenAIProvider(HTTPChatProvider):
             total_tokens=int(usage.get("total_tokens", 0) or 0),
             raw=payload,
         )
+
+    async def stream(self, request: ChatRequest) -> AsyncIterator[StreamChunk]:
+        from forgecli.core.errors import ProviderError
+        if not self._api_key:
+            self.validate()
+        body = self._format_request(request)
+        body["stream"] = True
+
+        req = self._client.build_request(
+            "POST", self._chat_url_for(request), json=body, headers=self._auth_headers()
+        )
+        response = await self._client.send(req, stream=True)
+        if response.status_code >= 400:
+            await response.aread()
+            raise ProviderError(
+                f"{self.name} stream failed ({response.status_code}): {response.text[:500]}"
+            )
+
+        import json
+        try:
+            async for line in response.aiter_lines():
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith("data: "):
+                    data_str = line[6:]
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        payload = json.loads(data_str)
+                        choices = payload.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            content = delta.get("content", "")
+                            finish_reason = choices[0].get("finish_reason")
+                            if content or finish_reason:
+                                yield StreamChunk(delta=content, finish_reason=finish_reason, raw=payload)
+                    except Exception:
+                        pass
+        finally:
+            await response.aclose()
 
     def _format_embeddings(self, request: EmbeddingRequest) -> dict[str, Any]:
         return {

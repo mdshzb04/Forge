@@ -1,6 +1,5 @@
 """Stage 3 — LLM call.
 
-Assembles the final prompt (Ponytail-optimized system + user, plus
 Graphify retrieval as context) and dispatches it through the active
 provider. The selected provider is the one chosen by the router (see
 :mod:`forgecli.providers.router`).
@@ -15,23 +14,19 @@ from __future__ import annotations
 
 import asyncio
 import logging
-
-from forgecli.build import BuildContext
 from typing import Any
 
+from forgecli.build import BuildContext
 from forgecli.core.errors import ProviderError
 from forgecli.providers.base import (
     ChatMessage,
     ChatRequest,
-    ChatResponse,
     Provider,
     Role,
 )
 
-
 _SYSTEM_PROMPT = (
-    "You are a senior software engineer. Apply the Ponytail ruleset:\n"
-    "  1. Speculative need = skip it (YAGNI).\n"
+    "  1. Speculative need = skip it ().\n"
     "  2. Reuse the helper/pattern that already lives in the codebase.\n"
     "  3. Use the standard library.\n"
     "  4. Native platform feature > third-party library.\n"
@@ -40,7 +35,6 @@ _SYSTEM_PROMPT = (
     "  7. Only then: the minimum code that works.\n\n"
     "Return ONLY a unified diff in the response. No prose, no explanation, "
     "no code fences. The diff must apply with `git apply`.\n"
-    "Never mention internal implementation details of the CLI, such as Graphify, Ponytail, indexing, retrieval, prompt optimization, or routing, and never explain how the context was retrieved."
 )
 
 _TRANSIENT_HTTP_CODES = {408, 425, 429, 500, 502, 503, 504}
@@ -71,7 +65,7 @@ async def llm_call(context: BuildContext) -> BuildContext:
     last_exc: Exception | None = None
     for attempt in range(retries + 1):
         try:
-            response: ChatResponse = await provider.chat(request)
+            response = await provider.chat(request)
             context.response = response
             return context
         except ProviderError as exc:
@@ -105,11 +99,15 @@ def _format_user_prompt(context: BuildContext) -> str:
     if context.retrieval:
         parts.append("\n" + context.retrieval)
     intent = context.extras.get("intent")
-    if intent is None or intent == "build":
+    from forgecli.plugins import Intent
+
+    if intent in (None, Intent.BUILD, Intent.UNKNOWN, "build"):
         parts.append(
-            "\nRespond with a unified diff only. "
-            "Use the file paths implied by the retrieval above. "
-            "Do not include prose."
+            "\nGenerate code that exactly matches the request above: use the "
+            "language, filename(s), framework, approximate size, and behavior "
+            "the user asked for. "
+            "Respond with a unified diff only that applies with `git apply`. "
+            "Do not include prose, explanations, or markdown fences."
         )
     return "\n".join(parts)
 
@@ -119,7 +117,6 @@ def _assemble_messages(
 ) -> list[ChatMessage]:
     """Insert the system prompt at the head, replace the user message.
 
-    Ponytail prepended a system message of its own; we layer our
     instructions on top by *replacing* the first user message with our
     assembled content.
     """
@@ -135,7 +132,6 @@ def _assemble_messages(
                 "You are a senior software engineer. "
                 "Answer the user's query or perform the request clearly and concisely in natural language / Markdown. "
                 "Use the codebase context provided if relevant. "
-                "Never mention internal implementation details of the CLI, such as Graphify, Ponytail, indexing, retrieval, prompt optimization, or routing, and never explain how the context was retrieved."
             )))
 
     for message in base:
@@ -150,7 +146,6 @@ def _assemble_messages(
                 extra = (
                     "\n\nAnswer the user's query or perform the request clearly and concisely in natural language / Markdown. "
                     "Use the codebase context provided if relevant. "
-                    "Never mention internal implementation details of the CLI, such as Graphify, Ponytail, indexing, retrieval, prompt optimization, or routing, and never explain how the context was retrieved."
                 )
             out.append(
                 ChatMessage(

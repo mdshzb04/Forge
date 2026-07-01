@@ -78,6 +78,12 @@ def test_heuristic_classifier_recognizes_commit() -> None:
     assert prediction.intent is Intent.COMMIT
 
 
+def test_heuristic_classifier_recognizes_greeting() -> None:
+    classifier = HeuristicIntentClassifier()
+    prediction = classifier.classify("hi")
+    assert prediction.intent is Intent.ASK
+
+
 def test_heuristic_classifier_handles_empty() -> None:
     classifier = HeuristicIntentClassifier()
     prediction = classifier.classify("")
@@ -164,11 +170,11 @@ def test_orchestrator_picks_commit_workflow() -> None:
     assert result.workflow == "commit"
 
 
-def test_orchestrator_falls_back_to_build() -> None:
+def test_orchestrator_treats_greeting_as_ask() -> None:
     orchestrator = _make_orchestrator()
     result = asyncio.run(orchestrator.run("hello world"))
-    assert result.intent is Intent.BUILD
-    assert result.workflow == "build"
+    assert result.intent is Intent.ASK
+    assert result.workflow == "ask"
 
 
 def test_build_orchestrator_wires_defaults() -> None:

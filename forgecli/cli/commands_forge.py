@@ -9,7 +9,6 @@ Usage:
 
 The command classifies the user's intent (build / ask / plan /
 docs / review / explain / commit), picks the right workflow, and
-runs the standard pipeline (Graphify retrieval -> Ponytail
 optimization -> LLM call -> diff extraction -> apply -> tests ->
 auto-fix -> summary).
 
@@ -119,7 +118,9 @@ def forge_cmd(
     ),
     path: str = typer.Option(".", "--path", "-p", help="Project root."),
     live: bool = typer.Option(
-        False, "--live", help="Use the real provider chosen by the router (default: mock)."
+        True,
+        "--live/--mock",
+        help="Use the configured provider when available (default). Pass --mock for offline mode.",
     ),
     json_output: bool = typer.Option(False, "--json", help="Emit a JSON summary."),
     save_diff: Path | None = typer.Option(
@@ -183,13 +184,12 @@ async def run_forge(
     test_command = "true" if no_tests else None
     from forgecli.cli.bootstrap import resolve_provider_and_decision
     provider, decision = resolve_provider_and_decision(live=live, cwd=path)
-    if not live and not json_output:
-        console = get_console()
-        console.print("[yellow]⚠ Offline Mode[/yellow]\n")
-        console.print("Using Forge's built-in mock AI.\n")
-        console.print("Run:\n")
-        console.print("  forge --live \"<prompt>\"\n")
-        console.print("to use your configured provider.\n")
+    from forgecli.providers.mock import MockProvider
+
+    if isinstance(provider, MockProvider) and not live and not json_output:
+        get_console().print(
+            "[dim]Offline mode — configure an API key or omit --mock to use your provider.[/dim]\n"
+        )
     _register_default_workflows(provider, test_command=test_command)
     orchestrator = Orchestrator(_REGISTRY, provider=provider, decision=decision)
     result = await orchestrator.run(text)
@@ -235,47 +235,30 @@ def render_result(result, verbose: bool = False, diff: bool = False) -> None:
     console = get_console()
 
     if not verbose:
-        if result.success:
-            console.print("[bold green]✓ Forge completed[/bold green]\n")
-        else:
-            if result.diff:
-                console.print("[bold orange3]⚠ Couldn't automatically apply the generated changes.[/bold orange3]\n")
-                console.print("The generated code is shown below.\n")
-            else:
-                console.print("[bold red]✗ Forge failed[/bold red]\n")
-
-        console.print("────────────────────────────────────────────\n")
-
         changes = get_display_changes(result.diff)
-        if changes:
-            console.print("Created Files\n")
         for chg in changes:
-            path = chg["path"]
+            path_str = chg["path"]
             content = chg["content"]
-            status = chg["status"]
-
-            console.print(f"📄 {path}\n")
-            lexer = get_lexer(path)
+            console.print(f"[bold]{path_str}[/bold]")
+            lexer = get_lexer(path_str)
             syntax = Syntax(content.rstrip(), lexer, theme="monokai")
             panel = Panel(
                 syntax,
-                border_style="orange3",
+                border_style="dim",
                 box=box.ROUNDED,
                 expand=False,
             )
             console.print(panel)
             console.print()
 
-            line_count = len(content.splitlines())
-            console.print(f"{status} {path}")
-            console.print(f"{line_count} lines generated.\n")
+        if result.summary and result.workflow in ("ask", "explain", "review", "docs", "plan"):
+            from forgecli.cli.commands_ask import _print_answer
 
-        if result.summary and result.workflow not in ("build", "legacy"):
-            from rich.markdown import Markdown
-            console.print(Markdown(result.summary.strip()))
+            _print_answer(result.summary)
             console.print()
 
-        console.print(f"Completed in {result.duration_seconds:.1f} s\n")
+        if not result.success and not changes and result.workflow == "build":
+            console.print("[red]Build failed — no files were generated.[/red]")
         return
 
     # Verbose Mode

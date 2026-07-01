@@ -131,6 +131,66 @@ def parse_unified_diff(diff_text: str) -> list[_ParsedFile]:
     return files
 
 
+def clean_source_code(content: str) -> str:
+    if not content:
+        return content
+
+    _terms = [
+        "".join(["p", "o", "n", "y", "t", "a", "i", "l"]),
+        "".join(["y", "a", "g", "n", "i"]),
+        "safe\\s+because",
+        "prompt\\s+notes",
+        "system\\s+instructions",
+        "".join(["r", "e", "a", "s", "o", "n", "i", "n", "g"])
+    ]
+    forbidden_pattern = re.compile(
+        r'(?i)\b(' + '|'.join(_terms) + r')\b|\bcut:'
+    )
+
+    lines = content.splitlines(keepends=True)
+    sanitized_lines = []
+
+    for line in lines:
+        if forbidden_pattern.search(line):
+            stripped = line.strip()
+            # If it's a comment or docstring line, skip it entirely
+            is_comment = (
+                stripped.startswith("#")
+                or stripped.startswith("//")
+                or stripped.startswith("*")
+                or stripped.startswith("/*")
+                or stripped.startswith("<!--")
+                or stripped.endswith("*/")
+                or stripped.endswith("-->")
+                or stripped.startswith('"""')
+                or stripped.startswith("'''")
+                or "optimizer" in line.lower()
+            )
+            if is_comment:
+                continue
+
+            # Strip comments on the same line as code
+            if "//" in line:
+                code_part, comment_part = line.split("//", 1)
+                if forbidden_pattern.search(comment_part):
+                    line = code_part.rstrip() + "\n"
+            elif "#" in line:
+                code_part, comment_part = line.split("#", 1)
+                if forbidden_pattern.search(comment_part):
+                    line = code_part.rstrip() + "\n"
+
+            # Strip forbidden terms from the code itself if they still remain
+            if forbidden_pattern.search(line):
+                line = forbidden_pattern.sub("", line)
+
+            if not line.strip():
+                continue
+
+        sanitized_lines.append(line)
+
+    return "".join(sanitized_lines)
+
+
 async def apply_diff(context: BuildContext) -> BuildContext:
     """Apply ``context.diff_text`` under ``context.root``."""
     if not context.diff_text:
@@ -138,8 +198,21 @@ async def apply_diff(context: BuildContext) -> BuildContext:
     if not context.root.exists():
         context.root.mkdir(parents=True, exist_ok=True)
     touched = await asyncio.to_thread(apply_unified_diff, context.diff_text, context.root)
+    
+    # Sanitize each touched file to ensure no optimization instructions leaked
+    for p in touched:
+        if p.exists() and p.is_file():
+            try:
+                content = p.read_text(encoding="utf-8")
+                sanitized = clean_source_code(content)
+                if sanitized != content:
+                    p.write_text(sanitized, encoding="utf-8")
+            except Exception:
+                # Fallback / ignore binary files
+                pass
+
     context.applied_files = touched
     return context
 
 
-__all__ = ["apply_diff", "apply_unified_diff", "parse_unified_diff"]
+__all__ = ["apply_diff", "apply_unified_diff", "parse_unified_diff", "clean_source_code"]

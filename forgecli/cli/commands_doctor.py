@@ -110,6 +110,7 @@ def doctor_cmd(
 
 
 def _get_api_keys_status() -> dict[str, bool]:
+    from forgecli.core.credentials import get_api_key
     keys = {
         "OPENAI_API_KEY": "openai",
         "ANTHROPIC_API_KEY": "anthropic",
@@ -119,7 +120,16 @@ def _get_api_keys_status() -> dict[str, bool]:
         "MISTRAL_API_KEY": "mistral",
         "OPENROUTER_API_KEY": "openrouter",
     }
-    return {env_var: os.environ.get(env_var) is not None for env_var in keys}
+    status = {}
+    for env_var, provider_name in keys.items():
+        has_env = os.environ.get(env_var) is not None
+        has_cred = False
+        try:
+            has_cred = get_api_key(provider_name) is not None
+        except Exception:
+            pass
+        status[env_var] = has_env or has_cred
+    return status
 
 
 def _get_git_status(path: str) -> dict[str, Any]:
@@ -253,12 +263,12 @@ def _calculate_health_score(
         if providers_score == 0:
             deductions.append(
                 "[bold red]AI Providers[/bold red] (-20 pts): no API keys configured.\n"
-                "  [cyan]↳ Next Step:[/cyan] Add model API keys (e.g. export OPENAI_API_KEY='...') in your .env or shell."
+                "  [cyan]↳ Next Step:[/cyan] Configure model API keys using [bold]forge auth login[/bold]."
             )
         else:
             deductions.append(
                 "[bold red]AI Providers[/bold red] (-10 pts): only one API key configured.\n"
-                "  [cyan]↳ Next Step:[/cyan] Optionally configure ANTHROPIC_API_KEY or GEMINI_API_KEY/GOOGLE_API_KEY for additional LLMs."
+                "  [cyan]↳ Next Step:[/cyan] Run [bold]forge auth login[/bold] to configure additional LLMs."
             )
 
     # 5. Repository State (20 points max)

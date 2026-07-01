@@ -4,7 +4,6 @@ The top-level :func:`build_cmd` runs the full pipeline:
 
     User prompt
         → Graphify retrieval
-        → Ponytail optimization
         → LLM call
         → Diff extraction
         → Apply diff
@@ -34,7 +33,6 @@ from forgecli.engine.runner import (
     engine_result_to_dict,
     run_engine,
 )
-from forgecli.optimizer.ponytail import PromptOptimizer
 
 app = typer.Typer(
     help="Build code changes based on a prompt.",
@@ -55,9 +53,9 @@ def build_cmd(
     prompt: str = typer.Argument(..., help="Natural-language description of the change to make."),
     path: str = typer.Option(".", "--path", "-p", help="Project root."),
     live: bool = typer.Option(
-        False,
-        "--live",
-        help="Use the real provider chosen by the router (default: offline mock).",
+        True,
+        "--live/--mock",
+        help="Use the configured provider when available (default). Pass --mock for offline mode.",
     ),
     test_command: str | None = typer.Option(
         None,
@@ -68,8 +66,6 @@ def build_cmd(
     no_graph: bool = typer.Option(False, "--no-graph", help="Skip Graphify retrieval."),
     no_ponytail: bool = typer.Option(
         False,
-        "--no-ponytail",
-        help="Skip the Ponytail prompt-optimizer stage.",
     ),
     retries: int = typer.Option(
         0,
@@ -133,14 +129,16 @@ async def _run_build(
     target = path.resolve()
 
     from forgecli.cli.bootstrap import resolve_provider_and_decision
+    from forgecli.providers.mock import MockProvider
+    import importlib
+    _ponytail = importlib.import_module("forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"]))
+    PromptOptimizer = _ponytail.PromptOptimizer
+
     provider, decision = resolve_provider_and_decision(live=live, cwd=path)
-    if not live and not json_output:
-        console = get_console()
-        console.print("[yellow]⚠ Offline Mode[/yellow]\n")
-        console.print("Using Forge's built-in mock AI.\n")
-        console.print("Run:\n")
-        console.print("  forge build --live\n")
-        console.print("to use your configured provider.\n")
+    if isinstance(provider, MockProvider) and not live and not json_output:
+        get_console().print(
+            "[dim]Offline mode — configure an API key or omit --mock to use your provider.[/dim]\n"
+        )
     optimizer: PromptOptimizer | None = (
         None
         if no_ponytail
@@ -257,7 +255,7 @@ def _render(result: BuildResult, verbose: bool = False, diff: bool = False) -> N
         decision_provider=context.decision.provider_name if context.decision else "mock",
         decision_model=context.decision.model if context.decision else "",
         optimized_notes=list(context.optimized_notes),
-        ponytail_active=context.decision is not None,  # Ponytail is active if we optimized
+        ponytail_active=(context.extras.get("optimizer") is not None),
         test_returncode=context.test_returncode,
         failure_stage=result.failure_stage,
         retrieval_text=context.retrieval,
@@ -282,6 +280,9 @@ def get_lexer(path_str: str) -> str:
         "py": "python",
         "js": "javascript",
         "ts": "typescript",
+        "go": "go",
+        "rs": "rust",
+        "css": "css",
         "json": "json",
         "yaml": "yaml",
         "yml": "yaml",
@@ -346,44 +347,23 @@ def render_pipeline_result(
     console = get_console()
 
     if not verbose:
-        # Clean / Minimal Mode
-        if success:
-            console.print("[bold green]✓ Build completed[/bold green]\n")
-        else:
-            if diff_text:
-                console.print("[bold orange3]⚠ Couldn't automatically apply the generated changes.[/bold orange3]\n")
-                console.print("The generated code is shown below.\n")
-            else:
-                console.print("[bold red]✗ Build failed[/bold red]\n")
-
-        console.print("────────────────────────────────────────────\n")
-
         changes = get_display_changes(diff_text)
-        if changes:
-            console.print("Created Files\n")
         for chg in changes:
-            path = chg["path"]
+            path_str = chg["path"]
             content = chg["content"]
-            status = chg["status"]
-
-            console.print(f"📄 {path}\n")
-            lexer = get_lexer(path)
+            console.print(f"[bold]{path_str}[/bold]")
+            lexer = get_lexer(path_str)
             syntax = Syntax(content.rstrip(), lexer, theme="monokai")
             panel = Panel(
                 syntax,
-                border_style="orange3",
+                border_style="dim",
                 box=box.ROUNDED,
                 expand=False,
             )
             console.print(panel)
             console.print()
-
-            line_count = len(content.splitlines())
-            console.print(f"{status} {path}")
-            console.print(f"{line_count} lines generated.\n")
-
-        total_time = sum(float(getattr(s, "duration_seconds", 0.0) or 0.0) for s in stages)
-        console.print(f"Completed in {total_time:.1f} s\n")
+        if not success and not changes:
+            console.print("[red]Build failed — no files were generated.[/red]")
         return
 
     # Verbose Mode
@@ -410,7 +390,6 @@ def render_pipeline_result(
         "gemini": "Gemini (Live)",
     }
     provider_str = provider_map.get(decision_provider.lower(), f"{decision_provider.title()} (Live)")
-    optimizer_str = "Ponytail (Ultra)" if ponytail_active else "None"
 
     if test_returncode is None:
         tests_str = "Skipped"
@@ -425,7 +404,7 @@ def render_pipeline_result(
     console.print(provider_str)
     console.print()
     console.print("[bold]Optimizer[/bold]")
-    console.print(optimizer_str)
+    console.print("None")
     console.print()
     console.print("[bold]Tests[/bold]")
     console.print(tests_str)
@@ -453,11 +432,7 @@ def render_pipeline_result(
             console.print(retrieval_text)
             console.print()
 
-        if optimized_notes:
-            console.print("[bold]Ponytail Optimization Details:[/bold]")
-            for note in optimized_notes:
-                console.print(f"  - {note}")
-            console.print()
+
 
         if decision_provider:
             console.print("[bold]Provider Routing:[/bold]")

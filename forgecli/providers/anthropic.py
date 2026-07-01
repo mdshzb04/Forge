@@ -13,6 +13,8 @@ from typing import Any
 
 import httpx
 
+from collections.abc import AsyncIterator
+
 from forgecli.providers.base import (
     ChatMessage,
     ChatRequest,
@@ -21,6 +23,7 @@ from forgecli.providers.base import (
     EmbeddingResponse,
     ModelInfo,
     Role,
+    StreamChunk,
 )
 from forgecli.providers.http_base import HTTPChatProvider
 
@@ -123,6 +126,51 @@ class AnthropicProvider(HTTPChatProvider):
             ),
             raw=payload,
         )
+
+    async def stream(self, request: ChatRequest) -> AsyncIterator[StreamChunk]:
+        from forgecli.core.errors import ProviderError
+        if not self._api_key:
+            self.validate()
+        body = self._format_request(request)
+        body["stream"] = True
+
+        req = self._client.build_request(
+            "POST", self._chat_url(), json=body, headers=self._auth_headers()
+        )
+        response = await self._client.send(req, stream=True)
+        if response.status_code >= 400:
+            await response.aread()
+            raise ProviderError(
+                f"{self.name} stream failed ({response.status_code}): {response.text[:500]}"
+            )
+
+        import json
+        try:
+            event_name = None
+            async for line in response.aiter_lines():
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith("event: "):
+                    event_name = line[7:]
+                elif line.startswith("data: "):
+                    data_str = line[6:]
+                    try:
+                        payload = json.loads(data_str)
+                        if event_name == "content_block_delta":
+                            delta = payload.get("delta", {})
+                            if delta.get("type") == "text_delta":
+                                text = delta.get("text", "")
+                                yield StreamChunk(delta=text, raw=payload)
+                        elif event_name == "message_delta":
+                            delta = payload.get("delta", {})
+                            finish_reason = delta.get("stop_reason")
+                            if finish_reason:
+                                yield StreamChunk(delta="", finish_reason=finish_reason, raw=payload)
+                    except Exception:
+                        pass
+        finally:
+            await response.aclose()
 
     # Anthropic does not expose a public embeddings endpoint; we
     # surface a clear error rather than a confusing 404.

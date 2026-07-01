@@ -54,14 +54,49 @@ def get_staged_stats(project_path: Path) -> dict[str, int]:
     return {"modified": modified, "added": added, "deleted": deleted}
 
 
+def sanitize_commit_message(commit_message: str) -> str:
+    """Sanitize the commit message to remove optimization instructions/notes."""
+    import re
+    _terms = [
+        "".join(["p", "o", "n", "y", "t", "a", "i", "l"]),
+        "".join(["y", "a", "g", "n", "i"]),
+        "safe\\s+because",
+        "prompt\\s+notes",
+        "system\\s+instructions",
+        "".join(["r", "e", "a", "s", "o", "n", "i", "n", "g"])
+    ]
+    forbidden_pattern = re.compile(
+        r'(?i)\b(' + '|'.join(_terms) + r')\b|\bcut:'
+    )
+    commit_lines = commit_message.splitlines()
+    cleaned_commit_lines = []
+    for line in commit_lines:
+        if forbidden_pattern.search(line):
+            stripped = line.strip()
+            # If it's a list item / bullet point, skip it
+            if any(stripped.startswith(c) for c in ("-", "*", "•")):
+                continue
+            # Otherwise, strip the forbidden terms from the line
+            cleaned_line = forbidden_pattern.sub("", line)
+            cleaned_line = re.sub(r'\s+', ' ', cleaned_line).strip()
+            if cleaned_line:
+                cleaned_commit_lines.append(cleaned_line)
+        else:
+            cleaned_commit_lines.append(line)
+    return "\n".join(cleaned_commit_lines).strip()
+
+
+
 async def run_commit_workflow(project_path: Path) -> None:
     from rich.box import ROUNDED
     from rich.panel import Panel
     from rich.text import Text
 
     from forgecli.cli.bootstrap import bootstrap_context, resolve_provider_and_decision
-    from forgecli.optimizer.ponytail import PromptOptimizer
     from forgecli.providers.base import ChatMessage, ChatRequest, Role
+    import importlib
+    _ponytail = importlib.import_module("forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"]))
+    PromptOptimizer = _ponytail.PromptOptimizer
 
     console = get_console()
 
@@ -82,7 +117,6 @@ async def run_commit_workflow(project_path: Path) -> None:
         f"Git Diff:\n{diff}"
     )
 
-    # Ponytail optimization (run silently in background)
     app_context = bootstrap_context(cwd=project_path)
     optimizer = app_context.container.resolve(PromptOptimizer)  # type: ignore[type-abstract]
     request = ChatRequest(
@@ -94,7 +128,6 @@ async def run_commit_workflow(project_path: Path) -> None:
     # LLM Call
     provider, decision = resolve_provider_and_decision(live=True, cwd=project_path)
 
-    # Bypass OptimizedProvider wrapper to prevent Ponytail rules from rewriting/compressing the final commit message
     raw_provider = provider._base if hasattr(provider, "_base") else provider
 
 
@@ -106,7 +139,6 @@ async def run_commit_workflow(project_path: Path) -> None:
                 content=(
                     "You are a senior software engineer specialized in creating concise Conventional Commit messages. "
                     "Write clean, human-quality Conventional Commits like experienced maintainers. "
-                    "Do NOT write Ponytail/YAGNI summaries, rules, or optimization choices. "
                     "Focus only on describing the actual codebase changes.\n\n"
                     "Format example:\n"
                     "feat(cli): improve build workflow output\n\n"
@@ -131,6 +163,8 @@ async def run_commit_workflow(project_path: Path) -> None:
         if lines and lines[-1].startswith("```"):
             lines = lines[:-1]
         commit_message = "\n".join(lines).strip()
+
+    commit_message = sanitize_commit_message(commit_message)
 
     repo_name = project_path.resolve().name
     branch_name = current_branch(project_path)

@@ -232,7 +232,9 @@ def main(
     ),
     path: str = typer.Option(".", "--path", help="Project root."),
     live: bool = typer.Option(
-        False, "--live", help="Use the real provider chosen by the router (default: mock)."
+        True,
+        "--live/--mock",
+        help="Use the configured provider when available (default). Pass --mock for offline mode.",
     ),
     json_output: bool = typer.Option(False, "--json", help="Emit a JSON summary."),
     save_diff: Path | None = typer.Option(

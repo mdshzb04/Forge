@@ -18,6 +18,8 @@ from typing import Any
 
 import httpx
 
+from collections.abc import AsyncIterator
+
 from forgecli.providers.base import (
     ChatMessage,
     ChatRequest,
@@ -26,6 +28,7 @@ from forgecli.providers.base import (
     EmbeddingResponse,
     ModelInfo,
     Role,
+    StreamChunk,
 )
 from forgecli.providers.http_base import HTTPChatProvider
 
@@ -164,6 +167,53 @@ class GeminiProvider(HTTPChatProvider):
             total_tokens=int(usage.get("totalTokenCount", 0) or 0),
             raw=payload,
         )
+
+    async def stream(self, request: ChatRequest) -> AsyncIterator[StreamChunk]:
+        from forgecli.core.errors import ProviderError
+        if not self._api_key:
+            self.validate()
+        body = self._format_request(request)
+        model = request.model or self.config.default_model
+        url = (
+            f"{self._base_url}/models/{model}:streamGenerateContent"
+            f"?key={self._api_key or ''}"
+        )
+        req = self._client.build_request(
+            "POST", url, json=body, headers=self._auth_headers()
+        )
+        response = await self._client.send(req, stream=True)
+        if response.status_code >= 400:
+            await response.aread()
+            raise ProviderError(
+                f"{self.name} stream failed ({response.status_code}): {response.text[:500]}"
+            )
+
+        import json
+        try:
+            async for line in response.aiter_lines():
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith(","):
+                    line = line[1:].strip()
+                if line.startswith("[") or line.endswith("]"):
+                    line = line.strip("[]").strip()
+                if not line:
+                    continue
+                try:
+                    payload = json.loads(line)
+                    candidates = payload.get("candidates") or []
+                    if candidates:
+                        first = candidates[0]
+                        content = first.get("content") or {}
+                        parts = content.get("parts") or []
+                        text = "".join(str(p.get("text", "")) for p in parts if isinstance(p, dict))
+                        finish_reason = first.get("finishReason")
+                        yield StreamChunk(delta=text, finish_reason=finish_reason, raw=payload)
+                except Exception:
+                    pass
+        finally:
+            await response.aclose()
 
     def _format_embeddings(self, request: EmbeddingRequest) -> dict[str, Any]:
         # The Gemini embedContent endpoint takes a single ``content``
