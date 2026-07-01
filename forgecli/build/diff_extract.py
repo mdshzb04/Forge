@@ -21,7 +21,7 @@ from forgecli.build import BuildContext
 _GIT_DIFF_HEADER = re.compile(r"^diff --git ", re.MULTILINE)
 _UNIFIED_HEADER = re.compile(r"^--- ", re.MULTILINE)
 _DIFF_LINE = re.compile(r"^(?:--- |\+\+\+ |@@ | |\+|-)", re.MULTILINE)
-_DIFF_OR_CONTEXT = re.compile(r"^(?:--- |\+\+\+ |@@ | |\+|-|index )", re.MULTILINE)
+_DIFF_OR_CONTEXT = re.compile(r"^(?:--- |\+\+\+ |@@ | |\+|-|index |new file |deleted file |similarity |rename |copy )", re.MULTILINE)
 _FENCE_OPEN = re.compile(r"^\s*```(?:\w+)?\s*$")
 _FENCE_CLOSE = re.compile(r"^\s*```\s*$")
 

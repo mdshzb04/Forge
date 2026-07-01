@@ -226,6 +226,11 @@ async def _run_build(
 def _render(result: BuildResult) -> None:
     context = result.context
     console = get_console()
+    if context.response and context.response.message and context.response.message.content:
+        console.print()
+        console.print("[bold cyan]Generated response/diff:[/bold cyan]")
+        console.print(context.response.message.content)
+        console.print()
     if context.summary:
         console.print(context.summary)
     console.print()

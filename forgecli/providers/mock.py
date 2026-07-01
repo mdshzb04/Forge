@@ -43,13 +43,52 @@ class MockProvider(Provider[MockProviderConfig]):
             None,
         )
         text = last_user.content if last_user else ""
+        
+        has_diff_request = any(
+            m.role is Role.SYSTEM and "diff" in m.content.lower()
+            for m in request.messages
+        )
+        
+        if has_diff_request:
+            text_lower = text.lower()
+            if "html" in text_lower or "page" in text_lower:
+                content = (
+                    "diff --git a/index.html b/index.html\n"
+                    "new file mode 100644\n"
+                    "index 0000000..e69de29\n"
+                    "--- /dev/null\n"
+                    "+++ b/index.html\n"
+                    "@@ -0,0 +1,5 @@\n"
+                    "+<!DOCTYPE html>\n"
+                    "+<html>\n"
+                    "+<head><title>Simple Page</title></head>\n"
+                    "+<body><h1>Hello, World!</h1></body>\n"
+                    "+</html>\n"
+                )
+            else:
+                content = (
+                    "diff --git a/main.py b/main.py\n"
+                    "new file mode 100644\n"
+                    "index 0000000..e69de29\n"
+                    "--- /dev/null\n"
+                    "+++ b/main.py\n"
+                    "@@ -0,0 +1,5 @@\n"
+                    "+def main():\n"
+                    "+    print(\"Hello from mock build!\")\n"
+                    "+\n"
+                    "+if __name__ == '__main__':\n"
+                    "+    main()\n"
+                )
+        else:
+            content = f"[mock] {text}"
+
         return ChatResponse(
             model=request.model or self.config.default_model,
-            message=ChatMessage(role=Role.ASSISTANT, content=f"[mock] {text}"),
+            message=ChatMessage(role=Role.ASSISTANT, content=content),
             finish_reason="stop",
             prompt_tokens=len(text),
-            completion_tokens=len(text),
-            total_tokens=len(text) * 2,
+            completion_tokens=len(content),
+            total_tokens=len(text) + len(content),
         )
 
     async def stream(self, request: ChatRequest):
