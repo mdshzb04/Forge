@@ -261,6 +261,7 @@ def main(
         help="Path to a forgecli.toml file.",
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging."),
+    diff: bool = typer.Option(False, "--diff", "-d", help="Show unified git diff."),
     version: bool = typer.Option(
         False,
         "--version",
@@ -326,6 +327,8 @@ def main(
                 save_diff=save_diff,
                 no_commit=no_commit,
                 no_tests=no_tests,
+                verbose=verbose,
+                diff=diff,
             )
         )
     except typer.Exit:

@@ -82,6 +82,12 @@ def review_cmd(
         "--live",
         help="Use the real provider (default: mock).",
     ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Enable verbose output.",
+    ),
 ) -> None:
     """Run the full repository review and print a report."""
     if ctx.invoked_subcommand is not None:
@@ -91,6 +97,15 @@ def review_cmd(
     from forgecli.providers.mock import MockProvider
 
     provider, decision = resolve_provider_and_decision(live=live, cwd=Path(path))
+
+    if isinstance(provider, MockProvider) and not live:
+        if not json_output and not md_output:
+            console = get_console()
+            console.print("[yellow]⚠ Offline Mode[/yellow]\n")
+            console.print("Using Forge's built-in mock AI.\n")
+            console.print("Run:\n")
+            console.print("  forge review --live\n")
+            console.print("to use your configured provider.\n")
 
     import asyncio
 
@@ -107,6 +122,7 @@ def review_cmd(
     orchestrator = Orchestrator(registry_obj, provider=provider, decision=decision)
 
     review: RepositoryReview | None = None
+    result = None
     try:
         if isinstance(provider, MockProvider):
             raise ValueError("No live provider configured")
@@ -116,10 +132,6 @@ def review_cmd(
             raise Exception(result.error or "Orchestrator failed")
 
         review = result.extras.get("review")
-        if not json_output and not md_output:
-            get_console().print()
-            get_console().print(result.summary)
-            get_console().print()
     except Exception as exc:
         if not json_output and not md_output:
             warn(f"Live provider could not be used ({exc}). Falling back to static review scan.")
@@ -148,9 +160,56 @@ def review_cmd(
         sys.stdout.write(review_to_markdown(review))
         sys.stdout.flush()
     else:
-        print_review(review, console=get_console(), full=full)
+        console = get_console()
+        console.print("────────────────────────────────────────\n")
+        print_review(review, console=console, full=full)
+        if result and result.summary:
+            from rich.markdown import Markdown
+            console.print(Markdown(result.summary.strip()))
+            console.print()
 
-    _print_summary(review)
+        # concise summary block
+        provider_name = decision.provider_name if decision else "mock"
+        provider_map = {
+            "mock": "Mock (Offline)",
+            "openai": "OpenAI (Live)",
+            "anthropic": "Anthropic (Live)",
+            "google": "Gemini (Live)",
+            "gemini": "Gemini (Live)",
+        }
+        provider_str = provider_map.get(provider_name.lower(), f"{provider_name.title()} (Live)")
+
+        console.print("[bold]Provider[/bold]")
+        console.print(provider_str)
+        console.print()
+        console.print("[bold]Tests[/bold]")
+        counts = review.counts_by_severity()
+        console.print(f"Files: {review.stats.get('files', 0)} | Findings: {len(review.findings)} | Critical: {counts[Severity.CRITICAL]}")
+        console.print()
+        console.print("[bold]Time[/bold]")
+        duration = 0.1
+        if result and hasattr(result, "duration_seconds"):
+            duration = result.duration_seconds
+        console.print(f"{duration:.1f} seconds")
+        console.print()
+
+        if verbose and result and hasattr(result, "stages") and result.stages:
+            console.print("[bold yellow]=== Pipeline Stages timings ===[/bold yellow]\n")
+            rows = []
+            for s in result.stages:
+                rows.append([
+                    str(s.get("name", "Stage")),
+                    str(s.get("status", "succeeded")),
+                    f"{float(s.get('duration_seconds') or 0.0):.3f}s",
+                    str(s.get("error") or "—")
+                ])
+            table(["Stage", "Status", "Duration", "Error"], rows, title="Pipeline stages")
+            console.print()
+
+        console.print("────────────────────────────────────────")
+
+    if not json_output and not md_output and verbose:
+        _print_summary(review)
     if fail_on_critical and review.is_blocking:
         raise typer.Exit(code=1)
 

@@ -89,6 +89,8 @@ def build_cmd(
         "--use-engine",
         help="Use the new ExecutionEngine pipeline (default: legacy BuildPipeline).",
     ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output."),
+    diff: bool = typer.Option(False, "--diff", "-d", help="Show unified git diff."),
 ) -> None:
     """Run the full pipeline on ``prompt``."""
     if ctx.invoked_subcommand is not None:
@@ -107,9 +109,10 @@ def build_cmd(
             json_output=json_output,
             save_diff=save_diff,
             use_engine=use_engine,
+            verbose=verbose,
+            diff=diff,
         )
     )
-
 
 
 async def _run_build(
@@ -125,14 +128,21 @@ async def _run_build(
     json_output: bool,
     save_diff: Path | None,
     use_engine: bool = False,
+    verbose: bool = False,
+    diff: bool = False,
 ) -> None:
     context = bootstrap_context(cwd=str(path))
     target = path.resolve()
 
     from forgecli.cli.bootstrap import resolve_provider_and_decision
     provider, decision = resolve_provider_and_decision(live=live, cwd=path)
-    if not live:
-        info("Offline mode: using the mock provider. Pass --live to use the real one.")
+    if not live and not json_output:
+        console = get_console()
+        console.print("[yellow]⚠ Offline Mode[/yellow]\n")
+        console.print("Using Forge's built-in mock AI.\n")
+        console.print("Run:\n")
+        console.print("  forge build --live\n")
+        console.print("to use your configured provider.\n")
     optimizer: PromptOptimizer | None = (
         None
         if no_ponytail
@@ -173,18 +183,32 @@ async def _run_build(
         )
         if save_diff is not None and eng_result.context.diff_text:
             save_diff.write_text(eng_result.context.diff_text, encoding="utf-8")
-            info(f"Diff written to {save_diff}")
+            if verbose:
+                info(f"Diff written to {save_diff}")
         if json_output:
             sys.stdout.write(json.dumps(engine_result_to_dict(eng_result), indent=2))
             sys.stdout.write("\n")
             sys.stdout.flush()
             return
-        console = get_console()
-        console.print(engine_summary(eng_result))
-        if eng_result.success:
-            success("Build pipeline finished (ExecutionEngine).")
-        else:
-            error(f"Build failed at stage: {eng_result.failed_stage}")
+        
+        render_pipeline_result(
+            success=eng_result.success,
+            prompt=prompt,
+            diff_text=eng_result.context.diff_text,
+            applied_files=eng_result.context.applied_files,
+            stages=eng_result.context.log,
+            decision_provider=eng_result.context.model_selection.provider if eng_result.context.model_selection else "mock",
+            decision_model=eng_result.context.model_selection.model if eng_result.context.model_selection else "",
+            optimized_notes=list(eng_result.context.optimized_notes),
+            ponytail_active=not no_ponytail,
+            test_returncode=eng_result.context.test_returncode,
+            failure_stage=eng_result.failed_stage,
+            retrieval_text=eng_result.context.retrieval.context_text if eng_result.context.retrieval else "",
+            internal_summary="",
+            verbose=verbose,
+            diff=diff,
+        )
+        if not eng_result.success:
             raise typer.Exit(code=1)
         return
 
@@ -212,7 +236,8 @@ async def _run_build(
 
     if save_diff is not None and build_context.diff_text:
         save_diff.write_text(build_context.diff_text, encoding="utf-8")
-        info(f"Diff written to {save_diff}")
+        if verbose:
+            info(f"Diff written to {save_diff}")
 
     if json_output:
         sys.stdout.write(json.dumps(result_to_dict(result), indent=2))
@@ -220,43 +245,230 @@ async def _run_build(
         sys.stdout.flush()
         return
 
-    _render(result)
+    _render(result, verbose=verbose, diff=diff)
 
 
-def _render(result: BuildResult) -> None:
+def _render(result: BuildResult, verbose: bool = False, diff: bool = False) -> None:
     context = result.context
-    console = get_console()
-    if context.response and context.response.message and context.response.message.content:
-        console.print()
-        console.print("[bold cyan]Generated response/diff:[/bold cyan]")
-        console.print(context.response.message.content)
-        console.print()
-    if context.summary:
-        console.print(context.summary)
-    console.print()
-    rows: list[list[str]] = []
-    for record in context.stages:
-        rows.append(
-            [
-                record.name,
-                record.status.value,
-                f"{(record.duration_seconds or 0):.3f}s",
-                record.error or "—",
-            ]
-        )
-    table(["Stage", "Status", "Duration", "Error"], rows, title="Pipeline stages")
-    if result.success:
-        success("Build pipeline finished.")
-    else:
-        error(f"Build failed at stage: {result.failure_stage}")
-
-
-
+    render_pipeline_result(
+        success=result.success,
+        prompt=context.prompt,
+        diff_text=context.diff_text,
+        applied_files=context.applied_files,
+        stages=context.stages,
+        decision_provider=context.decision.provider_name if context.decision else "mock",
+        decision_model=context.decision.model if context.decision else "",
+        optimized_notes=list(context.optimized_notes),
+        ponytail_active=context.decision is not None,  # Ponytail is active if we optimized
+        test_returncode=context.test_returncode,
+        failure_stage=result.failure_stage,
+        retrieval_text=context.retrieval,
+        internal_summary=context.summary,
+        verbose=verbose,
+        diff=diff,
+    )
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def get_lexer(path_str: str) -> str:
+    name = path_str.split("/")[-1] if "/" in path_str else path_str
+    if "." in name:
+        ext = name.split(".")[-1].lower()
+    else:
+        ext = ""
+
+    mapping = {
+        "html": "html",
+        "htm": "html",
+        "py": "python",
+        "js": "javascript",
+        "ts": "typescript",
+        "json": "json",
+        "yaml": "yaml",
+        "yml": "yaml",
+        "md": "markdown",
+        "toml": "toml",
+    }
+    return mapping.get(ext, "text")
+
+
+def get_display_changes(diff_text: str) -> list[dict]:
+    from forgecli.build.apply import parse_unified_diff
+
+    try:
+        parsed_files = parse_unified_diff(diff_text)
+    except Exception:
+        return []
+
+    results = []
+    blocks = diff_text.split("diff --git ")
+
+    for parsed in parsed_files:
+        path = parsed.path
+        status = "Modified"
+        for block in blocks:
+            if f"b/{path}" in block or f"/{path}" in block:
+                if "new file" in block or "/dev/null" in block:
+                    status = "Created"
+                elif "deleted file" in block:
+                    status = "Deleted"
+                break
+
+        results.append({
+            "path": path,
+            "status": status,
+            "content": parsed.new_content
+        })
+    return results
+
+
+def render_pipeline_result(
+    *,
+    success: bool,
+    prompt: str,
+    diff_text: str,
+    applied_files: list[Path],
+    stages: list[Any],
+    decision_provider: str,
+    decision_model: str,
+    optimized_notes: list[str],
+    ponytail_active: bool,
+    test_returncode: int | None,
+    failure_stage: str | None,
+    retrieval_text: str,
+    internal_summary: str,
+    verbose: bool,
+    diff: bool,
+) -> None:
+    from rich.panel import Panel
+    from rich.syntax import Syntax
+
+    console = get_console()
+    console.print("────────────────────────────────────────\n")
+    if success:
+        console.print("[bold green]✓ Build completed[/bold green]\n")
+    else:
+        console.print("[bold red]✗ Build failed[/bold red]\n")
+        if failure_stage:
+            console.print(f"Failed at stage: [bold red]{failure_stage}[/bold red]\n")
+
+    # Print the files
+    changes = get_display_changes(diff_text)
+    if not (verbose or diff):
+        for chg in changes:
+            status = chg["status"]
+            path = chg["path"]
+            content = chg["content"]
+
+            console.print(f"[bold]{status}[/bold]\n")
+            console.print(f"[bold cyan]{path}[/bold cyan]\n")
+
+            lexer = get_lexer(path)
+            syntax = Syntax(content.rstrip(), lexer, theme="monokai")
+            panel = Panel(
+                syntax,
+                border_style="blue",
+                expand=False,
+            )
+            console.print(panel)
+            console.print()
+    else:
+        if diff_text:
+            console.print("[bold cyan]Unified Diff:[/bold cyan]\n")
+            console.print(diff_text)
+            console.print()
+
+    # Print summary
+    provider_map = {
+        "mock": "Mock (Offline)",
+        "openai": "OpenAI (Live)",
+        "anthropic": "Anthropic (Live)",
+        "google": "Gemini (Live)",
+        "gemini": "Gemini (Live)",
+    }
+    provider_str = provider_map.get(decision_provider.lower(), f"{decision_provider.title()} (Live)")
+    optimizer_str = "Ponytail (Ultra)" if ponytail_active else "None"
+
+    if test_returncode is None:
+        tests_str = "Skipped"
+    elif test_returncode == 0:
+        tests_str = "[bold green]✓ Passed[/bold green]"
+    else:
+        tests_str = f"[bold red]✗ Failed (exit {test_returncode})[/bold red]"
+
+    total_time = sum(float(getattr(s, "duration_seconds", 0.0) or 0.0) for s in stages)
+
+    console.print("[bold]Provider[/bold]")
+    console.print(provider_str)
+    console.print()
+    console.print("[bold]Optimizer[/bold]")
+    console.print(optimizer_str)
+    console.print()
+    diff_files = [chg["path"] for chg in changes]
+    if diff_files and not (verbose or diff):
+        # We only display this in clean mode
+        console.print("[bold]Output Files[/bold]")
+        console.print(", ".join(diff_files))
+        console.print()
+    console.print("[bold]Tests[/bold]")
+    console.print(tests_str)
+    console.print()
+    console.print("[bold]Time[/bold]")
+    console.print(f"{total_time:.1f} seconds")
+    console.print()
+
+    if verbose:
+        console.print("[bold yellow]=== Pipeline Stages timings ===[/bold yellow]\n")
+        rows: list[list[str]] = []
+        for s in stages:
+            name = getattr(s, "stage", None) or getattr(s, "name", "Stage")
+            status_val = getattr(s, "status", None)
+            if hasattr(status_val, "value"):
+                status_val = status_val.value
+            duration = getattr(s, "duration_seconds", 0.0) or 0.0
+            err = getattr(s, "error", None) or "—"
+            rows.append([str(name), str(status_val), f"{duration:.3f}s", str(err)])
+        table(["Stage", "Status", "Duration", "Error"], rows, title="Pipeline stages")
+        console.print()
+
+        if retrieval_text:
+            console.print("[bold]Graph Retrieval Details:[/bold]")
+            console.print(retrieval_text)
+            console.print()
+
+        if optimized_notes:
+            console.print("[bold]Ponytail Optimization Details:[/bold]")
+            for note in optimized_notes:
+                console.print(f"  - {note}")
+            console.print()
+
+        if decision_provider:
+            console.print("[bold]Provider Routing:[/bold]")
+            console.print(f"  Provider: {decision_provider}")
+            console.print(f"  Model: {decision_model}")
+            console.print()
+
+        if applied_files:
+            console.print("[bold]Files touched:[/bold]")
+            for f in applied_files:
+                console.print(f"  - {f}")
+            console.print()
+
+        if diff_text:
+            console.print("[bold]Diff Extraction:[/bold]")
+            console.print(f"  Diff length: {len(diff_text)} chars")
+            console.print()
+
+        if internal_summary:
+            console.print("[bold]Internal Diagnostics:[/bold]")
+            console.print(internal_summary)
+            console.print()
+
+    console.print("────────────────────────────────────────")
 
 
 def _GraphType():

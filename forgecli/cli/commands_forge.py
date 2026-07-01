@@ -131,6 +131,8 @@ def forge_cmd(
     no_tests: bool = typer.Option(
         False, "--no-tests", help="Skip the test stage."
     ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output."),
+    diff: bool = typer.Option(False, "--diff", "-d", help="Show unified git diff."),
 ) -> None:
     """Top-level Forge command: run the full pipeline on a free-form prompt."""
     if ctx.invoked_subcommand is not None:
@@ -152,6 +154,8 @@ def forge_cmd(
             save_diff=save_diff,
             no_commit=no_commit,
             no_tests=no_tests,
+            verbose=verbose,
+            diff=diff,
         )
     )
 
@@ -165,6 +169,8 @@ async def run_forge(
     save_diff: Path | None,
     no_commit: bool,
     no_tests: bool,
+    verbose: bool = False,
+    diff: bool = False,
 ) -> None:
     """Run the orchestrator on ``text`` and render the result.
 
@@ -177,13 +183,21 @@ async def run_forge(
     test_command = "true" if no_tests else None
     from forgecli.cli.bootstrap import resolve_provider_and_decision
     provider, decision = resolve_provider_and_decision(live=live, cwd=path)
+    if not live and not json_output:
+        console = get_console()
+        console.print("[yellow]⚠ Offline Mode[/yellow]\n")
+        console.print("Using Forge's built-in mock AI.\n")
+        console.print("Run:\n")
+        console.print("  forge --live \"<prompt>\"\n")
+        console.print("to use your configured provider.\n")
     _register_default_workflows(provider, test_command=test_command)
     orchestrator = Orchestrator(_REGISTRY, provider=provider, decision=decision)
     result = await orchestrator.run(text)
 
     if save_diff and result.diff:
         save_diff.write_text(result.diff, encoding="utf-8")
-        info(f"Diff written to {save_diff}.")
+        if verbose:
+            info(f"Diff written to {save_diff}.")
 
     if json_output:
         payload = {
@@ -200,7 +214,7 @@ async def run_forge(
         sys.stdout.write("\n")
         sys.stdout.flush()
     else:
-        render_result(result)
+        render_result(result, verbose=verbose, diff=diff)
 
     # Auto-commit (unless disabled).
     if result.success and not no_commit and result.files_touched:
@@ -211,35 +225,93 @@ async def run_forge(
         raise typer.Exit(code=1)
 
 
-def render_result(result) -> None:
+def render_result(result, verbose: bool = False, diff: bool = False) -> None:
     console = get_console()
-    console.print()
-    console.print(f"[bold]Intent:[/bold] {result.intent.value}")
-    console.print(f"[bold]Workflow:[/bold] {result.workflow}")
-    console.print(f"[bold]Duration:[/bold] {result.duration_seconds:.2f}s")
-    console.print()
-    if result.summary:
-        console.print(result.summary)
-    if result.files_touched:
-        rel = [str(p) for p in result.files_touched]
-        rows = [[p] for p in rel]
-        table(["File"], rows, title=f"Files touched ({len(rel)})")
-    if result.stages:
-        rows = [
-            [
-                str(s.get("name", "?")),
-                str(s.get("status", "?")),
-                f"{float(s.get('duration_seconds') or 0.0):.3f}s",
-                str(s.get("error") or "—"),
-            ]
-            for s in result.stages
-        ]
-        table(["Stage", "Status", "Duration", "Error"], rows, title="Pipeline stages")
-
+    console.print("────────────────────────────────────────\n")
     if result.success:
-        success("Forge pipeline finished.")
+        console.print("[bold green]✓ Forge completed[/bold green]\n")
     else:
-        warn("Forge pipeline did not complete successfully.")
+        console.print("[bold red]✗ Forge failed[/bold red]\n")
+
+    from forgecli.cli.commands_build import get_display_changes, get_lexer
+    from rich.panel import Panel
+    from rich.syntax import Syntax
+
+    changes = get_display_changes(result.diff)
+    if not (verbose or diff):
+        for chg in changes:
+            status = chg["status"]
+            path = chg["path"]
+            content = chg["content"]
+
+            console.print(f"[bold]{status}[/bold]\n")
+            console.print(f"[bold cyan]{path}[/bold cyan]\n")
+
+            lexer = get_lexer(path)
+            syntax = Syntax(content.rstrip(), lexer, theme="monokai")
+            panel = Panel(syntax, border_style="blue", expand=False)
+            console.print(panel)
+            console.print()
+    else:
+        if result.diff:
+            console.print("[bold cyan]Unified Diff:[/bold cyan]\n")
+            console.print(result.diff)
+            console.print()
+
+    # Try to find provider name
+    provider_name = "mock"
+    if result.extras and result.extras.get("decision"):
+        provider_name = result.extras["decision"].provider_name
+
+    provider_map = {
+        "mock": "Mock (Offline)",
+        "openai": "OpenAI (Live)",
+        "anthropic": "Anthropic (Live)",
+        "google": "Gemini (Live)",
+        "gemini": "Gemini (Live)",
+    }
+    provider_str = provider_map.get(provider_name.lower(), f"{provider_name.title()} (Live)")
+
+    if result.summary and result.workflow not in ("build", "legacy"):
+        from rich.markdown import Markdown
+        console.print(Markdown(result.summary.strip()))
+        console.print()
+
+    console.print("[bold]Intent[/bold]")
+    console.print(result.intent.value)
+    console.print()
+    console.print("[bold]Workflow[/bold]")
+    console.print(result.workflow)
+    console.print()
+    console.print("[bold]Provider[/bold]")
+    console.print(provider_str)
+    console.print()
+
+    diff_files = [chg["path"] for chg in changes]
+    if diff_files and not (verbose or diff):
+        console.print("[bold]Output Files[/bold]")
+        console.print(", ".join(diff_files))
+        console.print()
+
+    console.print("[bold]Time[/bold]")
+    console.print(f"{result.duration_seconds:.1f} seconds")
+    console.print()
+
+    if verbose:
+        if result.stages:
+            console.print("[bold yellow]=== Pipeline Stages timings ===[/bold yellow]\n")
+            rows = []
+            for s in result.stages:
+                rows.append([
+                    str(s.get("name", "Stage")),
+                    str(s.get("status", "succeeded")),
+                    f"{float(s.get('duration_seconds') or 0.0):.3f}s",
+                    str(s.get("error") or "—")
+                ])
+            table(["Stage", "Status", "Duration", "Error"], rows, title="Pipeline stages")
+            console.print()
+
+    console.print("────────────────────────────────────────")
 
 
 def _maybe_commit(project: Path, result) -> None:
