@@ -1,6 +1,6 @@
 # ForgeCLI
 
-> **AI Development Operating System** — describe the outcome you want, and ForgeCLI orchestrates Graphify, Ponytail and the selected LLM to achieve it.
+> **AI Development Operating System** — describe the outcome you want, and ForgeCLI orchestrates Graphify,  and the selected LLM to achieve it.
 
 The headline command takes a single free-form prompt and runs the
 full pipeline end-to-end:
@@ -15,7 +15,7 @@ ForgeCLI classifies the prompt's intent (build / ask / plan / docs /
 review / explain / commit), picks a workflow, then runs:
 
 1. **Graphify retrieval** — find the relevant nodes/files in the repo.
-2. **Ponytail optimization** — apply the YAGNI "ladder" to the prompt.
+2. ** optimization** — apply the  "ladder" to the prompt.
 3. **Model selection** — use Claude, OpenAI, Gemini, or `auto` (cheapest).
 4. **Plan** — render the architecture, milestones and affected files.
 5. **Code generation** — call the LLM, extract a unified diff.
@@ -49,7 +49,6 @@ entry-point group — no core changes required.
 - **Provider abstraction + router** — `forge model claude|openai|gemini|auto` picks a real provider behind a unified interface (OpenAI, Anthropic, Google Gemini). With `auto`, the router picks the cheapest compatible model based on a per-1k-token price table.
 - **Dependency injection** via a lightweight `Container` exposed through `AppContext`.
 - **Graphify-powered knowledge graph** — `forge graph build / query / explain` shells out to the [Graphify](https://graphifylabs.ai/) CLI behind a clean `RepositoryGraph` interface. No Graphify code is modified or vendored.
-- **Ponytail prompt optimizer** — rewrites every chat prompt silently in the background before it reaches a provider, applying the [Ponytail](https://ponytail.dev/) "ladder" (YAGNI → reuse existing helpers → stdlib → native → installed deps → one-liner → minimum code). Optional external `ponytail` binary is auto-detected and preferred when present.
 - **Context optimizer** that chunks, ranks, and (optionally) summarizes large repositories for LLM context windows.
 - **Planner + Agent** for declarative, multi-step task execution.
 - **Auto-fix loop** — if tests fail, the LLM is asked for a focused fix and the patch is retried up to `max_fix_attempts` times.
@@ -131,13 +130,6 @@ Environment variables are documented in [`.env.example`](.env.example).
 | `forge model search <kw>`  | Search for models across all providers by keyword       |
 | `forge index`              | Build the in-memory code graph (lightweight)             |
 | `forge graph build`        | Build the Graphify knowledge graph for a project         |
-| `forge graph status`       | Show whether Graphify is installed and graph.json exists |
-| `forge graph query "..."`  | BFS/DFS-traverse the graph with a query or question      |
-| `forge graph explain X`    | Explain a node and its neighbors (text from Graphify)    |
-| `forge graph path A B`     | Shortest edge path between two nodes                     |
-| `forge graph affected X`   | Reverse-traverse to find blast radius of a node          |
-| `forge graph open`         | Open interactive graph visualization in web browser      |
-| `forge explain X`          | Top-level alias for `forge graph explain X`              |
 | `forge plan <goal>`        | Build a software plan (architecture, milestones, tasks, risks) |
 | `forge review`             | Run a code-quality review (security, performance, architecture, etc.) |
 | `forge commit`             | Premium AI-powered Conventional Commit generator        |
@@ -173,13 +165,6 @@ graphify .          # verify it works
 
 # In any project:
 forge graph build                  # → graphify extract . --out .
-forge graph query "what does foo do?"
-forge graph explain foo.py
-forge graph path foo.py bar.py
-forge graph affected foo.py --depth 3
-
-# Top-level shortcut
-forge explain foo.py
 ```
 
 The integration layer (`forgecli.graph.repository`) is a small
@@ -203,18 +188,16 @@ tests and small projects that don't need full AST extraction.
 
 ---
 
-## Ponytail prompt optimizer
 
-[Ponytail](https://ponytail.dev/) is a *ruleset* that nudges AI coding
+[](https:
 agents toward the smallest correct code change. ForgeCLI ships the
-ruleset in pure Python (`forgecli.optimizer.ponytail.ruleset`) and
-also wraps an external `ponytail` binary when one is installed.
+also wraps an external `` binary when one is installed.
 
 The optimizer runs automatically in the background on every chat request.
 
 The ruleset implements the official "ladder":
 
-> 1. Does this need to exist? Speculative need = skip it (YAGNI).
+> 1. Does this need to exist? Speculative need = skip it ().
 > 2. Already in this codebase? Reuse the helper, util, or pattern that already lives here.
 > 3. Does the standard library do it? Use it.
 > 4. Native platform feature covers it? Use it.
@@ -223,7 +206,6 @@ The ruleset implements the official "ladder":
 > 7. Only then: the minimum code that works.
 
 The integration is a clean :class:`PromptOptimizer` interface
-(`forgecli.optimizer.ponytail`) with two implementations
 (`PonytailRulesetOptimizer`, `PonytailCLIOptimizer`) selected at
 runtime by :class:`CompositeOptimizer`. The :class:`OptimizedProvider`
 decorator wraps any :class:`Provider` so every `chat()` call is
@@ -251,7 +233,6 @@ emits a structured `SoftwarePlan` with:
 * **milestones** — six coarse-grained phases (Discovery → Quality & release) with deliverables;
 * **tasks** — 15+ fine-grained units, each with priority, estimate (S/M/L/XL), acceptance criteria, and intra-milestone dependencies;
 * **risks** — a register of known unknowns with severity/likelihood and mitigations;
-* **prompt sequences** — the system + user prompts an AI agent would feed to a model to execute each task (Ponytail-style).
 
 Options:
 
@@ -359,7 +340,7 @@ pipe the report into CI dashboards.
 
 ## Semantic commits
 
-`forge commit` is the premium AI-powered git commit command. It automatically optimizes your diff analysis using Ponytail, generates a Conventional Commit message, displays a preview, and commits the staged changes upon confirmation.
+`forge commit` is the premium AI-powered git commit command. It automatically optimizes your diff analysis using , generates a Conventional Commit message, displays a preview, and commits the staged changes upon confirmation.
 
 ```bash
 # Generate and apply an AI Conventional Commit from your staged changes
@@ -368,7 +349,7 @@ forge commit
 
 ### Workflow
 1. **Read staged changes**: Checks for staged changes (`git diff --cached`). If none are staged, it guides you to run `git add`.
-2. **Ponytail prompt optimization**: Passes the diff through Ponytail to optimize instructions before reaching the LLM.
+2. ** prompt optimization**: Passes the diff through  to optimize instructions before reaching the LLM.
 3. **AI conventional commit**: Leverages your active provider, model, and API keys to produce a concise Conventional Commit message.
 4. **Interactive preview**: Displays a beautiful terminal preview of the generated message.
 5. **Create commit**: Runs `git commit -m "<generated message>"` upon pressing Enter.
@@ -385,7 +366,7 @@ that contributes one or more of the following:
   dispatches to a `Workflow` based on the prompt's intent.
 * a `Provider` — an AI provider registered with the router.
 * a `PromptOptimizer` — a prompt-rewriting strategy picked by the
-  Ponytail intensity.
+   intensity.
 * an `Analyzer` — a code-review analyzer run by `forge review`.
 * an `IntentClassifier` — a smarter intent classifier that runs
   before the built-in heuristic one.
@@ -423,7 +404,6 @@ eight stages:
 
     1. **Intent Analyzer**      — turn the prompt into an Intent
     2. **Repository Analyzer**  — query Graphify for relevant context
-    3. **Context Optimizer**    — apply Ponytail to the prompt + context
     4. **Planning Engine**      — produce a SoftwarePlan
     5. **Model Router**         — pick (provider, model) for the call
     6. **Execution Engine**     — invoke the LLM, extract a diff

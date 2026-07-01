@@ -219,8 +219,9 @@ def test_build_pipeline_uses_injected_provider_for_diff(monkeypatch, tmp_path: P
 
 
 def test_is_file_requested() -> None:
-    from forgecli.build.diff_extract import is_file_requested
     from pathlib import Path
+
+    from forgecli.build.diff_extract import is_file_requested
 
     root = Path(__file__).parent.parent
     # 1. File exists
@@ -243,8 +244,9 @@ def test_is_file_requested() -> None:
 
 
 def test_filter_diff_unrequested_files() -> None:
-    from forgecli.build.diff_extract import filter_diff
     from pathlib import Path
+
+    from forgecli.build.diff_extract import filter_diff
 
     diff = (
         "diff --git a/main.go b/main.go\n"

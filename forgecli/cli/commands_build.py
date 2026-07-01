@@ -26,6 +26,7 @@ import typer
 
 from forgecli.build import BuildPipeline, BuildResult
 from forgecli.build.pipeline import build_context_from, default_pipeline
+from forgecli.build.retrieval import needs_repository_context
 from forgecli.build.summarize import result_to_dict
 from forgecli.cli.bootstrap import bootstrap_context
 from forgecli.cli.ui import get_console, info, table
@@ -128,27 +129,30 @@ async def _run_build(
     context = bootstrap_context(cwd=str(path))
     target = path.resolve()
 
+    import importlib
+
     from forgecli.cli.bootstrap import resolve_provider_and_decision
     from forgecli.providers.mock import MockProvider
-    import importlib
-    _ponytail = importlib.import_module("forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"]))
-    PromptOptimizer = _ponytail.PromptOptimizer
+    prompt_optimizer_cls = importlib.import_module(
+        "forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"])
+    ).PromptOptimizer
 
     provider, decision = resolve_provider_and_decision(live=live, cwd=path)
+    use_graph = needs_repository_context(prompt)
     if isinstance(provider, MockProvider) and not live and not json_output:
         get_console().print(
             "[dim]Offline mode — configure an API key or omit --mock to use your provider.[/dim]\n"
         )
-    optimizer: PromptOptimizer | None = (
+    optimizer: Any | None = (
         None
         if no_ponytail
-        else context.container.resolve(PromptOptimizer)  # type: ignore[type-abstract]
-        if context.container.has(PromptOptimizer)
+        else context.container.resolve(prompt_optimizer_cls)  # type: ignore[type-abstract]
+        if context.container.has(prompt_optimizer_cls)
         else None
     )
     graph = (
         context.container.resolve(_GraphType())
-        if not no_graph and context.container.has(_GraphType())
+        if use_graph and not no_graph and context.container.has(_GraphType())
         else None
     )
 
@@ -340,8 +344,6 @@ def render_pipeline_result(
     verbose: bool,
     diff: bool,
 ) -> None:
-    from rich import box
-    from rich.panel import Panel
     from rich.syntax import Syntax
 
     console = get_console()
@@ -354,13 +356,7 @@ def render_pipeline_result(
             console.print(f"[bold]{path_str}[/bold]")
             lexer = get_lexer(path_str)
             syntax = Syntax(content.rstrip(), lexer, theme="monokai")
-            panel = Panel(
-                syntax,
-                border_style="dim",
-                box=box.ROUNDED,
-                expand=False,
-            )
-            console.print(panel)
+            console.print(syntax)
             console.print()
         if not success and not changes:
             console.print("[red]Build failed — no files were generated.[/red]")

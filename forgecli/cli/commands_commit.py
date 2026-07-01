@@ -93,10 +93,8 @@ async def run_commit_workflow(project_path: Path) -> None:
     from rich.text import Text
 
     from forgecli.cli.bootstrap import bootstrap_context, resolve_provider_and_decision
+    from forgecli.optimizer.ponytail import PromptOptimizer
     from forgecli.providers.base import ChatMessage, ChatRequest, Role
-    import importlib
-    _ponytail = importlib.import_module("forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"]))
-    PromptOptimizer = _ponytail.PromptOptimizer
 
     console = get_console()
 

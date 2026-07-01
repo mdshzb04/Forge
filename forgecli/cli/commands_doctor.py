@@ -6,6 +6,7 @@ and prints a premium, dashboard-style Rich report with a calculated health score
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import sys
@@ -124,10 +125,8 @@ def _get_api_keys_status() -> dict[str, bool]:
     for env_var, provider_name in keys.items():
         has_env = os.environ.get(env_var) is not None
         has_cred = False
-        try:
+        with contextlib.suppress(Exception):
             has_cred = get_api_key(provider_name) is not None
-        except Exception:
-            pass
         status[env_var] = has_env or has_cred
     return status
 

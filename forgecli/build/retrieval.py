@@ -14,9 +14,64 @@ from typing import Any
 from forgecli.build import BuildContext
 from forgecli.graph.repository import GraphNode, GraphSnapshot, RepositoryGraph
 
-
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_./-]+")
 _FILE_LIKE_RE = re.compile(r"^[\w./-]+\.[A-Za-z0-9]+$")
+_REPO_HINTS = (
+    "project",
+    "repository",
+    "repo",
+    "code",
+    "file",
+    "files",
+    "architecture",
+    "implementation",
+    "bug",
+    "bugs",
+    "docs",
+    "documentation",
+    "structure",
+    "folder",
+    "directory",
+    "dir",
+    "function",
+    "method",
+    "class",
+    "module",
+    "current",
+    "this",
+    "here",
+)
+_STANDALONE_HINTS = (
+    "10 lines",
+    "hello world",
+    "landing page",
+    "button",
+    "snippet",
+)
+
+_RETRIEVAL_CACHE: dict[tuple[int, str, int], str] = {}
+
+
+def needs_repository_context(prompt: str) -> bool:
+    """Return True when the prompt likely needs repository context."""
+    text = (prompt or "").strip().lower()
+    if not text:
+        return False
+
+    words = set(_TOKEN_RE.findall(text))
+    if len(words) <= 4 and any(word in {"hi", "hello", "hey", "howdy", "greetings"} for word in words):
+        return False
+
+    if any(hint in text for hint in _STANDALONE_HINTS):
+        return False
+
+    if any(ext in text for ext in (".py", ".ts", ".tsx", ".js", ".jsx", ".json", ".md", ".html", ".css", ".yml", ".yaml", ".toml", "package.json")):
+        return True
+
+    if any(hint in words for hint in _REPO_HINTS):
+        return True
+
+    return "what is this" in text or "explain this" in text or "this project" in text
 
 
 async def graphify_retrieval(
@@ -24,14 +79,20 @@ async def graphify_retrieval(
 ) -> BuildContext:
     """Return a context with ``context.retrieval`` populated."""
     graph: RepositoryGraph | None = context.extras.get("graph")
-    if graph is None:
+    if graph is None or not needs_repository_context(context.prompt):
         context.retrieval = ""
         return context
 
     try:
         snapshot = await graph.load()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         context.retrieval = f"[graph: failed to load ({exc!r})]"
+        return context
+
+    cache_key = (id(snapshot), context.prompt.strip().lower(), top_k)
+    cached = _RETRIEVAL_CACHE.get(cache_key)
+    if cached is not None:
+        context.retrieval = cached
         return context
 
     matches = _rank_nodes(snapshot, context.prompt, limit=top_k)
@@ -48,6 +109,7 @@ async def graphify_retrieval(
         )
         lines.append(f"- {node.label}{location}")
     context.retrieval = "\n".join(lines)
+    _RETRIEVAL_CACHE[cache_key] = context.retrieval
     return context
 
 
@@ -89,7 +151,7 @@ def _rank_nodes(
     return scored[:limit]
 
 
-__all__ = ["graphify_retrieval"]
+__all__ = ["graphify_retrieval", "needs_repository_context"]
 
 
 _ = Any  # keep typing.Any referenced for the test-only type hints

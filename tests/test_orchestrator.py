@@ -240,6 +240,18 @@ def test_build_workflow_uses_mock_provider() -> None:
     assert not result.files_touched  # mock echo, no diff applied
 
 
+def test_build_workflow_skips_graph_for_standalone_prompt() -> None:
+    provider = MockProvider(MockProviderConfig())
+    registry = PluginRegistry()
+    registry.register_classifier(HeuristicIntentClassifier())
+    registry.register_workflow(BuildWorkflow(provider=provider, test_command="true"))
+    orch = Orchestrator(registry, provider=provider)
+    result = asyncio.run(orch.run("10 lines of HTML"))
+    assert result.workflow == "build"
+    stage_names = [stage["name"] for stage in result.stages]
+    assert "graphify-retrieval" not in stage_names
+
+
 # ---------------------------------------------------------------------------
 # Docs workflow
 # ---------------------------------------------------------------------------
@@ -298,8 +310,8 @@ def test_orchestrator_uses_custom_classifier_first() -> None:
 
 
 # Silence unused-import warnings for symbols only used in some branches.
-_ = DocsWorkflow
-_ = textwrap
+_docs_workflow = DocsWorkflow
+_textwrap = textwrap
 
 
 def test_asks_for_repo_context() -> None:
@@ -312,4 +324,3 @@ def test_asks_for_repo_context() -> None:
     assert _asks_for_repo_context("explain the files in the directory")
     assert _asks_for_repo_context("what is this project?")
     assert _asks_for_repo_context("how does the main.py structure look?")
-

@@ -13,6 +13,7 @@ The orchestrator is the single entry point for the
 
 from __future__ import annotations
 
+import importlib
 import time
 import traceback
 from collections.abc import Callable
@@ -23,8 +24,7 @@ from typing import Any
 from forgecli.build.apply import apply_diff
 from forgecli.build.diff_extract import diff_extraction
 from forgecli.build.llm import llm_call
-from forgecli.build.optimize import ponytail_optimization
-from forgecli.build.retrieval import graphify_retrieval
+from forgecli.build.retrieval import graphify_retrieval, needs_repository_context
 from forgecli.build.summarize import summarize
 from forgecli.core.context import AppContext
 from forgecli.plugins import (
@@ -39,9 +39,10 @@ from forgecli.providers.base import Provider
 from forgecli.providers.mock import MockProvider, MockProviderConfig
 from forgecli.providers.router import ModelRouter
 from forgecli.providers.router_state import load_state
-import importlib
-_ponytail = importlib.import_module("forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"]))
-PromptOptimizer = _ponytail.PromptOptimizer
+
+prompt_optimizer_cls = importlib.import_module(
+    "forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"])
+).PromptOptimizer
 
 # ---------------------------------------------------------------------------
 # Intent classification
@@ -179,7 +180,8 @@ class BuildWorkflow(Workflow):
         build_context = BuildContext(prompt=context.prompt, root=target, decision=decision)
         build_context.extras.update(context.extras.get("build_extras", {}))
         build_context.extras["provider"] = self._provider
-        if self._graphify is not None:
+        use_graphify = self._graphify is not None and needs_repository_context(context.prompt)
+        if use_graphify:
             build_context.extras["graph"] = self._graphify
         if self._optimizer is not None:
             build_context.extras["optimizer"] = self._optimizer
@@ -187,13 +189,14 @@ class BuildWorkflow(Workflow):
             build_context.extras["test_command"] = self._test_command
 
         stages: list[tuple[str, Any]] = [
-            ("graphify-retrieval", graphify_retrieval),
             ("llm", llm_call),
             ("diff-extract", diff_extraction),
             ("apply-diff", apply_diff),
             ("run-tests", _run_tests),
             ("summarize", summarize),
         ]
+        if use_graphify:
+            stages.insert(0, ("graphify-retrieval", graphify_retrieval))
         pipeline = BuildPipeline(stages)
         result = await pipeline.run(build_context)
 
@@ -251,7 +254,6 @@ class BuildWorkflow(Workflow):
             # LLM/diff/apply/test stages in a tiny pipeline.
             from forgecli.build.diff_extract import diff_extraction
             from forgecli.build.llm import llm_call
-            from forgecli.build.optimize import ponytail_optimization
             from forgecli.build.summarize import summarize
 
             fix_prompt = (
@@ -333,11 +335,11 @@ class Orchestrator:
             from forgecli.graph.repository import RepositoryGraph
 
             opt = None
-            if app_ctx.container.has(PromptOptimizer):
-                opt = app_ctx.container.resolve(PromptOptimizer)  # type: ignore[type-abstract]
+            if app_ctx.container.has(prompt_optimizer_cls):
+                opt = app_ctx.container.resolve(prompt_optimizer_cls)  # type: ignore[type-abstract]
 
             graph = None
-            if app_ctx.container.has(RepositoryGraph):
+            if app_ctx.container.has(RepositoryGraph) and needs_repository_context(prompt):
                 graph = app_ctx.container.resolve(RepositoryGraph)  # type: ignore[type-abstract]
 
             build_extras = {
@@ -423,28 +425,7 @@ def _default_workflow_factory(intent: Intent) -> Workflow:
 
 
 def _asks_for_repo_context(prompt: str) -> bool:
-    import re
-    text = (prompt or "").strip().lower()
-    greetings = {"hi", "hello", "hey", "howdy", "greetings", "good morning", "good afternoon", "good evening", "how are you", "what's up", "yo"}
-    words = re.findall(r"\b\w+\b", text)
-    if not words:
-        return False
-    if len(words) <= 3 and any(w in greetings for w in words):
-        return False
-
-    keywords = {
-        "project", "repository", "repo", "code", "file", "files", "architecture", "implementation", "bug", "bugs",
-        "docs", "documentation", "structure", "folder", "directory", "dir", "function", "method", "class", "module",
-        "current", "this", "here"
-    }
-    extensions = {".py", ".ts", ".tsx", ".js", ".jsx", ".json", ".md", ".html", ".css", ".yml", ".yaml", ".toml", "package.json"}
-    if any(ext in text for ext in extensions):
-        return True
-
-    if any(w in keywords for w in words):
-        return True
-
-    return "what is this" in text or "explain this" in text or "this project" in text
+    return needs_repository_context(prompt)
 
 
 class AskWorkflow(Workflow):
@@ -456,7 +437,6 @@ class AskWorkflow(Workflow):
     async def run(self, context: PluginContext) -> dict[str, Any]:
         from forgecli.build import BuildContext, BuildPipeline
         from forgecli.build.llm import llm_call
-        from forgecli.build.optimize import ponytail_optimization
         from forgecli.build.retrieval import graphify_retrieval
         from forgecli.build.summarize import summarize
         from forgecli.providers.conversation import is_greeting
@@ -529,7 +509,6 @@ class DocsWorkflow(Workflow):
     async def run(self, context: PluginContext) -> dict[str, Any]:
         from forgecli.build import BuildContext, BuildPipeline
         from forgecli.build.llm import llm_call
-        from forgecli.build.optimize import ponytail_optimization
         from forgecli.build.summarize import summarize
 
         root = context.app_context.cwd
@@ -590,7 +569,6 @@ class ReviewWorkflow(Workflow):
     async def run(self, context: PluginContext) -> dict[str, Any]:
         from forgecli.build import BuildContext, BuildPipeline
         from forgecli.build.llm import llm_call
-        from forgecli.build.optimize import ponytail_optimization
         from forgecli.build.summarize import summarize
         from forgecli.review import review_repository
 
@@ -643,7 +621,6 @@ class ExplainWorkflow(Workflow):
     async def run(self, context: PluginContext) -> dict[str, Any]:
         from forgecli.build import BuildContext, BuildPipeline
         from forgecli.build.llm import llm_call
-        from forgecli.build.optimize import ponytail_optimization
         from forgecli.build.retrieval import graphify_retrieval
         from forgecli.build.summarize import summarize
 

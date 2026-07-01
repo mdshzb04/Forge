@@ -9,9 +9,6 @@ from typing import TYPE_CHECKING, Any
 from forgecli.config.loader import ConfigLoader
 from forgecli.core.context import AppContext
 from forgecli.core.logging import configure_logging, get_logger
-import importlib
-_ponytail_state = importlib.import_module("forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"]) + ".state")
-OptimizerState = _ponytail_state.OptimizerState
 from forgecli.providers.anthropic import AnthropicProvider
 from forgecli.providers.base import ProviderRegistry, default_registry
 from forgecli.providers.google import GeminiProvider
@@ -110,8 +107,11 @@ def bootstrap_context(
     return context
 
 
-def _load_optimizer_state(paths: ProjectPaths) -> OptimizerState:
+def _load_optimizer_state(paths: ProjectPaths):
     """Read the persisted optimizer state from ``data_dir/optimizer.json``."""
+    from forgecli.optimizer.ponytail import Intensity
+    from forgecli.optimizer.ponytail.state import OptimizerState
+
     state_path = paths.data_dir / "optimizer.json"
     if not state_path.exists():
         return OptimizerState()
@@ -119,9 +119,6 @@ def _load_optimizer_state(paths: ProjectPaths) -> OptimizerState:
         payload = json.loads(state_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return OptimizerState()
-    import importlib
-    _ponytail = importlib.import_module("forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"]))
-    Intensity = _ponytail.Intensity
 
     state = OptimizerState()
     intensity = payload.get("intensity")
@@ -152,6 +149,8 @@ def _build_container(
     from forgecli.memory.store import MemoryStore
     from forgecli.optimizer.chunker import Chunker
     from forgecli.optimizer.optimizer import ContextOptimizer
+    from forgecli.optimizer.ponytail import PromptOptimizer
+    from forgecli.optimizer.ponytail.factory import build_optimizer
     from forgecli.optimizer.ranker import Ranker
     from forgecli.optimizer.summarizer import Summarizer
     from forgecli.prompts.loader import PromptLoader
@@ -188,11 +187,6 @@ def _build_container(
         RepositoryGraph,  # type: ignore[type-abstract]
         lambda _c: GraphifyRepositoryGraph(root=paths.cwd),
     )
-    import importlib
-    _ponytail = importlib.import_module("forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"]))
-    PromptOptimizer = _ponytail.PromptOptimizer
-    _ponytail_factory = importlib.import_module("forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"]) + ".factory")
-    build_optimizer = _ponytail_factory.build_optimizer
     container.register(
         PromptOptimizer,  # type: ignore[type-abstract]
         lambda _c: build_optimizer(_load_optimizer_state(paths), ConfigLoader().load()),
@@ -285,4 +279,3 @@ def resolve_provider_and_decision(
     provider_cls = registry.get(decision.provider_name)
     provider = provider_cls()  # type: ignore[call-arg]
     return provider, decision
-

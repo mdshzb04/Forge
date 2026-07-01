@@ -9,12 +9,11 @@ point at OpenAI-compatible servers (vLLM, LM Studio, llama.cpp).
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
 
 import httpx
-
-from collections.abc import AsyncIterator
 
 from forgecli.providers.base import (
     ChatMessage,

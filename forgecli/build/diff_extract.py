@@ -18,7 +18,6 @@ from pathlib import Path
 
 from forgecli.build import BuildContext
 
-
 _GIT_DIFF_HEADER = re.compile(r"^diff --git ", re.MULTILINE)
 _UNIFIED_HEADER = re.compile(r"^--- ", re.MULTILINE)
 _DIFF_LINE = re.compile(r"^(?:--- |\+\+\+ |@@ | |\+|-)", re.MULTILINE)
@@ -92,17 +91,13 @@ def _looks_like_diff_line(line: str) -> bool:
         return True
     if line.startswith("diff --git "):
         return True
-    if line.startswith("index "):
-        return True
-    return False
+    return bool(line.startswith("index "))
 
 
 def is_file_requested(relative_path: str | Path, prompt: str, root_dir: Path) -> bool:
     """Return True if the file was explicitly requested by the user or already exists."""
     path_str = str(relative_path)
-    if path_str.startswith("b/"):
-        path_str = path_str[2:]
-    elif path_str.startswith("a/"):
+    if path_str.startswith("b/") or path_str.startswith("a/"):
         path_str = path_str[2:]
 
     full_path = root_dir / path_str
@@ -158,16 +153,15 @@ def filter_diff(diff_text: str, prompt: str, root_dir: Path) -> str:
     blocks = []
     lines = diff_text.splitlines(keepends=True)
 
-    current_block = []
+    current_block: list[str] = []
     i = 0
     while i < len(lines):
         line = lines[i]
         is_new_block = False
-        if line.startswith("diff --git "):
+        if line.startswith("diff --git ") or (line.startswith("--- ") and i + 1 < len(lines) and lines[i + 1].startswith("+++ ") and (
+            not current_block or not current_block[0].startswith("diff --git ")
+        )):
             is_new_block = True
-        elif line.startswith("--- ") and i + 1 < len(lines) and lines[i+1].startswith("+++ "):
-            if not current_block or not current_block[0].startswith("diff --git "):
-                is_new_block = True
 
         if is_new_block and current_block:
             blocks.append(current_block)
@@ -203,12 +197,9 @@ def filter_diff(diff_text: str, prompt: str, root_dir: Path) -> str:
             filtered_blocks.append(block_text)
             continue
 
-        if new_path.startswith("b/"):
-            new_path = new_path[2:]
-        elif new_path.startswith("a/"):
+        if new_path.startswith("b/") or new_path.startswith("a/"):
             new_path = new_path[2:]
 
-        from pathlib import Path
         if is_file_requested(new_path, prompt, root_dir):
             filtered_blocks.append(block_text)
 
