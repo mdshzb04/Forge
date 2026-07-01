@@ -95,8 +95,7 @@ async def _run_docs(path: Path, output: Path | None, live: bool, verbose: bool =
         console.print(f"{result.duration_seconds:.1f} seconds")
         console.print()
 
-        if verbose:
-            if result.stages:
+        if verbose and result.stages:
                 console.print("[bold yellow]=== Pipeline Stages timings ===[/bold yellow]\n")
                 rows = []
                 for s in result.stages:
@@ -115,7 +114,7 @@ async def _run_docs(path: Path, output: Path | None, live: bool, verbose: bool =
         try:
             context = bootstrap_context(cwd=str(path))
             target = generate_docs(context, output=output)
-            
+
             console = get_console()
             console.print("────────────────────────────────────────\n")
             success(f"Documentation written to {target}")

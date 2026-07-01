@@ -43,12 +43,12 @@ class MockProvider(Provider[MockProviderConfig]):
             None,
         )
         text = last_user.content if last_user else ""
-        
+
         has_diff_request = any(
             m.role is Role.SYSTEM and "diff" in m.content.lower()
             for m in request.messages
         )
-        
+
         if has_diff_request:
             text_lower = text.lower()
             if "html" in text_lower or "page" in text_lower:

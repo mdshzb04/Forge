@@ -21,6 +21,7 @@ import asyncio
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import typer
 
@@ -28,13 +29,10 @@ from forgecli.build import BuildPipeline, BuildResult
 from forgecli.build.pipeline import build_context_from, default_pipeline
 from forgecli.build.summarize import result_to_dict
 from forgecli.cli.bootstrap import bootstrap_context
-from forgecli.cli.ui import error, get_console, info, success, table
+from forgecli.cli.ui import get_console, info, table
 from forgecli.engine.runner import (
     engine_result_to_dict,
     run_engine,
-)
-from forgecli.engine.runner import (
-    render_engine_result as engine_summary,
 )
 from forgecli.optimizer.ponytail import PromptOptimizer
 
@@ -190,7 +188,7 @@ async def _run_build(
             sys.stdout.write("\n")
             sys.stdout.flush()
             return
-        
+
         render_pipeline_result(
             success=eng_result.success,
             prompt=prompt,
@@ -276,10 +274,7 @@ def _render(result: BuildResult, verbose: bool = False, diff: bool = False) -> N
 
 def get_lexer(path_str: str) -> str:
     name = path_str.split("/")[-1] if "/" in path_str else path_str
-    if "." in name:
-        ext = name.split(".")[-1].lower()
-    else:
-        ext = ""
+    ext = name.split(".")[-1].lower() if "." in name else ""
 
     mapping = {
         "html": "html",

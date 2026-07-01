@@ -62,6 +62,7 @@ async def _run_explain(target: str, path: Path, live: bool, verbose: bool = Fals
             raise Exception(result.error or "Orchestrator failed")
 
         from rich.markdown import Markdown
+
         from forgecli.cli.ui import table
         console = get_console()
         console.print("────────────────────────────────────────\n")
@@ -91,8 +92,7 @@ async def _run_explain(target: str, path: Path, live: bool, verbose: bool = Fals
         console.print(f"{result.duration_seconds:.1f} seconds")
         console.print()
 
-        if verbose:
-            if result.stages:
+        if verbose and result.stages:
                 console.print("[bold yellow]=== Pipeline Stages timings ===[/bold yellow]\n")
                 rows = []
                 for s in result.stages:

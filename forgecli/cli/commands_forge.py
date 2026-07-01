@@ -26,7 +26,7 @@ from pathlib import Path
 
 import typer
 
-from forgecli.cli.ui import error, get_console, info, success, table, warn
+from forgecli.cli.ui import error, get_console, info, table, warn
 from forgecli.commit.git_utils import GitRepoError, diff_staged
 from forgecli.orchestrator import (
     HeuristicIntentClassifier,
@@ -233,9 +233,10 @@ def render_result(result, verbose: bool = False, diff: bool = False) -> None:
     else:
         console.print("[bold red]✗ Forge failed[/bold red]\n")
 
-    from forgecli.cli.commands_build import get_display_changes, get_lexer
     from rich.panel import Panel
     from rich.syntax import Syntax
+
+    from forgecli.cli.commands_build import get_display_changes, get_lexer
 
     changes = get_display_changes(result.diff)
     if not (verbose or diff):
@@ -297,8 +298,7 @@ def render_result(result, verbose: bool = False, diff: bool = False) -> None:
     console.print(f"{result.duration_seconds:.1f} seconds")
     console.print()
 
-    if verbose:
-        if result.stages:
+    if verbose and result.stages:
             console.print("[bold yellow]=== Pipeline Stages timings ===[/bold yellow]\n")
             rows = []
             for s in result.stages:

@@ -98,8 +98,7 @@ def review_cmd(
 
     provider, decision = resolve_provider_and_decision(live=live, cwd=Path(path))
 
-    if isinstance(provider, MockProvider) and not live:
-        if not json_output and not md_output:
+    if isinstance(provider, MockProvider) and not live and not json_output and not md_output:
             console = get_console()
             console.print("[yellow]⚠ Offline Mode[/yellow]\n")
             console.print("Using Forge's built-in mock AI.\n")
