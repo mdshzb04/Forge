@@ -99,7 +99,6 @@ minversion = "8.0"
 addopts = "-ra -q --strict-markers -m 'not slow'"
 testpaths = ["tests"]
 asyncio_mode = "auto"
-timeout = 30
 markers = [
     "slow: marks tests as slow integration tests (deselect with '-m not slow')",
 ]

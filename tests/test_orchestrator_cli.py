@@ -98,6 +98,7 @@ def test_cli_top_level_forge_runs_pipeline(monkeypatch, tmp_path: Path) -> None:
             "--no-tests",
             "--no-commit",
             "--json",
+            "--mock",
         ],
     )
     assert result.exit_code == 0
