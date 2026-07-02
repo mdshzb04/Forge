@@ -48,7 +48,7 @@ with contextlib.suppress(AttributeError):
 
 app = typer.Typer(
     name=__app_name__,
-    help="ForgeCLI - AI Development Operating System.",
+    help="ForgeCLI — AI Optimization Runtime.",
     no_args_is_help=False,
     add_completion=False,
     rich_markup_mode="rich",
@@ -62,7 +62,7 @@ app.add_typer(commands_providers.app, name="provider")
 app.add_typer(commands_model.app, name="model")
 app.add_typer(commands_index.app, name="index")
 app.add_typer(commands_graph.app, name="graph")
-app.add_typer(commands_plan.app, name="plan")
+app.add_typer(commands_plan.app, name="plan", hidden=True)
 app.command(
     "build",
     help="Build code changes based on a prompt.",
@@ -74,7 +74,7 @@ app.add_typer(commands_review.app, name="review")
 
 app.command(
     "ask",
-    help="Ask a question about the repository.",
+    help="[deprecated] Ask a question about the repository.",
     context_settings={"allow_interspersed_args": True},
 )(commands_ask.ask_cmd)
 
@@ -90,7 +90,7 @@ app.add_typer(commands_history.app, name="history")
 
 app.command(
     "explain",
-    help="Explain a file or symbol.",
+    help="[deprecated] Explain a file or symbol.",
     context_settings={"allow_interspersed_args": True},
 )(commands_explain.main)
 
@@ -294,14 +294,14 @@ def main(
             "  [bold cyan]|_|     \\___/|_| \\_\\\\____|_____|\\____|_____|___|[/bold cyan]\n"
         )
         console.print(
-            f"  [bold cyan]ForgeCLI[/bold cyan] [dim]v{__version__}[/dim] • [bold white]Developer Operating System[/bold white]"
+            f"  [bold cyan]ForgeCLI[/bold cyan] [dim]v{__version__}[/dim] • [bold white]AI Optimization Runtime[/bold white]"
         )
         console.print(
-            "  [dim]Orchestrates codebase intelligence and LLMs.[/dim]\n"
+            "  [dim]Graphify · Caveman ·  · Smart Routing.[/dim]\n"
         )
         console.print(
             "  [bold]Usage:[/bold]\n"
-            "    [cyan]forge --prompt \"<your request>\"[/cyan]  Run the AI developer pipeline\n"
+            "    [cyan]forge --prompt \"<your request>\"[/cyan]  Run the AI optimization pipeline\n"
             "    [cyan]forge status[/cyan]                      Show current project and tool status\n"
             "    [cyan]forge doctor[/cyan]                      Run diagnostic checks and self-checks\n"
             "    [cyan]forge --help[/cyan]                      List all available subcommands\n"

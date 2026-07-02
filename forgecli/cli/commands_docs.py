@@ -1,4 +1,8 @@
-"""``forge docs`` subcommand: auto-generate project documentation."""
+"""``forge docs`` subcommand: auto-generate project documentation.
+
+.. deprecated::
+   This conversational command is deprecated and may be removed.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +12,7 @@ from pathlib import Path
 import typer
 
 from forgecli.cli.bootstrap import bootstrap_context
-from forgecli.cli.ui import error, get_console, warn
+from forgecli.cli.ui import error, get_console, warn, warn_deprecated
 from forgecli.docs.generator import generate_docs
 from forgecli.orchestrator import (
     DocsWorkflow,

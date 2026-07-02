@@ -4,17 +4,17 @@
 # After installation:        forge init
 #
 # To validate locally:
-#   winget validate --manifest .\packaging\winget\mdshzb04.ForgeCli.yaml
+#   winget validate --manifest .\packaging\winget\forgecli.ForgeCli.yaml
 #
 # To submit to winget-pkgs:
 #   1. Fork https://github.com/microsoft/winget-pkgs
-#   2. Copy this file to manifests/m/mdshzb04/ForgeCli/<version>/mdshzb04.ForgeCli.yaml
+#   2. Copy this file to manifests/m/forgecli/ForgeCli/<version>/forgecli.ForgeCli.yaml
 #   3. Update the version + installerUrl + installerSha256.
-PackageIdentifier: mdshzb04.ForgeCli
+PackageIdentifier: forgecli.ForgeCli
 PackageVersion: 0.1.0
 PackageLocale: en-US
 PackageName: ForgeCLI
-Publisher: mdshzb04
+Publisher: forgecli
 ShortDescription: AI-first developer operating system — Ponytail built-in, Graphify optional, any LLM.
 Description: |
   ForgeCLI is an AI Development Operating System. Install with
@@ -33,12 +33,12 @@ Tags:
 - git
 - code-intelligence
 PackageLocale: en-US
-PublisherUrl: https://github.com/mdshzb04/ForgeCli
-PublisherSupportUrl: https://github.com/mdshzb04/ForgeCli/issues
-PrivacyUrl: https://github.com/mdshzb04/ForgeCli/blob/main/LICENSE
+PublisherUrl: https://github.com/forgecli/ForgeCli
+PublisherSupportUrl: https://github.com/forgecli/ForgeCli/issues
+PrivacyUrl: https://github.com/forgecli/ForgeCli/blob/main/LICENSE
 Author: ForgeCLI Authors
 Moniker: forgecli
-DescriptionUrl: https://github.com/mdshzb04/ForgeCli
+DescriptionUrl: https://github.com/forgecli/ForgeCli
 Installers:
 - Architecture: x64
   InstallerType: pip

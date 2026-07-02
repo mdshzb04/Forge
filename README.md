@@ -557,14 +557,14 @@ pip install forgecli
 uv tool install forgecli
 
 # macOS / Linux
-brew install mdshzb04/tap/forgecli   # once a tap exists
+brew install forgecli/tap/forgecli     # once a tap exists
 
 # Windows (Scoop)
-scoop bucket add mdshzb04 https://github.com/mdshzb04/scoop-bucket
+scoop bucket add forgecli https://github.com/forgecli/scoop-bucket
 scoop install forgecli
 
 # Windows (Winget)
-winget install mdshzb04.ForgeCli
+winget install forgecli.ForgeCli
 ```
 
 Packaging manifests live in :file:`packaging/`.

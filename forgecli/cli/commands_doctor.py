@@ -322,7 +322,7 @@ def _render_dashboard(
     console.print(
         Panel(
             Align.center(
-                f"[bold cyan]ForgeCLI[/bold cyan] [cyan]v{__version__}[/cyan]  •  [bold white]Developer Operating System[/bold white]"
+                f"[bold cyan]ForgeCLI[/bold cyan] [cyan]v{__version__}[/cyan]  •  [bold white]AI Optimization Runtime[/bold white]"
             ),
             border_style="cyan",
             padding=(1, 2),

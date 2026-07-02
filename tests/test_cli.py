@@ -70,7 +70,7 @@ def test_cli_main_empty() -> None:
     result = runner.invoke(app, [])
     assert result.exit_code == 0
     assert "ForgeCLI" in result.output
-    assert "Developer Operating System" in result.output
+    assert "AI Optimization Runtime" in result.output
 
 
 

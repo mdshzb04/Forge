@@ -67,6 +67,8 @@ def build_cmd(
     no_graph: bool = typer.Option(False, "--no-graph", help="Skip Graphify retrieval."),
     no_ponytail: bool = typer.Option(
         False,
+        "--no-",
+        help="Skip  prompt optimization.",
     ),
     retries: int = typer.Option(
         0,
@@ -162,25 +164,24 @@ async def _run_build(
     if use_engine:
         import asyncio as _asyncio
 
-        # run_engine is synchronous (calls asyncio.run internally); we must
-        # run it in a thread to avoid "cannot run nested event loop" errors
-        # when we're already inside asyncio.run from build_cmd.
-        loop = _asyncio.get_event_loop()
-        eng_result = await loop.run_in_executor(
-            None,
-            lambda: run_engine(
-                prompt,
-                target,
-                provider=provider,
-                optimizer=optimizer,
-                graph=graph,
-                test_command=None if no_tests else test_command,
-                retries=retries,
-                skip_tests=no_tests,
-                skip_graph=no_graph,
-                skip_ponytail=no_ponytail,
-            ),
-        )
+        console = get_console()
+        with console.status("[bold yellow]Thinking...[/bold yellow]", spinner="dots"):
+            loop = _asyncio.get_event_loop()
+            eng_result = await loop.run_in_executor(
+                None,
+                lambda: run_engine(
+                    prompt,
+                    target,
+                    provider=provider,
+                    optimizer=optimizer,
+                    graph=graph,
+                    test_command=None if no_tests else test_command,
+                    retries=retries,
+                    skip_tests=no_tests,
+                    skip_graph=no_graph,
+                    skip_ponytail=no_ponytail,
+                ),
+            )
         if save_diff is not None and eng_result.context.diff_text:
             save_diff.write_text(eng_result.context.diff_text, encoding="utf-8")
             if verbose:
@@ -232,7 +233,9 @@ async def _run_build(
     if retries:
         build_context.extras["retries"] = retries
 
-    result: BuildResult = await pipeline.run(build_context)
+    console = get_console()
+    with console.status("[bold yellow]Thinking...[/bold yellow]", spinner="dots"):
+        result: BuildResult = await pipeline.run(build_context)
 
     if save_diff is not None and build_context.diff_text:
         save_diff.write_text(build_context.diff_text, encoding="utf-8")
@@ -344,115 +347,101 @@ def render_pipeline_result(
     verbose: bool,
     diff: bool,
 ) -> None:
+    from rich import box
+    from rich.panel import Panel
     from rich.syntax import Syntax
 
     console = get_console()
 
     if not verbose:
         changes = get_display_changes(diff_text)
-        for chg in changes:
-            path_str = chg["path"]
-            content = chg["content"]
-            console.print(f"[bold]{path_str}[/bold]")
-            lexer = get_lexer(path_str)
-            syntax = Syntax(content.rstrip(), lexer, theme="monokai")
-            console.print(syntax)
-            console.print()
-        if not success and not changes:
-            console.print("[red]Build failed — no files were generated.[/red]")
+        if changes:
+            for chg in changes:
+                path_str = chg["path"]
+                content = chg["content"]
+                status_tag = chg["status"]
+                status_color = {"Created": "green", "Modified": "yellow", "Deleted": "red"}.get(status_tag, "white")
+                console.print(f"[bold]{path_str}[/bold]  [dim]({status_tag})[/dim]")
+                lexer = get_lexer(path_str)
+                syntax = Syntax(content.rstrip(), lexer, theme="monokai", line_numbers=True)
+                panel = Panel(
+                    syntax,
+                    border_style=status_color,
+                    box=box.ROUNDED,
+                    expand=False,
+                    padding=(1, 2),
+                )
+                console.print(panel)
+                console.print()
+            if test_returncode == 0:
+                console.print("[bold green]All tests passed[/bold green]")
+            elif test_returncode is not None and test_returncode != 0:
+                console.print(f"[bold red]Tests failed (exit {test_returncode})[/bold red]")
+        elif not success:
+            console.print(f"[red]Build failed[/red]")
+        else:
+            # No diff parsed but build succeeded (e.g. llm returned text)
+            from rich.markdown import Markdown
+            if diff_text and len(diff_text) > 0:
+                console.print("[dim]LLM response:[/dim]")
+                console.print(Markdown(diff_text[:500]))
         return
 
     # Verbose Mode
-    console.print("────────────────────────────────────────\n")
+    from rich.table import Table
+
     if success:
-        console.print("[bold green]✓ Build completed[/bold green]\n")
+        console.print("[bold green]Build complete[/bold green]")
     else:
-        console.print("[bold red]✗ Build failed[/bold red]\n")
-        if failure_stage:
-            console.print(f"Failed at stage: [bold red]{failure_stage}[/bold red]\n")
+        console.print(f"[bold red]Build failed[/bold red] at stage: [bold]{failure_stage}[/bold]")
+    console.print()
 
-    # Print the files in verbose or diff mode
-    if diff_text:
-        console.print("[bold cyan]Unified Diff:[/bold cyan]\n")
-        console.print(diff_text)
-        console.print()
-
-    # Print summary
-    provider_map = {
-        "mock": "Mock (Offline)",
-        "openai": "OpenAI (Live)",
-        "anthropic": "Anthropic (Live)",
-        "google": "Gemini (Live)",
-        "gemini": "Gemini (Live)",
-    }
-    provider_str = provider_map.get(decision_provider.lower(), f"{decision_provider.title()} (Live)")
-
+    total_time_v = sum(float(getattr(s, "duration_seconds", 0.0) or 0.0) for s in stages)
+    summary_table = Table.grid(padding=(0, 4))
+    summary_table.add_column()
+    summary_table.add_column()
+    summary_table.add_row("[dim]Provider[/dim]", f"[bold]{decision_provider}[/bold]")
+    summary_table.add_row("[dim]Model[/dim]", f"[bold]{decision_model}[/bold]")
+    opt_label = []
+    if ponytail_active:
+        opt_label.append("")
+    summary_table.add_row("[dim]Optimizers[/dim]", f"[bold]{' + '.join(opt_label) if opt_label else 'None'}[/bold]")
     if test_returncode is None:
-        tests_str = "Skipped"
+        tests_display = "[dim]Skipped[/dim]"
     elif test_returncode == 0:
-        tests_str = "[bold green]✓ Passed[/bold green]"
+        tests_display = "[bold green]Passed[/bold green]"
     else:
-        tests_str = f"[bold red]✗ Failed (exit {test_returncode})[/bold red]"
-
-    total_time = sum(float(getattr(s, "duration_seconds", 0.0) or 0.0) for s in stages)
-
-    console.print("[bold]Provider[/bold]")
-    console.print(provider_str)
-    console.print()
-    console.print("[bold]Optimizer[/bold]")
-    console.print("None")
-    console.print()
-    console.print("[bold]Tests[/bold]")
-    console.print(tests_str)
-    console.print()
-    console.print("[bold]Time[/bold]")
-    console.print(f"{total_time:.1f} seconds")
+        tests_display = f"[bold red]Failed (exit {test_returncode})[/bold red]"
+    summary_table.add_row("[dim]Tests[/dim]", tests_display)
+    summary_table.add_row("[dim]Duration[/dim]", f"[bold]{total_time_v:.1f}s[/bold]")
+    console.print(summary_table)
     console.print()
 
-    if verbose:
-        console.print("[bold yellow]=== Pipeline Stages timings ===[/bold yellow]\n")
-        rows: list[list[str]] = []
-        for s in stages:
-            name = getattr(s, "stage", None) or getattr(s, "name", "Stage")
-            status_val = getattr(s, "status", None)
-            if status_val is not None and hasattr(status_val, "value"):
-                status_val = status_val.value  # type: ignore[union-attr]
-            duration = getattr(s, "duration_seconds", 0.0) or 0.0
-            err = getattr(s, "error", None) or "—"
-            rows.append([str(name), str(status_val), f"{duration:.3f}s", str(err)])
-        table(["Stage", "Status", "Duration", "Error"], rows, title="Pipeline stages")
-        console.print()
+    console.print("[bold yellow]Pipeline stages[/bold yellow]")
+    stage_table = Table(box=box.SIMPLE_HEAD, header_style="bold")
+    stage_table.add_column("Stage", style="dim")
+    stage_table.add_column("Status")
+    stage_table.add_column("Duration", justify="right")
+    stage_table.add_column("Notes", style="dim")
+    for s in stages:
+        name = getattr(s, "stage", None) or getattr(s, "name", "-")
+        status_val = getattr(s, "status", None)
+        if status_val is not None and hasattr(status_val, "value"):
+            status_val = status_val.value
+        status_display = {"succeeded": "[green]ok[/green]", "failed": "[red]fail[/red]", "skipped": "[dim]skip[/dim]", "running": "[yellow]...[/yellow]"}.get(str(status_val), str(status_val))
+        duration = getattr(s, "duration_seconds", 0.0) or 0.0
+        notes_vals = getattr(s, "notes", None) or ()
+        notes_str = notes_vals[0] if notes_vals else ""
+        stage_table.add_row(str(name), status_display, f"{duration:.2f}s", str(notes_str))
+    console.print(stage_table)
+    console.print()
 
-        if retrieval_text:
-            console.print("[bold]Graph Retrieval Details:[/bold]")
-            console.print(retrieval_text)
-            console.print()
+    if diff and diff_text:
+        console.print("[bold]Diff[/bold]")
+        console.print(diff_text)
 
-
-
-        if decision_provider:
-            console.print("[bold]Provider Routing:[/bold]")
-            console.print(f"  Provider: {decision_provider}")
-            console.print(f"  Model: {decision_model}")
-            console.print()
-
-        if applied_files:
-            console.print("[bold]Files touched:[/bold]")
-            for f in applied_files:
-                console.print(f"  - {f}")
-            console.print()
-
-        if diff_text:
-            console.print("[bold]Diff Extraction:[/bold]")
-            console.print(f"  Diff length: {len(diff_text)} chars")
-            console.print()
-
-        if internal_summary:
-            console.print("[bold]Internal Diagnostics:[/bold]")
-            console.print(internal_summary)
-            console.print()
-
-    console.print("────────────────────────────────────────")
+    if retrieval_text:
+        console.print("[dim]Context:[/dim] " + retrieval_text[:200] + ("..." if len(retrieval_text) > 200 else ""))
 
 
 def _GraphType():

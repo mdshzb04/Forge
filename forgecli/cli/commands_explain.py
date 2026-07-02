@@ -1,4 +1,8 @@
-"""``forge explain`` top-level command."""
+"""``forge explain`` top-level command.
+
+.. deprecated::
+   This conversational command is deprecated and may be removed.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +11,7 @@ from pathlib import Path
 
 import typer
 
-from forgecli.cli.ui import error, get_console
+from forgecli.cli.ui import error, get_console, warn_deprecated
 from forgecli.orchestrator import (
     ExplainWorkflow,
     HeuristicIntentClassifier,
@@ -42,6 +46,7 @@ async def _run_explain(target: str, path: Path, live: bool, verbose: bool = Fals
 
     provider, decision = resolve_provider_and_decision(live=live, cwd=path)
 
+    warn_deprecated("forge explain")
     if isinstance(provider, MockProvider) and not live:
         console = get_console()
         console.print("[yellow]⚠ Offline Mode[/yellow]\n")

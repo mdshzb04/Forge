@@ -115,44 +115,42 @@ async def run_commit_workflow(project_path: Path) -> None:
         f"Git Diff:\n{diff}"
     )
 
-    app_context = bootstrap_context(cwd=project_path)
-    optimizer = app_context.container.resolve(PromptOptimizer)  # type: ignore[type-abstract]
-    request = ChatRequest(
-        messages=[ChatMessage(role=Role.USER, content=prompt)],
-    )
-    optimized = await optimizer.optimize_chat(request)
-    optimized_prompt = optimized.request.messages[0].content
+    with console.status("[bold yellow]Thinking...[/bold yellow]", spinner="dots"):
+        app_context = bootstrap_context(cwd=project_path)
+        optimizer = app_context.container.resolve(PromptOptimizer)
+        request = ChatRequest(
+            messages=[ChatMessage(role=Role.USER, content=prompt)],
+        )
+        optimized = await optimizer.optimize_chat(request)
+        optimized_prompt = optimized.request.messages[0].content
 
-    # LLM Call
-    provider, decision = resolve_provider_and_decision(live=True, cwd=project_path)
+        provider, decision = resolve_provider_and_decision(live=True, cwd=project_path)
+        raw_provider = provider._base if hasattr(provider, "_base") else provider
 
-    raw_provider = provider._base if hasattr(provider, "_base") else provider
+        commit_request = ChatRequest(
+            model=decision.model if decision else None,
+            messages=[
+                ChatMessage(
+                    role=Role.SYSTEM,
+                    content=(
+                        "You are a senior software engineer specialized in creating concise Conventional Commit messages. "
+                        "Write clean, human-quality Conventional Commits like experienced maintainers. "
+                        "Focus only on describing the actual codebase changes.\n\n"
+                        "Format example:\n"
+                        "feat(cli): improve build workflow output\n\n"
+                        "- redesign build result UI\n"
+                        "- add syntax-highlighted code previews\n"
+                        "- simplify offline mode messaging\n"
+                        "- improve CLI presentation\n\n"
+                        "Output ONLY the raw commit message. Do not include markdown fences, backticks, or any explanation."
+                    )
+                ),
+                ChatMessage(role=Role.USER, content=optimized_prompt),
+            ],
+        )
 
-
-    commit_request = ChatRequest(
-        model=decision.model if decision else None,
-        messages=[
-            ChatMessage(
-                role=Role.SYSTEM,
-                content=(
-                    "You are a senior software engineer specialized in creating concise Conventional Commit messages. "
-                    "Write clean, human-quality Conventional Commits like experienced maintainers. "
-                    "Focus only on describing the actual codebase changes.\n\n"
-                    "Format example:\n"
-                    "feat(cli): improve build workflow output\n\n"
-                    "- redesign build result UI\n"
-                    "- add syntax-highlighted code previews\n"
-                    "- simplify offline mode messaging\n"
-                    "- improve CLI presentation\n\n"
-                    "Output ONLY the raw commit message. Do not include markdown fences, backticks, or any explanation."
-                )
-            ),
-            ChatMessage(role=Role.USER, content=optimized_prompt),
-        ],
-    )
-
-    response = await raw_provider.chat(commit_request)
-    commit_message = response.message.content.strip()
+        response = await raw_provider.chat(commit_request)
+        commit_message = response.message.content.strip()
 
     if commit_message.startswith("```"):
         lines = commit_message.splitlines()

@@ -192,7 +192,10 @@ async def run_forge(
         )
     _register_default_workflows(provider, test_command=test_command)
     orchestrator = Orchestrator(_REGISTRY, provider=provider, decision=decision)
-    result = await orchestrator.run(text)
+
+    console = get_console()
+    with console.status("[bold yellow]Thinking...[/bold yellow]", spinner="dots"):
+        result = await orchestrator.run(text)
 
     if save_diff and result.diff:
         save_diff.write_text(result.diff, encoding="utf-8")

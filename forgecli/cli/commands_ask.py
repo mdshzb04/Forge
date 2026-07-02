@@ -1,4 +1,11 @@
-"""``forge ask`` subcommand: ask a question about the project."""
+"""``forge ask`` subcommand: ask a question about the project.
+
+.. deprecated::
+   This conversational command is deprecated and may be removed in a
+   future release. Forge is now an AI optimization runtime.
+   Use :command:`forge commit` for AI-powered Git commits or
+   :command:`forge build` for code generation.
+"""
 
 from __future__ import annotations
 
@@ -9,7 +16,7 @@ from pathlib import Path
 import typer
 from rich.markdown import Markdown
 
-from forgecli.cli.ui import error, get_console
+from forgecli.cli.ui import error, get_console, warn_deprecated
 from forgecli.orchestrator import (
     AskWorkflow,
     HeuristicIntentClassifier,
@@ -19,23 +26,23 @@ from forgecli.orchestrator import (
 from forgecli.providers.mock import MockProvider
 
 app = typer.Typer(
-    help="Ask a question about the repository.",
+    help="[deprecated] Ask a question about the repository.",
     invoke_without_command=True,
     rich_markup_mode="rich",
 )
 
 _terms = [
     "graphify",
-    "".join(["p", "o", "n", "y", "t", "a", "i", "l"]),
+    "ponytail",
     "prompt optimization",
     "retrieval",
     "indexing",
     "routing",
-    "".join(["y", "a", "g", "n", "i"]),
+    "yagni",
     "safe\\s+because",
     "prompt\\s+notes",
     "system\\s+instructions",
-    "".join(["r", "e", "a", "s", "o", "n", "i", "n", "g"])
+    "reasoning"
 ]
 _INTERNAL_TERMS = re.compile(
     r"(?i)\b(" + "|".join(_terms) + r")\b|\bcut:"
@@ -91,10 +98,15 @@ async def _run_ask(question: str, path: Path, live: bool, verbose: bool = False)
     plugin_registry.register_workflow(AskWorkflow())
     orchestrator = Orchestrator(plugin_registry, provider=provider, decision=decision)
 
+    console = get_console()
+    warn_deprecated("forge ask")
+
     try:
         from forgecli.plugins import Intent
 
-        result = await orchestrator.run(question, intent=Intent.ASK)
+        with console.status("[bold yellow]Thinking...[/bold yellow]", spinner="dots"):
+            result = await orchestrator.run(question, intent=Intent.ASK)
+
         if not result.success:
             raise Exception(result.error or "Orchestrator failed")
 
@@ -103,7 +115,6 @@ async def _run_ask(question: str, path: Path, live: bool, verbose: bool = False)
         if verbose:
             from forgecli.cli.ui import table
 
-            console = get_console()
             provider_name = decision.provider_name if decision else "mock"
             console.print()
             console.print(f"[dim]Provider: {provider_name}[/dim]")

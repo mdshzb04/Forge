@@ -5,7 +5,7 @@ summary = "Demo plugin: registers a custom provider + health probe."
 description = "A runnable example used by the PLUGINS.md guide."
 authors = ["ForgeCLI Authors"]
 license = "MIT"
-homepage = "https://github.com/mdshzb04/ForgeCli"
+homepage = "https://github.com/forgecli/ForgeCli"
 
 permissions = ["network", "filesystem"]
 

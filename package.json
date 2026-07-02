@@ -1,7 +1,7 @@
 {
-  "name": "p-4",
+  "name": "forgecli",
   "version": "1.0.0",
-  "description": "> **AI Development Operating System** — describe the outcome you want, and ForgeCLI orchestrates Graphify,  and the selected LLM to achieve it.",
+  "description": "AI optimization runtime — Graphify, Caveman, , Smart Routing.",
   "main": "index.js",
   "directories": {
     "doc": "docs",
@@ -13,13 +13,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mdshzb04/ForgeCli.git"
+    "url": "git+https://github.com/forgecli/forgecli.git"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mdshzb04/ForgeCli/issues"
+    "url": "https://github.com/forgecli/forgecli/issues"
   },
-  "homepage": "https://github.com/mdshzb04/ForgeCli#readme"
+  "homepage": "https://github.com/forgecli/forgecli#readme"
 }

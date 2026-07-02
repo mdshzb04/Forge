@@ -40,6 +40,12 @@ def success(message: str) -> None:
     get_console().print(f"[success]✓[/success] {message}")
 
 
+def warn_deprecated(command: str) -> None:
+    get_console().print(
+        f"[yellow]Deprecated[/yellow] — [bold]{command}[/bold] may be removed in a future release."
+    )
+
+
 def table(headers: list[str], rows: list[list[str]], *, title: str | None = None) -> None:
     """Print a small :class:`rich.table.Table` to the shared console."""
     tbl = Table(title=title, header_style="accent.bold")
