@@ -10,8 +10,7 @@ class Forgecli < Formula
 
   depends_on "python@3.12"
 
-  # Graphify is optional; install separately with:
-  #   uv tool install graphifyy
+  # Graphify is built in ; 
 
   def install
     virtualenv_install_with_resources
