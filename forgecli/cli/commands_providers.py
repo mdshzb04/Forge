@@ -40,7 +40,7 @@ def list_cmd() -> None:
     console = get_console()
     from forgecli.config.loader import ConfigLoader
 
-    _ENV_KEYS = {
+    _env_keys = {
         "openai": "OPENAI_API_KEY",
         "anthropic": "ANTHROPIC_API_KEY",
         "google": "GEMINI_API_KEY",
@@ -64,7 +64,7 @@ def list_cmd() -> None:
         default_p = None
 
     for p_id, p_display in PROVIDERS_DISPLAY.items():
-        is_auth = bool(os.getenv(_ENV_KEYS.get(p_id, "")))
+        is_auth = bool(os.getenv(_env_keys.get(p_id, "")))
         if p_id in ("ollama", "lmstudio", "vllm"):
             is_auth = is_auth or (default_p == p_id)
 
