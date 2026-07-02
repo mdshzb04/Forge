@@ -76,7 +76,6 @@ class HeuristicIntentClassifier(IntentClassifier):
     _PLAN_HINTS = ("plan", "design", "architect", "roadmap", "milestones")
     _REVIEW_HINTS = ("review", "audit", "check the code", "lint")
     _EXPLAIN_HINTS = ("explain this", "what does this do", "how does this work")
-    _COMMIT_HINTS = ("commit", "ship this", "make a commit")
     _BUILD_HINTS = (
         "add",
         "implement",
@@ -108,8 +107,6 @@ class HeuristicIntentClassifier(IntentClassifier):
             return IntentPrediction(Intent.REVIEW, 0.9, ("matched review hint",))
         if any(text.startswith(hint) for hint in self._EXPLAIN_HINTS):
             return IntentPrediction(Intent.EXPLAIN, 0.85, ("matched explain hint",))
-        if any(hint in text for hint in self._COMMIT_HINTS):
-            return IntentPrediction(Intent.COMMIT, 0.8, ("matched commit hint",))
         if any(hint in text for hint in self._PLAN_HINTS) and not any(
             hint in text for hint in self._BUILD_HINTS
         ):
@@ -411,8 +408,6 @@ def _default_workflow_factory(intent: Intent) -> Workflow:
         return ReviewWorkflow()
     if intent is Intent.EXPLAIN:
         return ExplainWorkflow()
-    if intent is Intent.COMMIT:
-        return CommitWorkflow()
     # BUILD and UNKNOWN fall through to the heavy pipeline.
     from forgecli.providers.mock import MockProvider
 
@@ -648,30 +643,6 @@ class ExplainWorkflow(Workflow):
         return {"summary": explanation, "files_touched": [], "diff": ""}
 
 
-class CommitWorkflow(Workflow):
-    name = "commit"
-    intents = (Intent.COMMIT,)
-
-    async def run(self, context: PluginContext) -> dict[str, Any]:
-        from forgecli.commit.analyzer import CommitAnalyzer
-        from forgecli.commit.git_utils import diff_staged
-
-        diff = diff_staged(Path.cwd())
-        if not diff:
-            return {
-                "summary": "No staged changes to commit.",
-                "files_touched": [],
-                "diff": "",
-            }
-        analysis = CommitAnalyzer().analyze(diff)
-        return {
-            "summary": analysis.summary,
-            "analysis": analysis,
-            "files_touched": [],
-            "diff": diff,
-        }
-
-
 # ---------------------------------------------------------------------------
 # Bootstrap helper
 # ---------------------------------------------------------------------------
@@ -698,7 +669,6 @@ def _bootstrap_app_context() -> AppContext:
 __all__ = [
     "AskWorkflow",
     "BuildWorkflow",
-    "CommitWorkflow",
     "DocsWorkflow",
     "ExplainWorkflow",
     "ForgeResult",
@@ -729,7 +699,6 @@ def build_orchestrator(
         DocsWorkflow(),
         ReviewWorkflow(),
         ExplainWorkflow(),
-        CommitWorkflow(),
     ]
     existing = {w.name for w in registry.workflows}
     for workflow in defaults:

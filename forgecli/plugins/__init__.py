@@ -49,7 +49,6 @@ class Intent(str, Enum):
     DOCS = "docs"          # produce documentation
     REVIEW = "review"      # run the code review pipeline
     EXPLAIN = "explain"    # explain a single node / file
-    COMMIT = "commit"      # generate a commit message
     UNKNOWN = "unknown"
 
 

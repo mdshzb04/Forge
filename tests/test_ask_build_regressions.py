@@ -289,21 +289,6 @@ def test_clean_source_code_removes_ponytail_comments() -> None:
     assert "y = 2" in cleaned
 
 
-def test_commit_message_sanitization() -> None:
-    from forgecli.cli.commands_commit import sanitize_commit_message
-
-    msg = (
-        "feat(cli): improve build workflow\n\n"
-        "- safe because we ran unit tests\n"
-        "- ponytail intensity full applied\n"
-        "- implement the core changes\n"
-    )
-    cleaned = sanitize_commit_message(msg)
-    assert "safe because" not in cleaned
-    assert "ponytail" not in cleaned
-    assert "implement the core changes" in cleaned
-
-
 def test_cli_build_unrequested_files_blocked(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path))
     provider = _RecordingProvider()

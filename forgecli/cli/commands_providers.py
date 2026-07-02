@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import typer
 
 from forgecli.cli.bootstrap import bootstrap_context
@@ -37,7 +39,21 @@ def list_cmd() -> None:
     """List every supported provider and its authentication status."""
     console = get_console()
     from forgecli.config.loader import ConfigLoader
-    from forgecli.core.credentials import list_authenticated_providers
+
+    _ENV_KEYS = {
+        "openai": "OPENAI_API_KEY",
+        "anthropic": "ANTHROPIC_API_KEY",
+        "google": "GEMINI_API_KEY",
+        "openrouter": "OPENROUTER_API_KEY",
+        "groq": "GROQ_API_KEY",
+        "mistral": "MISTRAL_API_KEY",
+        "minimax": "MINIMAX_API_KEY",
+        "xai": "XAI_API_KEY",
+        "together": "TOGETHER_API_KEY",
+        "fireworks": "FIREWORKS_API_KEY",
+        "cohere": "COHERE_API_KEY",
+        "nvidia": "NVIDIA_API_KEY",
+    }
 
     try:
         settings = ConfigLoader().load()
@@ -47,11 +63,8 @@ def list_cmd() -> None:
     except Exception:
         default_p = None
 
-    auth_list = list_authenticated_providers()
-
     for p_id, p_display in PROVIDERS_DISPLAY.items():
-        is_auth = p_id in auth_list
-        # Local providers can be active/used even without auth (e.g. no key required)
+        is_auth = bool(os.getenv(_ENV_KEYS.get(p_id, "")))
         if p_id in ("ollama", "lmstudio", "vllm"):
             is_auth = is_auth or (default_p == p_id)
 

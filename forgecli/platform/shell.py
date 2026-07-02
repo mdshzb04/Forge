@@ -14,7 +14,7 @@ shell-style invocations. All callers go through :func:`run`, which:
   out of the platform layer.
 
 The module also exposes a small ``run_capture`` helper used by
-:mod:`forgecli.commit.git_utils` and friends.
+:mod:`forgecli.graph.client` and friends.
 """
 
 from __future__ import annotations

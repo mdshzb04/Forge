@@ -55,8 +55,6 @@ class GitSection(BaseModel):
     user_name: str = ""
     user_email: str = ""
     auto_fetch: bool = True
-    push_on_commit: bool = False
-    sign_commits: bool = False
 
 
 class OptimizerSection(BaseModel):

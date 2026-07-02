@@ -1,13 +1,6 @@
 """``forge release`` subcommand: cut a release.
 
-Combines:
-
-* ``forge commit release <version>`` — promote the Unreleased
-  changelog entries to a versioned block;
-* ``git tag <version>`` — create an annotated tag;
-* ``git push --follow-tags`` — push the commit and the tag.
-
-Use ``--dry-run`` to print the actions without executing them.
+Creates a git tag with the specified version.
 """
 
 from __future__ import annotations
@@ -19,8 +12,6 @@ from pathlib import Path
 import typer
 
 from forgecli.cli.ui import error, get_console, info, success, warn
-from forgecli.commit.changelog import Changelog
-from forgecli.commit.release_notes import build_release_notes
 
 app = typer.Typer(
     help="Cut a release (changelog promotion, tag, optional push).",
@@ -38,15 +29,6 @@ def release_cmd(
     ctx: typer.Context,
     version: str = typer.Argument(..., help="Version to release (e.g. 1.2.0) or 'validate' to validate release candidate."),
     path: str = typer.Option(".", "--path", "-p", help="Project root."),
-    previous: str | None = typer.Option(
-        None, "--previous", help="Previous version (for the compare link)."
-    ),
-    changelog_path: Path = typer.Option(
-        Path("CHANGELOG.md"), "--changelog-path", help="Path to CHANGELOG.md."
-    ),
-    notes_path: Path | None = typer.Option(
-        None, "--notes-path", help="Write release notes to this file."
-    ),
     push: bool = typer.Option(
         False, "--push", help="Push the commit and the tag to the remote."
     ),
@@ -72,42 +54,14 @@ def release_cmd(
         return
     project = Path(path).resolve()
     if not _SEMVER.match(version):
-        # Allow plain "1.2.0" as well as "v1.2.0".
         version = version.lstrip("v")
         if not _SEMVER.match(version):
             error(f"Version must look like 1.2.0 or v1.2.0; got {version!r}")
             raise typer.Exit(code=1)
         version = f"v{version}"
 
-    cl = Changelog.load(changelog_path)
-    if not cl.unreleased:
-        warn("No Unreleased entries to release. Run 'forge commit --changelog' first.")
-        raise typer.Exit(code=1)
-
-    analyses = [entry.analysis for entry in cl.unreleased]
-    notes = build_release_notes(version, analyses, previous_version=previous)
-    if notes_path:
-        if dry_run:
-            info(f"[dry-run] would write {notes_path}")
-        else:
-            notes_path.parent.mkdir(parents=True, exist_ok=True)
-            notes_path.write_text(notes.render(), encoding="utf-8")
-            success(f"Release notes written to {notes_path}.")
-    else:
-        # Print to stdout.
-        import sys
-        sys.stdout.write(notes.render())
-
-    if not dry_run:
-        cl.release(version)
-        cl.save(changelog_path)
-        success(f"Changelog released as [{version}].")
-
-    if _run_git(["add", str(changelog_path)], project, dry_run=dry_run) and not dry_run:
-        success("Changelog staged.")
-
     if not _is_git_repo(project):
-        warn("Not a git repository; skipping tag and push.")
+        warn("Not a git repository; cannot release.")
         return
 
     msg = f"Release {version}"
@@ -291,9 +245,7 @@ def validate_internal(
     # Basic safe command verification
     safe_commands = [
         "forge doctor",
-        "forge auth status",
         "forge provider list",
-        "forge model list",
         "forge history list",
         "forge status"
     ]

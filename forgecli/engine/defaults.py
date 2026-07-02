@@ -74,7 +74,7 @@ def default_registry(
         ModelRouterStage(router=router),
         ExecutionEngineStage(provider=provider),
         ValidationEngineStage(test_command=test_command),
-        GitEngineStage(**{k: v for k, v in stage_kwargs.items() if k in ("auto_commit",)}),
+        GitEngineStage(),
     ]
 
     for stage in stages:

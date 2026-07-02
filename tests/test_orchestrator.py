@@ -11,7 +11,6 @@ import pytest
 from forgecli.orchestrator import (
     AskWorkflow,
     BuildWorkflow,
-    CommitWorkflow,
     DocsWorkflow,
     ExplainWorkflow,
     HeuristicIntentClassifier,
@@ -72,12 +71,6 @@ def test_heuristic_classifier_recognizes_explain() -> None:
     assert prediction.intent is Intent.EXPLAIN
 
 
-def test_heuristic_classifier_recognizes_commit() -> None:
-    classifier = HeuristicIntentClassifier()
-    prediction = classifier.classify("Make a commit with these changes")
-    assert prediction.intent is Intent.COMMIT
-
-
 def test_heuristic_classifier_recognizes_greeting() -> None:
     classifier = HeuristicIntentClassifier()
     prediction = classifier.classify("hi")
@@ -129,7 +122,6 @@ def _make_orchestrator() -> Orchestrator:
     registry.register_workflow(AskWorkflow())
     registry.register_workflow(ReviewWorkflow())
     registry.register_workflow(ExplainWorkflow())
-    registry.register_workflow(CommitWorkflow())
     return Orchestrator(registry, provider=provider)
 
 
@@ -163,13 +155,6 @@ def test_orchestrator_picks_explain_workflow() -> None:
     assert result.workflow == "explain"
 
 
-def test_orchestrator_picks_commit_workflow() -> None:
-    orchestrator = _make_orchestrator()
-    result = asyncio.run(orchestrator.run("Make a commit"))
-    assert result.intent is Intent.COMMIT
-    assert result.workflow == "commit"
-
-
 def test_orchestrator_treats_greeting_as_ask() -> None:
     orchestrator = _make_orchestrator()
     result = asyncio.run(orchestrator.run("hello world"))
@@ -181,9 +166,9 @@ def test_build_orchestrator_wires_defaults() -> None:
     provider = MockProvider(MockProviderConfig())
     registry = PluginRegistry()
     orch = build_orchestrator(registry, provider=provider)
-    # All seven default workflows are registered.
+    # All six default workflows are registered.
     assert {w.name for w in orch.registry.workflows} >= {
-        "build", "plan", "ask", "docs", "review", "explain", "commit"
+        "build", "plan", "ask", "docs", "review", "explain"
     }
 
 

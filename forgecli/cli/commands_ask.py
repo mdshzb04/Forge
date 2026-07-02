@@ -3,8 +3,7 @@
 .. deprecated::
    This conversational command is deprecated and may be removed in a
    future release. Forge is now an AI optimization runtime.
-   Use :command:`forge commit` for AI-powered Git commits or
-   :command:`forge build` for code generation.
+   Use :command:`forge build` for code generation.
 """
 
 from __future__ import annotations

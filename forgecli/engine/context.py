@@ -121,7 +121,6 @@ class EngineContext:
     fix_attempts: int = 0
     # Stage 8: Git
     staged: bool = False
-    committed: bool = False
     pushed: bool = False
 
     # Free-form extras for plugins / advanced stages.
@@ -158,7 +157,6 @@ class EngineContext:
             "test_returncode": self.test_returncode,
             "fix_attempts": self.fix_attempts,
             "staged": self.staged,
-            "committed": self.committed,
             "pushed": self.pushed,
             "stage_count": len(self.log),
         }

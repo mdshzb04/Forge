@@ -25,8 +25,7 @@ from pathlib import Path
 
 import typer
 
-from forgecli.cli.ui import error, get_console, info, table, warn
-from forgecli.commit.git_utils import GitRepoError, diff_staged
+from forgecli.cli.ui import error, get_console, info, table
 from forgecli.orchestrator import (
     HeuristicIntentClassifier,
     Orchestrator,
@@ -48,7 +47,6 @@ def _register_default_workflows(provider, *, test_command: str | None = None) ->
     from forgecli.orchestrator import (
         AskWorkflow,
         BuildWorkflow,
-        CommitWorkflow,
         DocsWorkflow,
         ExplainWorkflow,
         PlanWorkflow,
@@ -62,7 +60,6 @@ def _register_default_workflows(provider, *, test_command: str | None = None) ->
         DocsWorkflow(),
         ReviewWorkflow(),
         ExplainWorkflow(),
-        CommitWorkflow(),
     ]
     existing = {w.name for w in _REGISTRY.workflows}
     for workflow in defaults:
@@ -126,9 +123,6 @@ def forge_cmd(
     save_diff: Path | None = typer.Option(
         None, "--save-diff", help="Write the produced diff to this path."
     ),
-    no_commit: bool = typer.Option(
-        False, "--no-commit", help="Skip the auto-commit step."
-    ),
     no_tests: bool = typer.Option(
         False, "--no-tests", help="Skip the test stage."
     ),
@@ -153,7 +147,6 @@ def forge_cmd(
             live=live,
             json_output=json_output,
             save_diff=save_diff,
-            no_commit=no_commit,
             no_tests=no_tests,
             verbose=verbose,
             diff=diff,
@@ -168,7 +161,6 @@ async def run_forge(
     live: bool,
     json_output: bool,
     save_diff: Path | None,
-    no_commit: bool,
     no_tests: bool,
     verbose: bool = False,
     diff: bool = False,
@@ -218,10 +210,6 @@ async def run_forge(
         sys.stdout.flush()
     else:
         render_result(result, verbose=verbose, diff=diff)
-
-    # Auto-commit (unless disabled).
-    if result.success and not no_commit and result.files_touched:
-        _maybe_commit(path, result)
 
     if not result.success:
         error(result.error or "Forge pipeline failed.")
@@ -323,27 +311,6 @@ def render_result(result, verbose: bool = False, diff: bool = False) -> None:
         console.print()
 
     console.print("────────────────────────────────────────")
-
-
-def _maybe_commit(project: Path, result) -> None:
-    """Best-effort auto-commit: only if the user has not already committed
-    these files and the project is a git repo.
-    """
-    try:
-        diff = diff_staged(project)
-    except GitRepoError as exc:
-        warn(f"Skipping auto-commit: {exc}")
-        return
-    if not diff and result.diff:
-        # Stage the touched files and let the user run `forge commit`.
-        from forgecli.cli.commands_commit import _run_git
-
-        for path in result.files_touched:
-            _run_git(["add", str(path)], project)
-        info("Touched files staged. Run `forge commit` to record the change.")
-        return
-    if diff:
-        info("Staged changes detected; run `forge commit` to record them.")
 
 
 __all__ = ["app", "get_registry", "render_result", "run_forge"]

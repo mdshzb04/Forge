@@ -101,7 +101,6 @@ def engine_result_to_dict(result: EngineResult) -> dict[str, object]:
         "applied_files": [str(p) for p in ctx.applied_files],
         "test_returncode": ctx.test_returncode,
         "fix_attempts": ctx.fix_attempts,
-        "committed": ctx.committed,
         "stages": [
             {
                 "name": log.stage,

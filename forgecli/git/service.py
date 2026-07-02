@@ -1,4 +1,4 @@
-"""High-level git operations: stage, commit, branch, push, diff."""
+"""High-level git operations: stage, branch, push, diff."""
 
 from __future__ import annotations
 
@@ -8,7 +8,6 @@ from typing import Any
 
 from forgecli.core.errors import GitError
 from forgecli.core.service import Service
-from forgecli.git.commit import CommitAuthor, CommitInfo
 from forgecli.git.repo import GitRepo
 
 
@@ -22,12 +21,10 @@ class GitService(Service):
         repo: GitRepo,
         *,
         default_branch: str = "main",
-        author: CommitAuthor | None = None,
     ) -> None:
         super().__init__()
         self._repo = repo
         self._default_branch = default_branch
-        self._author = author
 
     @property
     def repo(self) -> GitRepo:
@@ -39,16 +36,6 @@ class GitService(Service):
             self._repo.raw.index.add([str(p) for p in paths])
         except Exception as exc:
             raise GitError(f"Failed to stage files: {exc}") from exc
-
-    def commit(
-        self,
-        message: str,
-        *,
-        author: CommitAuthor | None = None,
-        all_files: bool = False,
-    ) -> CommitInfo:
-        """Create a commit with ``message``; placeholder for now."""
-        raise NotImplementedError("GitService.commit() is a scaffold placeholder")
 
     def current_branch(self) -> str:
         return self._repo._safe_branch()

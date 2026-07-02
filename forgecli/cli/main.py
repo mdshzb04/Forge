@@ -14,9 +14,7 @@ import typer
 from forgecli import __app_name__, __version__
 from forgecli.cli import (
     commands_ask,
-    commands_auth,
     commands_build,
-    commands_commit,
     commands_config,
     commands_docs,
     commands_doctor,
@@ -26,7 +24,6 @@ from forgecli.cli import (
     commands_index,
     commands_info,
     commands_init,
-    commands_model,
     commands_plan,
     commands_plugin,
     commands_providers,
@@ -56,10 +53,8 @@ app = typer.Typer(
 
 app.add_typer(commands_init.app, name="init")
 app.add_typer(commands_config.app, name="config")
-app.add_typer(commands_auth.app, name="auth")
 app.add_typer(commands_providers.app, name="providers")
 app.add_typer(commands_providers.app, name="provider")
-app.add_typer(commands_model.app, name="model")
 app.add_typer(commands_index.app, name="index")
 app.add_typer(commands_graph.app, name="graph")
 app.add_typer(commands_plan.app, name="plan", hidden=True)
@@ -69,7 +64,6 @@ app.command(
     context_settings={"allow_interspersed_args": True},
 )(commands_build.build_cmd)
 
-app.add_typer(commands_commit.app, name="commit")
 app.add_typer(commands_review.app, name="review")
 
 app.command(
@@ -240,9 +234,6 @@ def main(
     save_diff: Path | None = typer.Option(
         None, "--save-diff", help="Write the produced diff to this path."
     ),
-    no_commit: bool = typer.Option(
-        False, "--no-commit", help="Skip the auto-commit step."
-    ),
     no_tests: bool = typer.Option(
         False, "--no-tests", help="Skip the test stage."
     ),
@@ -316,7 +307,6 @@ def main(
                 live=live,
                 json_output=json_output,
                 save_diff=save_diff,
-                no_commit=no_commit,
                 no_tests=no_tests,
                 verbose=verbose,
                 diff=diff,

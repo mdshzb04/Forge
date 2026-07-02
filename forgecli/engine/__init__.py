@@ -10,7 +10,7 @@ in ForgeCLI. The pipeline is a fixed sequence of eight stages:
     5. Model Router          — pick (provider, model) for the call
     6. Execution Engine      — invoke the LLM, extract a diff
     7. Validation Engine     — apply the diff + run tests + auto-fix
-    8. Git Engine            — stage / commit / push the changes
+    8. Git Engine            — stage / push the changes
 
 Every stage is an independent object behind the :class:`Stage`
 Protocol. The :class:`ExecutionEngine` runs them in order, emits
