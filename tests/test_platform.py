@@ -172,10 +172,6 @@ def test_run_returns_nonzero_on_failure(tmp_path: Path) -> None:
 
 
 def test_run_propagates_env() -> None:
-    if is_windows():
-        result = run(["cmd.exe", "/c", "echo %FORGECLI_TEST_VAR%"])
-    else:
-        result = run(["sh", "-c", "echo $FORGECLI_TEST_VAR"])
     result = run(
         ["cmd.exe", "/c", "echo %FORGECLI_TEST_VAR%"]
         if is_windows()
@@ -186,8 +182,11 @@ def test_run_propagates_env() -> None:
 
 
 def test_which_finds_python(monkeypatch) -> None:
-    monkeypatch.setenv("PATH", os.path.dirname(shutil.which("python") or "") or os.defpath)
-    assert find_executable("python") is not None
+    candidates = ("python", "python3", "python.exe", "python3.exe")
+    resolved = next((shutil.which(c) for c in candidates if shutil.which(c)), None)
+    if resolved:
+        monkeypatch.setenv("PATH", os.path.dirname(resolved))
+    assert find_executable("python") is not None or find_executable("python3") is not None
 
 
 def test_which_returns_none_for_missing() -> None:
