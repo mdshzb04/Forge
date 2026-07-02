@@ -1,0 +1,25 @@
+{
+  "name": "p-4",
+  "version": "1.0.0",
+  "description": "> **AI Development Operating System** — describe the outcome you want, and ForgeCLI orchestrates Graphify,  and the selected LLM to achieve it.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdshzb04/ForgeCli.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mdshzb04/ForgeCli/issues"
+  },
+  "homepage": "https://github.com/mdshzb04/ForgeCli#readme"
+}

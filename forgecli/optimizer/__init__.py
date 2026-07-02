@@ -1,4 +1,4 @@
-"""Context optimization: chunking, ranking, summarization."""
+"""Context optimization: chunking, ranking, summarization, token optimization."""
 
 from forgecli.optimizer.chunker import Chunker
 from forgecli.optimizer.optimizer import ContextOptimizer
@@ -11,3 +11,4 @@ __all__ = [
     "Ranker",
     "Summarizer",
 ]
+

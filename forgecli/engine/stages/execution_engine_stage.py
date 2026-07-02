@@ -45,6 +45,17 @@ class ExecutionEngineStage:
         if context.engine.optimized_request is not None:
             build_ctx.optimized_request = context.engine.optimized_request
             build_ctx.optimized_notes = context.engine.optimized_notes
+        # Merge caveman-optimized system prompt into the final request.
+        if (
+            context.engine.caveman_optimized_request is not None
+            and context.engine.optimized_request is not None
+        ):
+            build_ctx.optimized_request = _merge_caveman_request(
+                context.engine.caveman_optimized_request,
+                context.engine.optimized_request,
+            )
+        elif context.engine.caveman_optimized_request is not None:
+            build_ctx.optimized_request = context.engine.caveman_optimized_request
         retries = int(context.engine.extras.get("retries", 0))
         build_ctx.extras["provider"] = provider
         build_ctx.extras["retries"] = retries
@@ -70,3 +81,33 @@ class ExecutionEngineStage:
             },
             notes=notes,
         )
+
+
+def _merge_caveman_request(
+    caveman_req: ChatRequest,
+    ponytail_req: ChatRequest,
+) -> ChatRequest:
+    """Merge caveman system prompt into the Ponytail-optimized request.
+
+    Caveman's system message (communication compression) is prepended
+    to Ponytail's system message (code generation strategy) so both
+    optimizations apply to the final request sent to the LLM.
+    """
+    caveman_sys = [
+        m for m in caveman_req.messages if m.role is Role.SYSTEM
+    ]
+    ponytail_sys = [
+        m for m in ponytail_req.messages if m.role is Role.SYSTEM
+    ]
+    other_messages = [
+        m for m in ponytail_req.messages if m.role is not Role.SYSTEM
+    ]
+
+    merged_sys_content = "\n\n".join(
+        m.content for m in [*caveman_sys, *ponytail_sys] if m.content.strip()
+    )
+    merged_messages: list[ChatMessage] = [
+        ChatMessage(role=Role.SYSTEM, content=merged_sys_content),
+        *other_messages,
+    ]
+    return ponytail_req.model_copy(update={"messages": merged_messages})

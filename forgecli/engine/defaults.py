@@ -18,6 +18,7 @@ from typing import Any
 
 from forgecli.engine.execution import Stage, StageRegistry
 from forgecli.engine.stages import (
+    CavemanOptimizerStage,
     ContextOptimizerStage,
     ExecutionEngineStage,
     GitEngineStage,

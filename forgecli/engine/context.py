@@ -100,10 +100,13 @@ class EngineContext:
     intent_analysis: IntentAnalysis | None = None
     # Stage 2: Retrieval
     retrieval: RetrievalResult | None = None
-    # Stage 3: Context optimization
+    # Stage 3: Caveman optimization (runs before context optimization)
+    caveman_optimized_request: Any = None
+    caveman_optimized_notes: tuple[str, ...] = ()
+    # Stage 4: Context optimization
     optimized_request: Any = None
     optimized_notes: tuple[str, ...] = ()
-    # Stage 4: Plan
+    # Stage 5: Plan
     plan: Any = None  # SoftwarePlan; kept loose to avoid an import cycle
     # Stage 5: Model
     model_selection: ModelSelection | None = None
@@ -142,6 +145,7 @@ class EngineContext:
             "retrieval_match_count": len(self.retrieval.matched_nodes)
             if self.retrieval
             else 0,
+            "caveman_optimized_notes": list(self.caveman_optimized_notes),
             "optimized_notes": list(self.optimized_notes),
             "has_plan": self.plan is not None,
             "model": self.model_selection.model if self.model_selection else None,

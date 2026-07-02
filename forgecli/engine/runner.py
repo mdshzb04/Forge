@@ -21,6 +21,7 @@ def run_engine(
     *,
     provider: Any = None,
     optimizer: Any = None,
+    caveman_optimizer: Any = None,
     graph: Any = None,
     classifier: Any = None,
     router: Any = None,
@@ -30,6 +31,7 @@ def run_engine(
     skip_tests: bool = False,
     skip_graph: bool = False,
     skip_ponytail: bool = False,
+    skip_caveman: bool = False,
     pipeline_names: tuple[str, ...] | None = None,
     extras: dict[str, Any] | None = None,
 ) -> EngineResult:
@@ -50,6 +52,8 @@ def run_engine(
     if extras:
         engine_ctx.extras.update(extras)
 
+    if not skip_caveman and caveman_optimizer is not None:
+        engine_ctx.extras["caveman_optimizer"] = caveman_optimizer
     if not skip_graph and graph is not None:
         engine_ctx.extras["graph"] = graph
     if not skip_ponytail and optimizer is not None:
@@ -65,6 +69,7 @@ def run_engine(
     registry = default_registry(
         provider=provider,
         optimizer=optimizer if not skip_ponytail else None,
+        caveman_optimizer=caveman_optimizer if not skip_caveman else None,
         graph=graph if not skip_graph else None,
         classifier=classifier,
         router=router,

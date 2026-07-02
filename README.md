@@ -607,6 +607,19 @@ Python 3.12 and 3.13. See :file:`.github/workflows/ci.yml`.
 <img width="1854" height="1005" alt="image" src="https://github.com/user-attachments/assets/6eb06d10-6f1f-4648-b679-028368362c24" />
 
 
+## Frontend
+
+The `frontend/` directory contains a production-ready landing page for ForgeCLI built with Next.js, TypeScript, Tailwind CSS, and Framer Motion.
+
+```bash
+cd frontend
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # Static export to out/
+```
+
+See [frontend/README.md](frontend/README.md) for details.
+
 ## License
 
 [MIT](LICENSE)

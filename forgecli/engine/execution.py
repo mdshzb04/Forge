@@ -276,6 +276,7 @@ class ExecutionEngine:
     DEFAULT_PIPELINE: tuple[str, ...] = (
         "intent-analyzer",
         "repository-analyzer",
+        "caveman-optimizer",
         "context-optimizer",
         "planning-engine",
         "model-router",

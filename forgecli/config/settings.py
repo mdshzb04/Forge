@@ -82,6 +82,18 @@ class PromptOptimizerSection(BaseModel):
     timeout_seconds: float = 30.0
 
 
+class CavemanSection(BaseModel):
+    """Caveman token-optimizer settings."""
+
+    model_config = ConfigDict(extra="allow")
+
+    enabled: bool = False
+    intensity: str = "off"  # off | lite | full | ultra | wenyan
+    backend: str = "ruleset"  # ruleset | cli | auto
+    binary: str = "caveman"  # only used when backend = "cli"
+    timeout_seconds: float = 30.0
+
+
 class GraphSection(BaseModel):
     """Repository graph settings."""
 

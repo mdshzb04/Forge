@@ -54,6 +54,8 @@ class BuildContext:
     root: Path
     decision: RouteDecision | None = None
     retrieval: str = ""               # graph-derived context
+    caveman_optimized_request: Any = None
+    caveman_optimized_notes: tuple[str, ...] = ()
     optimized_request: Any = None
     optimized_notes: tuple[str, ...] = ()
     response: ChatResponse | None = None
