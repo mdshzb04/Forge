@@ -18,10 +18,10 @@ from forgecli.providers.mock import MockProvider, MockProviderConfig
 
 
 def test_clean_answer_strips_internal_terms() -> None:
-    text = "Graphify found auth.py and Ponytail optimized the prompt."
+    text = "Graphify found auth.py and  optimized the prompt."
     cleaned = _clean_answer(text)
     assert "graphify" not in cleaned.lower()
-    assert "ponytail" not in cleaned.lower()
+    assert "" not in cleaned.lower()
 
 
 def test_ask_workflow_greeting_uses_short_pipeline() -> None:
@@ -33,7 +33,7 @@ def test_ask_workflow_greeting_uses_short_pipeline() -> None:
     assert result.success
     assert "Hi!" in result.summary
     stage_names = [stage["name"] for stage in result.stages]
-    assert "ponytail-optimize" not in stage_names
+    assert "-optimize" not in stage_names
     assert "graphify-retrieval" not in stage_names
 
 
@@ -57,7 +57,7 @@ def test_cli_ask_greeting_mock_mode(monkeypatch, tmp_path: Path) -> None:
     result = runner.invoke(app, ["ask", "hello", "--mock"])
     assert result.exit_code == 0
     assert "Hi!" in result.output
-    assert "Ponytail" not in result.output
+    assert "" not in result.output
     assert "Graphify" not in result.output
 
 
@@ -73,11 +73,15 @@ def test_resolve_provider_forces_mock_when_live_false(monkeypatch, tmp_path: Pat
 
 
 def test_build_default_live_flag_is_true() -> None:
-    runner = CliRunner()
-    result = runner.invoke(app, ["build", "--help"])
-    assert result.exit_code == 0
-    assert "--live" in result.output
-    assert "--mock" in result.output
+    from typer.main import get_command
+
+    click_cmd = get_command(app)
+    build_params = click_cmd.commands["build"].params
+    live_param = next(p for p in build_params if p.name == "live")
+
+    assert "--live" in live_param.opts
+    assert "--mock" in live_param.secondary_opts
+    assert live_param.default is True
 
 
 @pytest.mark.parametrize(
@@ -273,17 +277,16 @@ def test_clean_source_code_removes_ponytail_comments() -> None:
 
     code = (
         "def main():\n"
-        "    # YAGNI: we cut unused functions\n"
-        "    # safe because this is simple\n"
-        "    # Ponytail rules: don't write too much\n"
+        "
+        "
+        "
         "    # regular comment about logic\n"
-        "    x = 1  # reasoning: optimizer said so\n"
         "    y = 2\n"
     )
     cleaned = clean_source_code(code)
-    assert "YAGNI" not in cleaned
-    assert "safe because" not in cleaned
-    assert "Ponytail" not in cleaned
+    assert "" not in cleaned
+    assert "" not in cleaned
+    assert "" not in cleaned
     assert "optimizer" not in cleaned
     assert "regular comment about logic" in cleaned
     assert "y = 2" in cleaned
