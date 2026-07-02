@@ -18,10 +18,10 @@ from forgecli.providers.mock import MockProvider, MockProviderConfig
 
 
 def test_clean_answer_strips_internal_terms() -> None:
-    text = "Graphify found auth.py and  optimized the prompt."
+    text = "Graphify found auth.py and Ponytail optimized the prompt."
     cleaned = _clean_answer(text)
     assert "graphify" not in cleaned.lower()
-    assert "" not in cleaned.lower()
+    assert "ponytail" not in cleaned.lower()
 
 
 def test_ask_workflow_greeting_uses_short_pipeline() -> None:
@@ -33,7 +33,7 @@ def test_ask_workflow_greeting_uses_short_pipeline() -> None:
     assert result.success
     assert "Hi!" in result.summary
     stage_names = [stage["name"] for stage in result.stages]
-    assert "-optimize" not in stage_names
+    assert "ponytail-optimize" not in stage_names
     assert "graphify-retrieval" not in stage_names
 
 
@@ -57,7 +57,7 @@ def test_cli_ask_greeting_mock_mode(monkeypatch, tmp_path: Path) -> None:
     result = runner.invoke(app, ["ask", "hello", "--mock"])
     assert result.exit_code == 0
     assert "Hi!" in result.output
-    assert "" not in result.output
+    assert "Ponytail" not in result.output
     assert "Graphify" not in result.output
 
 
