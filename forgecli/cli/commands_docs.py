@@ -12,7 +12,7 @@ from pathlib import Path
 import typer
 
 from forgecli.cli.bootstrap import bootstrap_context
-from forgecli.cli.ui import error, get_console, warn, warn_deprecated
+from forgecli.cli.ui import error, get_console, warn
 from forgecli.docs.generator import generate_docs
 from forgecli.orchestrator import (
     DocsWorkflow,

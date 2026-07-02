@@ -24,7 +24,7 @@ from collections.abc import Sequence
 from enum import Enum
 
 from forgecli.optimizer.ponytail import OptimizedRequest
-from forgecli.providers.base import ChatMessage, ChatRequest, Role
+from forgecli.providers.base import ChatMessage, ChatRequest
 
 
 class CavemanIntensity(str, Enum):
@@ -125,7 +125,7 @@ class CavemanCompositeOptimizer(CavemanPromptOptimizer):
             result = await self._external.optimize_chat(request)
             return OptimizedRequest(
                 request=result.request,
-                notes=result.notes + ("caveman external",),
+                notes=(*result.notes, "caveman external"),
                 intensity=self._intensity,
                 source="caveman-external",
             )

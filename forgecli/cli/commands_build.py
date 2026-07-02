@@ -29,7 +29,7 @@ from forgecli.build.pipeline import build_context_from, default_pipeline
 from forgecli.build.retrieval import needs_repository_context
 from forgecli.build.summarize import result_to_dict
 from forgecli.cli.bootstrap import bootstrap_context
-from forgecli.cli.ui import get_console, info, table
+from forgecli.cli.ui import get_console, info
 from forgecli.engine.runner import (
     engine_result_to_dict,
     run_engine,
@@ -378,7 +378,7 @@ def render_pipeline_result(
             elif test_returncode is not None and test_returncode != 0:
                 console.print(f"[bold red]Tests failed (exit {test_returncode})[/bold red]")
         elif not success:
-            console.print(f"[red]Build failed[/red]")
+            console.print("[red]Build failed[/red]")
         else:
             # No diff parsed but build succeeded (e.g. llm returned text)
             from rich.markdown import Markdown

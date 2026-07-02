@@ -1,4 +1,4 @@
-"""Stage 6 — Execution Engine.
+"""Stage 6 - Execution Engine.
 
 Invokes the LLM with the assembled prompt and extracts a unified diff
 from the response. Combines :func:`forgecli.build.llm.llm_call` and
@@ -13,7 +13,7 @@ from forgecli.build import BuildContext
 from forgecli.build.diff_extract import diff_extraction
 from forgecli.build.llm import llm_call
 from forgecli.engine.execution import StageContext, StageResult, StageStatus
-from forgecli.providers.base import Provider
+from forgecli.providers.base import ChatMessage, ChatRequest, Provider, Role
 from forgecli.providers.router import RouteDecision
 
 
@@ -87,12 +87,7 @@ def _merge_caveman_request(
     caveman_req: ChatRequest,
     ponytail_req: ChatRequest,
 ) -> ChatRequest:
-    """Merge caveman system prompt into the Ponytail-optimized request.
-
-    Caveman's system message (communication compression) is prepended
-    to Ponytail's system message (code generation strategy) so both
-    optimizations apply to the final request sent to the LLM.
-    """
+    """Merge caveman and ponytail system prompts into one request."""
     caveman_sys = [
         m for m in caveman_req.messages if m.role is Role.SYSTEM
     ]

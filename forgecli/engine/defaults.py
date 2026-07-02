@@ -34,6 +34,7 @@ def default_registry(
     *,
     provider: Any = None,
     optimizer: Any = None,
+    caveman_optimizer: Any = None,
     graph: Any = None,
     classifier: Any = None,
     router: Any = None,
@@ -41,12 +42,13 @@ def default_registry(
     plugin_registry: Any = None,
     **stage_kwargs: Any,
 ) -> StageRegistry:
-    """Create a :class:`StageRegistry` with all eight default pipeline stages.
+    """Create a :class:`StageRegistry` with all nine default pipeline stages.
 
     Keyword arguments are forwarded to stage constructors:
 
     * ``provider`` → :class:`ExecutionEngineStage`
     * ``optimizer`` → :class:`ContextOptimizerStage`
+    * ``caveman_optimizer`` → :class:`CavemanOptimizerStage`
     * ``graph`` → :class:`RepositoryAnalyzerStage`
     * ``classifier`` → :class:`IntentAnalyzerStage`
     * ``router`` → :class:`ModelRouterStage`
@@ -66,6 +68,7 @@ def default_registry(
     stages: list[Stage] = [
         IntentAnalyzerStage(classifier=classifier),
         RepositoryAnalyzerStage(graph=graph),
+        CavemanOptimizerStage(optimizer=caveman_optimizer),
         ContextOptimizerStage(optimizer=optimizer),
         PlanningEngineStage(**{k: v for k, v in stage_kwargs.items() if k in ("enabled",)}),
         ModelRouterStage(router=router),

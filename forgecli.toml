@@ -1,17 +1,1 @@
-[app]
-log_level = "INFO"
-
-[git]
-default_branch = "main"
-
-[graph]
-enabled = true
-languages = ["python", "typescript"]
-
-[prompt_optimizer]
-backend = "ruleset"
-enabled = true
-intensity = "lite"
-
 [providers]
-allowed = ["mock"]
