@@ -277,16 +277,17 @@ def test_clean_source_code_removes_ponytail_comments() -> None:
 
     code = (
         "def main():\n"
-        "
-        "
-        "
+        "    # YAGNI: we cut unused functions\n"
+        "    # safe because this is simple\n"
+        "    # Ponytail rules: don't write too much\n"
         "    # regular comment about logic\n"
+        "    x = 1  # reasoning: optimizer said so\n"
         "    y = 2\n"
     )
     cleaned = clean_source_code(code)
-    assert "" not in cleaned
-    assert "" not in cleaned
-    assert "" not in cleaned
+    assert "YAGNI" not in cleaned
+    assert "safe because" not in cleaned
+    assert "Ponytail" not in cleaned
     assert "optimizer" not in cleaned
     assert "regular comment about logic" in cleaned
     assert "y = 2" in cleaned
