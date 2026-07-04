@@ -31,7 +31,7 @@ Wrappers feel instant because Forge skips full graph builds during normal use.
 | `forge cursor` | Launch Cursor CLI with optimized context |
 | `forge opencode` | Launch OpenCode CLI with optimized context |
 | `forge commandcode` | Launch CommandCode CLI with optimized context |
-| `forge graph build` | Optionally build a full knowledge graph via Graphify |
+| `forge graph build` | build a full knowledge graph via Graphify |
 | `forge --version` | Show version |
 
 Pass through any flags your CLI supports:
