@@ -180,6 +180,7 @@ class ForgeSettings(BaseSettings):
     git: GitSection = Field(default_factory=GitSection)
     optimizer: OptimizerSection = Field(default_factory=OptimizerSection)
     prompt_optimizer: PromptOptimizerSection = Field(default_factory=PromptOptimizerSection)
+    caveman: CavemanSection = Field(default_factory=CavemanSection)
     graph: GraphSection = Field(default_factory=GraphSection)
     memory: MemorySection = Field(default_factory=MemorySection)
     review: ReviewSection = Field(default_factory=ReviewSection)
@@ -195,6 +196,7 @@ class ForgeSettings(BaseSettings):
         "git",
         "optimizer",
         "prompt_optimizer",
+        "caveman",
         "graph",
         mode="before",
     )

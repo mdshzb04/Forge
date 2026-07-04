@@ -19,6 +19,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 from forgecli.providers.base import ChatMessage, ChatRequest
 
@@ -64,7 +65,7 @@ class OptimizedRequest:
 
     request: ChatRequest
     notes: tuple[str, ...] = ()
-    intensity: Intensity = Intensity.LITE
+    intensity: Any = Intensity.LITE
     source: str = "ruleset"  # "ruleset" | "external" | "passthrough"
 
 
