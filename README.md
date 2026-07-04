@@ -44,16 +44,16 @@ forge cursor --refresh
 
 Use `--refresh` to bypass Forge's context cache.
 
-## Optional: knowledge graph
 
-If you want a full codebase knowledge graph (separate from the fast wrapper path):
+
+If you want a full codebase knowledge graph :
 
 ```bash
 uv tool install graphifyy
 forge graph build
 ```
 
-Graphify runs only when you ask for it — not on every `forge claude` / `codex` / `cursor` invocation.
+
 
 ## Environment variables
 
