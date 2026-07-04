@@ -132,8 +132,8 @@ jobs:
 
 
   publish-testpypi:
-    name: publish to TestPyPI (on tag)
-    if: startsWith(github.ref, 'refs/tags/v')
+    name: publish to TestPyPI (on tag or manual)
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: [test, build, uv-install]
     runs-on: ubuntu-latest
     environment: testpypi
@@ -155,8 +155,8 @@ jobs:
           skip-existing: true
 
   publish-pypi:
-    name: publish to PyPI (on tag)
-    if: startsWith(github.ref, 'refs/tags/v')
+    name: publish to PyPI (on tag or manual)
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: [test, build, uv-install]
     runs-on: ubuntu-latest
     environment: pypi
@@ -175,3 +175,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
+
