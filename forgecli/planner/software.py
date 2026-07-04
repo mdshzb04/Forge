@@ -248,7 +248,6 @@ _STACK_HINTS: dict[str, tuple[str, ...]] = {
     "java": ("Java", "Spring Boot", "Maven", "JUnit"),
     "kotlin": ("Kotlin", "Spring Boot", "Gradle", "JUnit"),
     "swift": ("Swift", "SwiftUI", "XCTest"),
-    "ruby": ("Ruby", "Rails", "PostgreSQL", "RSpec"),
     "elixir": ("Elixir", "Phoenix", "PostgreSQL", "ExUnit"),
 }
 

@@ -1,4 +1,4 @@
-"""``forge graph`` subcommand group: build / query / explain.
+"""``forge graph`` subcommand group: build.
 
 These commands integrate the external Graphify CLI behind the
 :mod:`forgecli.graph.repository` abstraction. When Graphify is not
@@ -17,13 +17,13 @@ from forgecli.cli.ui import (
     get_console,
     info,
     success,
-    warn,
 )
 from forgecli.graph.backend_graphify import GraphifyRepositoryGraph
+from forgecli.utils.fs import has_supported_source_files
 from forgecli.utils.paths import to_privacy_path
 
 app = typer.Typer(
-    help="Build, query, and traverse the codebase graph.",
+    help="Build the codebase graph.",
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
@@ -85,7 +85,23 @@ def build_cmd(
     """Build (or rebuild) the codebase graph for ``path``."""
     import asyncio
 
-    backend = _build_backend(Path(path))
+    path_obj = Path(path).resolve()
+
+    # 1. Exit cleanly if no supported source files found
+    if not has_supported_source_files(path_obj):
+        get_console().print("No supported source files found. Nothing to build.")
+        raise typer.Exit(code=0)
+
+    # 2. Check credentials first. Never continue without a valid provider configuration.
+    active_provider = setup_graphify_credentials(path_obj)
+    if not active_provider:
+        error(
+            "No API key configured. Run 'forge auth login' or export "
+            "OPENAI_API_KEY / ANTHROPIC_API_KEY / GEMINI_API_KEY before running 'forge graph build'."
+        )
+        raise typer.Exit(code=1)
+
+    backend = _build_backend(path_obj)
 
     async def _run() -> None:
         if not await backend.is_available():
@@ -93,35 +109,6 @@ def build_cmd(
             raise typer.Exit(code=1)
 
         info(f"Building graph for [accent]{to_privacy_path(backend.root)}[/accent] ...")
-
-        # Setup Graphify credentials from active provider/store
-        active_provider = setup_graphify_credentials(backend.root)
-
-        if not active_provider:
-            warn(
-                "No AI provider configured.\n\n"
-                "Run:\n"
-                "  forge auth login\n"
-                "  forge provider use <provider>\n"
-                "  forge model use <model>\n\n"
-                "Continuing with syntax-only indexing..."
-            )
-            info("Building syntax-only graph (no LLM needed)...")
-            try:
-                result = await backend.update_graph(force=force, no_cluster=no_cluster)
-                snapshot = result.snapshot
-                get_console().print(
-                    f"  nodes:      [bold]{len(snapshot.nodes)}[/bold]\n"
-                    f"  edges:      [bold]{len(snapshot.edges)}[/bold]\n"
-                    f"  communities:[bold]{len(snapshot.communities)}[/bold]"
-                )
-                for label, value in result.artifacts.items():
-                    get_console().print(f"  [muted]{label}:[/muted] {to_privacy_path(value)}")
-                success("Syntax-only graph built successfully.")
-                return
-            except Exception as update_exc:
-                error(f"Syntax-only graph build failed: {update_exc}")
-                raise typer.Exit(code=1) from update_exc
 
         try:
             result = await backend.build(force=force, no_cluster=no_cluster)
@@ -135,32 +122,8 @@ def build_cmd(
                 get_console().print(f"  [muted]{label}:[/muted] {to_privacy_path(value)}")
             success("Graph built.")
         except Exception as exc:
-            exc_msg = str(exc).lower()
-            is_key_issue = "api key" in exc_msg or "api_key" in exc_msg or "credentials" in exc_msg or "token" in exc_msg
-
-            if is_key_issue:
-                warn(
-                    "Semantic indexing failed or was skipped because of API key issues.\n"
-                    "Continuing with syntax-only indexing..."
-                )
-                info("Building syntax-only graph (no LLM needed)...")
-                try:
-                    result = await backend.update_graph(force=force, no_cluster=no_cluster)
-                    snapshot = result.snapshot
-                    get_console().print(
-                        f"  nodes:      [bold]{len(snapshot.nodes)}[/bold]\n"
-                        f"  edges:      [bold]{len(snapshot.edges)}[/bold]\n"
-                        f"  communities:[bold]{len(snapshot.communities)}[/bold]"
-                    )
-                    for label, value in result.artifacts.items():
-                        get_console().print(f"  [muted]{label}:[/muted] {to_privacy_path(value)}")
-                    success("Syntax-only graph built successfully.")
-                except Exception as update_exc:
-                    error(f"Syntax-only graph build failed: {update_exc}")
-                    raise typer.Exit(code=1) from update_exc
-            else:
-                error(f"Graph build failed: {exc}")
-                raise typer.Exit(code=1) from exc
+            error(f"Graph build failed: {exc}")
+            raise typer.Exit(code=1) from exc
 
     try:
         asyncio.run(_run())

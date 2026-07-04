@@ -1,8 +1,9 @@
-"""Smoke test for the CLI Typer app."""
+"""Smoke tests for the slim Forge CLI."""
 
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import patch
 
 from typer.testing import CliRunner
 
@@ -21,97 +22,106 @@ def test_cli_help() -> None:
     runner = CliRunner()
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    assert "ForgeCLI" in result.output
+    assert "claude" in result.output
+    assert "codex" in result.output
+    assert "cursor" in result.output
+    assert "graph" in result.output
 
 
-def test_cli_providers_list() -> None:
-    runner = CliRunner()
-    result = runner.invoke(app, ["providers", "list"])
-    assert result.exit_code == 0
-    # New providers list shows display names for real providers
-    assert "OpenAI" in result.output or "Anthropic" in result.output or "Groq" in result.output
-
-
-def test_cli_status() -> None:
-    runner = CliRunner()
-    result = runner.invoke(app, ["status"])
-    assert result.exit_code == 0
-    assert "Workspace Status" in result.output
-
-
-def test_cli_info() -> None:
-    runner = CliRunner()
-    result = runner.invoke(app, ["info"])
-    assert result.exit_code == 0
-    assert "Information" in result.output
-
-
-def test_cli_update(monkeypatch) -> None:
-    from datetime import UTC, datetime
-
-    from forgecli.platform.update import UpdateInfo
-
-    dummy_info = UpdateInfo(
-        current="0.1.0",
-        latest="0.2.0",
-        update_available=True,
-        checked_at=datetime.now(UTC),
-    )
-    monkeypatch.setattr("forgecli.cli.commands_update.check_for_update", lambda **kwargs: dummy_info)
-
-    runner = CliRunner()
-    result = runner.invoke(app, ["update"])
-    assert result.exit_code == 0
-    assert "Update Available!" in result.output
-
-
-def test_cli_main_empty() -> None:
+def test_cli_banner() -> None:
     runner = CliRunner()
     result = runner.invoke(app, [])
     assert result.exit_code == 0
-    assert "ForgeCLI" in result.output
-    assert "AI Optimization Runtime" in result.output
+    assert "Forge" in result.output
+    assert "forge claude" in result.output
 
 
-
-
-
-def test_cli_records_history(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path))
+def test_wrapper_help_registered() -> None:
     runner = CliRunner()
-    result = runner.invoke(app, ["status"])
-    assert result.exit_code == 0
-    result_history = runner.invoke(app, ["history", "list"])
-    assert result_history.exit_code == 0
-    assert "status" in result_history.output
-
-
-def test_cli_verbose_logging(monkeypatch, tmp_path: Path) -> None:
-    import logging
-    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path))
-    # Reset logger configuration so it configures anew
-    from forgecli.core import logging as forge_logging
-    old_configured = forge_logging._configured
-    old_level = logging.getLogger().level
-    forge_logging._configured = False
-
-    try:
-        runner = CliRunner()
-        result = runner.invoke(app, ["--verbose", "status"])
+    for cmd in ("claude", "codex", "cursor"):
+        result = runner.invoke(app, [cmd, "--help"])
         assert result.exit_code == 0
-        assert logging.getLogger().level == logging.DEBUG
-    finally:
-        forge_logging._configured = old_configured
-        logging.getLogger().setLevel(old_level)
+        assert cmd in result.output.lower() or "Launch" in result.output
 
 
-def test_cli_doctor_output() -> None:
+def test_wrapper_missing_binary_exits_cleanly(tmp_path: Path) -> None:
     runner = CliRunner()
-    result = runner.invoke(app, ["doctor"])
+    with patch("forgecli.runtime.wrappers.which", return_value=None):
+        result = runner.invoke(app, ["claude"], catch_exceptions=False)
+    assert result.exit_code == 1
+    assert "not installed" in result.output.lower()
+
+
+def test_wrapper_prepares_context_and_launches(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
+    monkeypatch.setenv("FORGECLI_GRAPHIFY_BIN", "nonexistent-graphify")
+
+    import subprocess
+    original_run = subprocess.run
+    launched: dict[str, object] = {}
+
+    def _fake_run(argv, *args, **kwargs):
+        if argv and ("/usr/bin/claude" in argv[0] or argv[0] == "claude"):
+            launched["argv"] = argv
+            launched["cwd"] = kwargs.get("cwd")
+            launched["env"] = kwargs.get("env")
+
+            class _Result:
+                returncode = 0
+
+            return _Result()
+        return original_run(argv, *args, **kwargs)
+
+    with (
+        patch("forgecli.runtime.wrappers.which", return_value="/usr/bin/claude"),
+        patch("forgecli.runtime.wrappers.subprocess.run", side_effect=_fake_run),
+    ):
+        runner = CliRunner()
+        result = runner.invoke(app, ["claude"], catch_exceptions=False)
+
     assert result.exit_code == 0
-    assert "Overall Health" in result.output
-    assert "Weighted Category Breakdown" in result.output
-    assert "Deductions & Actionable Next Steps" in result.output
+    assert launched["argv"] in (["/usr/bin/claude"], ["claude"])
+    env = launched["env"]
+    assert env is not None
+    assert "FORGE_CONTEXT" in env
+    assert "FORGE_CONTEXT_FILE" in env
 
 
+def test_graph_help() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["graph", "--help"])
+    assert result.exit_code == 0
+    assert "build" in result.output
+
+
+def test_wrapper_help_new_commands() -> None:
+    runner = CliRunner()
+    for cmd in ("opencode", "commandcode"):
+        result = runner.invoke(app, [cmd, "--help"])
+        assert result.exit_code == 0
+        assert cmd in result.output.lower() or "Launch" in result.output
+
+
+def test_graph_build_empty_directory(tmp_path: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["graph", "build", "-p", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "No supported source files found. Nothing to build." in result.output
+
+
+def test_graph_build_no_api_key(tmp_path: Path, monkeypatch) -> None:
+    # Clear environment variables to ensure no keys are detected
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
+
+    (tmp_path / "main.py").write_text("print('hello')", encoding="utf-8")
+    runner = CliRunner()
+    result = runner.invoke(app, ["graph", "build", "-p", str(tmp_path)])
+    assert result.exit_code == 1
+    assert "No API key configured" in result.output
 

@@ -3,18 +3,18 @@ requires = ["hatchling>=1.21"]
 build-backend = "hatchling.build"
 
 [project]
-name = "forgecli"
-version = "0.1.0"
-description = "ForgeCLI - AI Development Operating System that orchestrates repository intelligence, context optimization, AI coding workflows, and Git automation."
+name = "forgectx"
+version = "1.0.0"
+description = "Forge — AI optimization runtime. Fast prompt and token optimization for Claude Code, Codex, Cursor, OpenCode, and CommandCode CLI."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.12"
 authors = [
-    { name = "ForgeCLI Authors" }
+    { name = "Forge Authors" }
 ]
-keywords = ["ai", "cli", "developer-tools", "git", "code-intelligence"]
+keywords = ["ai", "cli", "developer-tools", "codex", "claude", "cursor"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
@@ -23,7 +23,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development",
-    "Topic :: Software Development :: Code Generators",
 ]
 dependencies = [
     "typer>=0.12.0",
@@ -52,21 +51,18 @@ dev = [
     "mypy>=1.10.0",
     "types-PyYAML",
     "respx>=0.21.0",
+    "build>=1.0.0",
+    "twine>=5.0.0",
 ]
 
 [project.scripts]
-forgecli = "forgecli.cli.main:app"
 forge = "forgecli.cli.main:app"
 
-[project.entry-points."forgecli.plugins"]
-# Third-party plugins register here, e.g.:
-# my_plugin = "my_plugin:register"
-
 [project.urls]
-Homepage = "https://github.com/forgecli/forgecli"
-Repository = "https://github.com/forgecli/forgecli"
-Documentation = "https://github.com/forgecli/forgecli#readme"
-Issues = "https://github.com/forgecli/forgecli/issues"
+Homepage = "https://github.com/mdshzb04/ForgeCli"
+Repository = "https://github.com/mdshzb04/ForgeCli"
+Documentation = "https://github.com/mdshzb04/ForgeCli#readme"
+Issues = "https://github.com/mdshzb04/ForgeCli/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["forgecli"]
@@ -80,11 +76,11 @@ extend-exclude = [".venv", "build", "dist"]
 select = ["E", "F", "W", "I", "N", "B", "UP", "C4", "SIM", "RUF"]
 ignore = [
     "E501",
-    "N802",   # `Timer` is intentional; a class-like context manager name
-    "UP042",  # `class X(str, Enum)` is intentional for value-equality enums
-    "UP046",  # `class X(Generic[T])` is fine and supported on 3.12+
-    "B008",   # `typer.Option`/`typer.Argument` are intentionally call-site defaults
-    "RUF001", # `ℹ`, `✓`, `✗` icons are intentional in CLI helpers
+    "N802",
+    "UP042",
+    "UP046",
+    "B008",
+    "RUF001",
 ]
 
 [tool.ruff.lint.per-file-ignores]

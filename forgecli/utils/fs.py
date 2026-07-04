@@ -65,3 +65,27 @@ def iter_files(root: os.PathLike[str] | str, patterns: Iterable[str]) -> Iterabl
     base = Path(root)
     for pattern in patterns:
         yield from base.glob(pattern)
+
+
+def has_supported_source_files(path: Path) -> bool:
+    supported_exts = {
+        '.py', '.js', '.ts', '.jsx', '.tsx', '.go', '.rs', '.c', '.cpp', '.cc', '.h', '.hpp',
+        '.java', '.rb', '.php', '.cs', '.html', '.css', '.sh', '.md', '.toml', '.json', '.yaml', '.yml'
+    }
+    ignored_dirs = {
+        '.git', '.venv', '__pycache__', 'node_modules', 'dist', 'build', '.forge',
+        'graphify-out', '.mypy_cache', '.pytest_cache', '.ruff_cache'
+    }
+    if not path.exists() or not path.is_dir():
+        return False
+    for p in path.rglob('*'):
+        try:
+            parts = p.relative_to(path).parts
+            if any(part.startswith('.') or part in ignored_dirs for part in parts[:-1]):
+                continue
+            if p.is_file() and not p.name.startswith('.') and p.suffix.lower() in supported_exts:
+                return True
+        except ValueError:
+            continue
+    return False
+

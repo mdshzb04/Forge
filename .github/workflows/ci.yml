@@ -35,8 +35,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
-      - name: Run doctor (smoke test)
-        run: forge doctor
+      - name: Smoke test CLI
+        run: |
+          forge --version
+          forge --help
+          forge graph --help
 
       - name: Lint
         run: python -m ruff check forgecli tests
@@ -56,7 +59,6 @@ jobs:
         run: |
           python -c "from forgecli.platform import run; r = run(['cmd.exe', '/c', 'echo cross-platform']); print('OK' if r.ok else 'FAIL')"
 
-  # ─── Build sdist + wheel ──────────────────────────────────────────
   build:
     name: build sdist + wheel
     runs-on: ubuntu-latest
@@ -66,16 +68,27 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install build
-        run: python -m pip install --upgrade build
+        run: python -m pip install --upgrade build twine
       - name: Build
         run: python -m build
+      - name: Verify package metadata
+        run: |
+          twine check dist/*
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          wheel = next(Path("dist").glob("*.whl"))
+          with zipfile.ZipFile(wheel) as zf:
+              names = zf.namelist()
+          assert any(n.startswith("forgecli/") for n in names), "missing forgecli package"
+          print(f"OK: {wheel.name}")
+          PY
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
 
-  # ─── Smoke-test `uv tool install` from the built wheel ────────────
   uv-install:
     name: uv tool install (${{ matrix.os }})
     needs: build
@@ -101,7 +114,7 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Install ForgeCLI via uv tool
+      - name: Install forgectx via uv tool
         shell: bash
         run: |
           uv tool install dist/*.whl
@@ -109,16 +122,15 @@ jobs:
       - name: Verify forge --help
         run: forge --help
 
-      - name: Verify forge doctor
-        run: forge doctor
-
-      - name: Verify forge init
-        shell: bash
+      - name: Verify wrapper commands are registered
         run: |
-          cd "$RUNNER_TEMP"
-          forge init --json
+          forge claude --help
+          forge codex --help
+          forge cursor --help
+          forge opencode --help
+          forge commandcode --help
 
-  # ─── Publish to TestPyPI (on tag) ─────────────────────────────────
+
   publish-testpypi:
     name: publish to TestPyPI (on tag)
     if: startsWith(github.ref, 'refs/tags/v')
@@ -127,6 +139,7 @@ jobs:
     environment: testpypi
     permissions:
       id-token: write
+      contents: read
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -141,7 +154,6 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           skip-existing: true
 
-  # ─── Publish to PyPI (on tag) ─────────────────────────────────────
   publish-pypi:
     name: publish to PyPI (on tag)
     if: startsWith(github.ref, 'refs/tags/v')
@@ -150,6 +162,7 @@ jobs:
     environment: pypi
     permissions:
       id-token: write
+      contents: read
     steps:
       - uses: actions/download-artifact@v4
         with:

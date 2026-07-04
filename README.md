@@ -1,92 +1,99 @@
 # Forge
 
-> AI optimization runtime for modern software development.
+Forge is an AI optimization runtime. It prepares your repository context at light speed — prompt optimization and token compression — then launches the AI CLI you already use.
 
-Forge improves AI-assisted development by helping AI systems understand your codebase more effectively. It automatically converts repositories into a searchable knowledge graph, optimizes prompts before they're processed, reduces unnecessary token usage, and caches reusable context for faster, more efficient AI workflows.
-
-## Features
-
-- Converts your codebase into a searchable knowledge graph
-- Automatic project detection
-- Prompt optimization
-- Token optimization
-- Intelligent caching
-- Fast local execution
-- Zero configuration
-- Cross-platform support (Windows, macOS, and Linux)
-
-## Installation
+Install:
 
 ```bash
-uv tool install forge
+uv tool install forgectx
 ```
 
-## Getting Started
+The command is `forge`.
 
-Open any project and build its knowledge graph.
+## What it does
+
+When you run `forge claude`, `forge codex`, `forge cursor`, `forge opencode`, or `forge commandcode`, Forge:
+
+1. Detects your git repository (or current directory)
+2. Builds a **shallow** repo snapshot — it does **not** index your whole codebase
+3. Runs prompt optimization (Ponytail ruleset) and token compression
+4. Reuses cached results when nothing important changed
+5. Launches the selected CLI with `FORGE_CONTEXT` and `FORGE_CONTEXT_FILE` set
+
+Wrappers feel instant because Forge skips full graph builds during normal use.
+
+## Commands
+
+| Command | Description |
+| -------- | ------------ |
+| `forge claude` | Launch Claude Code with optimized context |
+| `forge codex` | Launch Codex CLI with optimized context |
+| `forge cursor` | Launch Cursor CLI with optimized context |
+| `forge opencode` | Launch OpenCode CLI with optimized context |
+| `forge commandcode` | Launch CommandCode CLI with optimized context |
+| `forge graph build` | Optionally build a full knowledge graph via Graphify |
+| `forge --version` | Show version |
+
+Pass through any flags your CLI supports:
 
 ```bash
+forge claude -- "fix the failing test in tests/test_foo.py"
+forge codex --help
+forge cursor --refresh
+```
+
+Use `--refresh` to bypass Forge's context cache.
+
+## Optional: knowledge graph
+
+If you want a full codebase knowledge graph (separate from the fast wrapper path):
+
+```bash
+uv tool install graphifyy
 forge graph build
 ```
 
-Forge automatically analyzes your project, builds or updates its knowledge graph, optimizes context before it reaches your AI model, reduces unnecessary tokens, and reuses cached information to improve speed and efficiency.
+Graphify runs only when you ask for it — not on every `forge claude` / `codex` / `cursor` invocation.
 
-No initialization or manual setup is required.
+## Environment variables
 
-## How It Works
+Wrappers export:
 
-Forge combines three core capabilities to improve AI-assisted development:
-
-- Converts your codebase into a structured knowledge graph for better repository understanding.
-- Optimizes prompts before they reach your AI model.
-- Reduces unnecessary tokens to improve efficiency, lower cost, and reduce latency.
-
-These optimizations happen automatically with no additional configuration.
-
-## Platform Support
-
-- Linux
-- macOS
-- Windows
+| Variable | Purpose |
+| -------- | -------- |
+| `FORGE_CONTEXT` | Optimized text context |
+| `FORGE_CONTEXT_FILE` | Path to the optimized context file |
+| `FORGE_REPO_ROOT` | Detected repository root |
 
 ## Development
 
 ```bash
-git clone <repository-url>
-cd Forge
-
-pip install -e .
-```
-
-Run the test suite:
-
-```bash
+git clone https://github.com/mdshzb04/ForgeCli
+cd ForgeCli
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
 pytest
+ruff check forgecli tests
 ```
 
-Run linting:
+## Release
+
+Push a version tag to publish to TestPyPI and PyPI:
 
 ```bash
-ruff check .
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
-## License
+Publish jobs run **only on `v*` tags**. On regular pushes to `main`, those jobs show as **Skipped** — that is expected, not a failure.
 
-MIT
+Configure GitHub environments `testpypi` and `pypi` with PyPI trusted publishing for package name `forgectx`.
+
 ---
-
 
 <img width="1854" height="1005" alt="image" src="https://github.com/user-attachments/assets/03f3c2e2-424c-4784-8a59-b2b0f4b99447" />
 
-
-
-
-
 <img width="1854" height="1005" alt="image" src="https://github.com/user-attachments/assets/6eb06d10-6f1f-4648-b679-028368362c24" />
-
-
-
-
 
 ## License
 
