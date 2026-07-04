@@ -141,13 +141,22 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Rename package to match TestPyPI Trusted Publisher
+        run: |
+          python -c "
+          p = 'pyproject.toml'
+          content = open(p).read()
+          content = content.replace('name = \"forgectx\"', 'name = \"forgekit\"')
+          open(p, 'w').write(content)
+          "
+      - name: Build sdist and wheel
+        run: |
+          pip install --upgrade build
+          python -m build
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
@@ -164,15 +173,25 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Rename package to match PyPI Trusted Publisher
+        run: |
+          python -c "
+          p = 'pyproject.toml'
+          content = open(p).read()
+          content = content.replace('name = \"forgectx\"', 'name = \"forgeoptimizer\"')
+          open(p, 'w').write(content)
+          "
+      - name: Build sdist and wheel
+        run: |
+          pip install --upgrade build
+          python -m build
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
+
 
