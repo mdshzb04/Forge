@@ -68,8 +68,8 @@ Wrappers export:
 ## Development
 
 ```bash
-git clone https://github.com/mdshzb04/ForgeCli
-cd ForgeCli
+git clone https://github.com/mdshzb04/Forge
+cd Forge
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest

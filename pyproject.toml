@@ -59,10 +59,10 @@ dev = [
 forge = "forgecli.cli.main:app"
 
 [project.urls]
-Homepage = "https://github.com/mdshzb04/ForgeCli"
-Repository = "https://github.com/mdshzb04/ForgeCli"
-Documentation = "https://github.com/mdshzb04/ForgeCli#readme"
-Issues = "https://github.com/mdshzb04/ForgeCli/issues"
+Homepage = "https://github.com/mdshzb04/Forge"
+Repository = "https://github.com/mdshzb04/Forge"
+Documentation = "https://github.com/mdshzb04/Forge#readme"
+Issues = "https://github.com/mdshzb04/Forge/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["forgecli"]
