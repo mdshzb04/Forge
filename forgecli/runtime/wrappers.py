@@ -69,7 +69,9 @@ def launch_wrapper(
         raise typer.Exit(code=1)
 
     if extra_args:
-        error("Passing prompts or extra arguments to wrapper commands is not supported. Please run the command without arguments to launch the interactive CLI.")
+        error(
+            "Passing prompts or extra arguments to wrapper commands is not supported. Please run the command without arguments to launch the interactive CLI."
+        )
         raise typer.Exit(code=1)
 
     binary_path = which(spec.binary)
@@ -105,6 +107,7 @@ def launch_wrapper(
 
     # 3. Optimize context, prompts, and tokens (aggressively reusing cache)
     import time
+
     from forgecli.utils.stats import record_wrapper_stats
 
     start_time = time.perf_counter()

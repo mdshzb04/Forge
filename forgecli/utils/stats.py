@@ -77,7 +77,7 @@ def get_graph_build_time(repo_root: Path) -> float | None:
     build_time_file = repo_root / "graphify-out" / "build_time.json"
     if build_time_file.is_file():
         try:
-            with open(build_time_file, "r", encoding="utf-8") as f:
+            with open(build_time_file, encoding="utf-8") as f:
                 data = json.load(f)
                 return data.get("build_time")
         except Exception:
@@ -111,7 +111,9 @@ def record_wrapper_stats(
         relevant_files = count_files_in_layout(optimized_context)
         excluded_files = max(0, files_scanned - relevant_files)
 
-        kg_cache = "Cache Hit" if (repo_root / "graphify-out" / "graph.json").is_file() else "Cache Miss"
+        kg_cache = (
+            "Cache Hit" if (repo_root / "graphify-out" / "graph.json").is_file() else "Cache Miss"
+        )
         cache_status = "Cache Hit" if prepared.from_cache else "Cache Miss"
         graph_build_time = get_graph_build_time(repo_root)
 
@@ -142,7 +144,7 @@ def record_wrapper_stats(
         history = []
         if stats_file.exists():
             try:
-                with open(stats_file, "r", encoding="utf-8") as f:
+                with open(stats_file, encoding="utf-8") as f:
                     history = json.load(f)
             except Exception:
                 pass
@@ -168,7 +170,7 @@ def get_stats_history() -> list[dict[str, Any]]:
         stats_file = paths.data_dir / "stats_history.json"
         if not stats_file.exists():
             return []
-        with open(stats_file, "r", encoding="utf-8") as f:
+        with open(stats_file, encoding="utf-8") as f:
             history = json.load(f)
             if isinstance(history, list):
                 return history

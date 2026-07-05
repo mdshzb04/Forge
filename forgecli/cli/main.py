@@ -91,11 +91,14 @@ def mcp_cmd() -> None:
     run_mcp_stdio()
 
 
-@app.command("stats", help="Display the prompt and token optimization statistics from the latest wrapper runs.")
+@app.command(
+    "stats",
+    help="Display the prompt and token optimization statistics from the latest wrapper runs.",
+)
 def stats_cmd() -> None:
     """Display the prompt and token optimization statistics from the latest wrapper runs."""
-    from forgecli.utils.stats import get_stats_history
     from forgecli.cli.ui import get_console
+    from forgecli.utils.stats import get_stats_history
 
     history = get_stats_history()
     if not history:
@@ -108,14 +111,14 @@ def stats_cmd() -> None:
     for idx, run in enumerate(history):
         run_title = "[bold cyan]Forge Optimization Report"
         if len(history) > 1:
-            run_title += f" (Run #{idx+1}"
+            run_title += f" (Run #{idx + 1}"
             if idx == 0:
                 run_title += " - Latest"
             run_title += ")"
         run_title += "[/bold cyan]"
 
         console.print(run_title)
-        
+
         # Capitalize the CLI used (e.g. claude -> Claude, antigravity -> Antigravity)
         cli_raw = run.get("cli_used", "N/A")
         cli_display = cli_raw.capitalize() if isinstance(cli_raw, str) else str(cli_raw)
@@ -135,8 +138,12 @@ def stats_cmd() -> None:
         if red_abs <= 0:
             console.print("[yellow]No meaningful token reduction for this repository.[/yellow]")
         else:
-            console.print(f"Original             : [white]{run.get('original_tokens', 0):,}[/white]")
-            console.print(f"Optimized            : [white]{run.get('optimized_tokens', 0):,}[/white]")
+            console.print(
+                f"Original             : [white]{run.get('original_tokens', 0):,}[/white]"
+            )
+            console.print(
+                f"Optimized            : [white]{run.get('optimized_tokens', 0):,}[/white]"
+            )
             console.print(f"Saved                : [green]{red_abs:,}[/green]")
             console.print(f"Reduction            : [green]{red_pct:.1f}%[/green]")
         console.print()
@@ -148,7 +155,9 @@ def stats_cmd() -> None:
         console.print(f"Relevant Files       : [white]{run.get('files_count', 0)}[/white]")
         console.print(f"Excluded Files       : [white]{run.get('excluded_files', 0)}[/white]")
         console.print(f"Preparation Time     : [white]{run.get('prep_time', 0.0):.2f} s[/white]")
-        console.print(f"Prompt Optimization  : [white]{run.get('prompt_opt_status', 'N/A')}[/white]")
+        console.print(
+            f"Prompt Optimization  : [white]{run.get('prompt_opt_status', 'N/A')}[/white]"
+        )
         console.print(f"Token Optimization   : [white]{run.get('token_opt_status', 'N/A')}[/white]")
 
         if idx < len(history) - 1:

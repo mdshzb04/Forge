@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
 
 from forgecli.cli.main import app
@@ -92,7 +90,10 @@ def test_stats_cli_with_runs(tmp_path: Path, monkeypatch) -> None:
         from_cache=True,
     )
 
-    with patch("forgecli.utils.stats._scan_repo_light", return_value="Project layout (shallow scan):\nfile1.py\nfile2.py\nfile3.py\nfile4.py\nfile5.py"):
+    with patch(
+        "forgecli.utils.stats._scan_repo_light",
+        return_value="Project layout (shallow scan):\nfile1.py\nfile2.py\nfile3.py\nfile4.py\nfile5.py",
+    ):
         record_wrapper_stats(
             wrapper_id="claude",
             repo_root=tmp_path,
@@ -124,7 +125,10 @@ def test_stats_shrinking_repo(tmp_path: Path, monkeypatch) -> None:
     )
 
     # Scanned mock has 5 lines (more tokens), optimized has 1 file (fewer tokens)
-    with patch("forgecli.utils.stats._scan_repo_light", return_value="Project layout (shallow scan):\nfile1.py\nfile2.py\nfile3.py\nfile4.py"):
+    with patch(
+        "forgecli.utils.stats._scan_repo_light",
+        return_value="Project layout (shallow scan):\nfile1.py\nfile2.py\nfile3.py\nfile4.py",
+    ):
         record_wrapper_stats("cursor", tmp_path, prepared, 0.25)
 
     history = get_stats_history()
@@ -147,7 +151,10 @@ def test_stats_same_size_repo(tmp_path: Path, monkeypatch) -> None:
     )
 
     # Scanned is identical to optimized layout
-    with patch("forgecli.utils.stats._scan_repo_light", return_value="Project layout (shallow scan):\nfile1.py"):
+    with patch(
+        "forgecli.utils.stats._scan_repo_light",
+        return_value="Project layout (shallow scan):\nfile1.py",
+    ):
         record_wrapper_stats("cursor", tmp_path, prepared, 0.25)
 
     history = get_stats_history()
@@ -171,7 +178,9 @@ def test_stats_growing_repo_falls_back(tmp_path: Path, monkeypatch) -> None:
     # Mock _optimize_tokens to return a larger string (simulating growth)
     with (
         patch("forgecli.runtime.prepare._scan_repo_light", return_value="short context"),
-        patch("forgecli.runtime.prepare._optimize_tokens", return_value="a very long context indeed"),
+        patch(
+            "forgecli.runtime.prepare._optimize_tokens", return_value="a very long context indeed"
+        ),
         patch("forgecli.runtime.prepare._optimize_prompt", return_value="something"),
     ):
         prepared = prepare_runtime_sync(tmp_path, force=True, quiet=True)

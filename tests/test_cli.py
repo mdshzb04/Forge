@@ -245,4 +245,3 @@ def test_wrapper_rejects_prompts_and_extra_arguments(tmp_path: Path, monkeypatch
         result = runner.invoke(app, ["claude", "write code for me"], catch_exceptions=False)
         assert result.exit_code == 1
         assert "not supported" in result.output
-

@@ -109,8 +109,9 @@ def build_cmd(
         info(f"Building graph for [accent]{to_privacy_path(backend.root)}[/accent] ...")
 
         try:
-            import time
             import json
+            import time
+
             start_time = time.perf_counter()
             result = await backend.build(force=force, no_cluster=no_cluster)
             build_duration = time.perf_counter() - start_time
