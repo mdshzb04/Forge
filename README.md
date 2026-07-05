@@ -16,48 +16,47 @@ uv tool install forgectx
 
 The command is `forge`.
 
-## What it does
+## Convenience Wrappers vs. Core MCP Runtime
 
-When you run `forge claude`, `forge codex`, `forge cursor`, `forge opencode`, or `forge commandcode`, Forge:
-
-1. Detects your git repository (or current directory)
-2. Builds a **shallow** repo snapshot — it does **not** index your whole codebase
-3. Runs prompt optimization (Ponytail ruleset) and token compression
-4. Reuses cached results when nothing important changed
-5. Launches the selected CLI with `FORGE_CONTEXT` and `FORGE_CONTEXT_FILE` set
-
-Wrappers feel instant because Forge skips full graph builds during normal use.
+Forge provides two primary interfaces to connect with your AI coding tools:
+1. **Convenience Wrappers** (`forge claude`, `forge cursor`, etc.): Commands that automatically prepare/optimize context, update local and global configurations, and launch the target AI CLI under an optimized environment.
+2. **Core MCP Runtime** (`forge mcp`): The standard Model Context Protocol (MCP) interface that compatible AI clients communicate with over stdio.
 
 ## Commands
 
-| Command | Description |
-| -------- | ------------ |
-| `forge claude` | Launch Claude Code with optimized context |
-| `forge codex` | Launch Codex CLI with optimized context |
-| `forge cursor` | Launch Cursor CLI with optimized context |
-| `forge opencode` | Launch OpenCode CLI with optimized context |
-| `forge commandcode` | Launch CommandCode CLI with optimized context |
-| `forge graph build` | build a full knowledge graph via Graphify |
-| `forge --version` | Show version |
+| Command | Type | Description |
+| -------- | ---- | ----------- |
+| `forge claude` | Wrapper | Launch Claude Code with optimized context and auto-registered MCP |
+| `forge codex` | Wrapper | Launch Codex CLI with optimized context and auto-registered MCP |
+| `forge cursor` | Wrapper | Launch Cursor CLI with optimized context and auto-registered MCP |
+| `forge opencode` | Wrapper | Launch OpenCode CLI with optimized context and auto-registered MCP |
+| `forge commandcode` | Wrapper | Launch CommandCode CLI with optimized context and auto-registered MCP |
+| `forge mcp` | Core Runtime | Start the stdio Model Context Protocol (MCP) server |
+| `forge start` | Daemon | Start the background context optimization daemon |
+| `forge graph build` | Tool | Build a full knowledge graph via Graphify (optional) |
+| `forge --version` | Tool | Show version |
 
-Pass through any flags your CLI supports:
+> [!NOTE]
+> When launching convenience wrappers, prompts or extra positional arguments are not supported directly (e.g. `forge claude "some prompt"` is blocked). Run the wrapper command without arguments to launch the tool's interactive session directly. Use the `--refresh` option to bypass the cache:
+> ```bash
+> forge claude --refresh
+> ```
 
-```bash
-forge claude -- "fix the failing test in tests/test_foo.py"
-forge codex --help
-forge cursor --refresh
-```
+## Model Context Protocol (MCP) Integration
 
-Use `--refresh` to bypass Forge's context cache.
+Forge automatically registers its MCP server globally and project-locally for launched clients (updating `~/.claude.json`, `~/.cursor/mcp.json`, and project `.mcp.json` files).
 
+### Exposed Tools
+Forge exposes the following schema tools over MCP:
+* `get_optimized_context` — Retrieve the fully optimized and token-compressed repository context.
+* `get_summary` — Retrieve a summary of the repository layout, size, and file list.
+* `get_dependency_graph` — Retrieve module/file import relationships.
+* `file_lookup` — Query individual file contents.
+* `symbol_lookup` — Find definition locations of symbols (classes/functions).
+* `semantic_search` — Keyword/phrase search across codebase chunks.
 
-
-If you want a full codebase knowledge graph :
-
-```bash
-uv tool install graphifyy
-forge graph build
-```
+> [!IMPORTANT]
+> **Client Behavior Notice:** While Forge exposes these tools to the MCP client, whether and when they are invoked depends entirely on the AI client's internal orchestration logic. Forge makes these capabilities available, but the client decides which tool to call.
 
 
 
