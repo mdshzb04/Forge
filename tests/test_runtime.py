@@ -36,6 +36,18 @@ def test_prepare_runtime_is_fast_and_cached(tmp_path: Path, monkeypatch) -> None
     assert second.from_cache is True
 
 
+def test_prepare_runtime_applies_caveman_injection(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
+
+    (tmp_path / "README.md").write_text("# demo\n", encoding="utf-8")
+
+    prepared = prepare_runtime_sync(tmp_path, force=True)
+    assert "SYSTEM INSTRUCTION: RESPOND STYLE (CAVEMAN)" in prepared.context_summary
+    assert "CAVEMAN (lite)" in prepared.context_summary
+
+
 def test_runtime_cache_roundtrip(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))

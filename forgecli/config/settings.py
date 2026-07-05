@@ -85,8 +85,8 @@ class CavemanSection(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    enabled: bool = False
-    intensity: str = "off"  # off | lite | full | ultra | wenyan
+    enabled: bool = True
+    intensity: str = "lite"  # off | lite | full | ultra | wenyan
     backend: str = "ruleset"  # ruleset | cli | auto
     binary: str = "caveman"  # only used when backend = "cli"
     timeout_seconds: float = 30.0

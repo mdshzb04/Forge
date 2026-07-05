@@ -151,6 +151,39 @@ def _optimize_tokens(text: str) -> str:
     return merged[:12_000]
 
 
+def _apply_caveman_instructions(context: str) -> str:
+    from forgecli.config.loader import ConfigLoader
+    from forgecli.optimizer.caveman import CavemanIntensity
+    from forgecli.optimizer.caveman.ruleset import _CAVEMAN_GUIDANCE
+
+    try:
+        settings = ConfigLoader().load()
+        enabled = settings.caveman.enabled
+        intensity_str = settings.caveman.intensity
+    except Exception:
+        enabled = True
+        intensity_str = "lite"
+
+    if not enabled or intensity_str == "off":
+        return context
+
+    try:
+        intensity = CavemanIntensity.parse(intensity_str)
+    except ValueError:
+        intensity = CavemanIntensity.LITE
+
+    guidance = _CAVEMAN_GUIDANCE.get(intensity, "")
+    if not guidance:
+        return context
+
+    instruction_block = (
+        "=== SYSTEM INSTRUCTION: RESPOND STYLE (CAVEMAN) ===\n"
+        f"{guidance}\n"
+        "===================================================\n\n"
+    )
+    return instruction_block + context
+
+
 def prepare_runtime_sync(
     start: Path,
     *,
@@ -168,11 +201,12 @@ def prepare_runtime_sync(
 
     raw_context = _scan_repo_light(root)
     prompt_optimized = _optimize_prompt(raw_context)
-    token_optimized = _optimize_tokens(prompt_optimized)
+    caveman_optimized = _apply_caveman_instructions(prompt_optimized)
+    token_optimized = _optimize_tokens(caveman_optimized)
 
     # Optimization pipeline check: never allow optimized context to be larger than raw context
     if len(token_optimized) > len(raw_context):
-        token_optimized = raw_context
+        token_optimized = _apply_caveman_instructions(raw_context)
 
     cache_dir = ProjectPaths.from_env().cache_dir / "runtime" / "context"
     cache_dir.mkdir(parents=True, exist_ok=True)
