@@ -6,7 +6,6 @@ import contextlib
 import signal
 import warnings
 from pathlib import Path
-from typing import Any
 
 import typer
 
@@ -92,135 +91,6 @@ def mcp_cmd() -> None:
     run_mcp_stdio()
 
 
-@app.command(
-    "stats",
-    help="Display the prompt and token optimization statistics from the latest wrapper runs.",
-)
-def stats_cmd() -> None:
-    """Display the prompt and token optimization statistics from the latest wrapper runs."""
-    from forgecli.cli.ui import get_console
-    from forgecli.utils.stats import get_stats_history
-
-    history = get_stats_history()
-    if not history:
-        get_console().print("No optimization statistics available yet.")
-        return
-
-    console = get_console()
-    console.print()
-
-    def format_precision_time(val: Any) -> str:
-        try:
-            seconds = float(val)
-            if seconds < 0.001:
-                return "<0.001 s"
-            return f"{seconds:.3f} s"
-        except (ValueError, TypeError):
-            return "N/A"
-
-    for idx, run in enumerate(history):
-        run_title = "[bold cyan]Forge Optimization Report"
-        if len(history) > 1:
-            run_title += f" (Run #{idx + 1}"
-            if idx == 0:
-                run_title += " - Latest"
-            run_title += ")"
-        run_title += "[/bold cyan]"
-
-        console.print(run_title)
-
-        status_raw = run.get("status")
-        if not status_raw:
-            if run.get("cli_used") == "graph":
-                status_raw = "Graph Built"
-            elif "hit" in str(run.get("cache_status", "")).lower():
-                status_raw = "Cache Reused"
-            elif run.get("reduction_tokens", 0) > 0:
-                status_raw = "Optimized Successfully"
-            else:
-                status_raw = "No optimization required"
-
-        if status_raw == "Optimized Successfully":
-            status_display = "[green]✓ Optimized Successfully[/green]"
-        elif status_raw == "Cache Reused":
-            status_display = "[green]✓ Cache Reused[/green]"
-        elif status_raw == "Graph Built":
-            status_display = "[green]✓ Graph Built[/green]"
-        else:
-            status_display = "[yellow]⚠ No optimization required[/yellow]"
-
-        cli_raw = run.get("cli_used", "N/A")
-        cli_display = cli_raw.capitalize() if isinstance(cli_raw, str) else str(cli_raw)
-
-        console.print(f"Status              : {status_display}")
-        console.print(f"Repository          : [white]{run.get('repo_name', 'N/A')}[/white]")
-        console.print(f"AI CLI              : [white]{cli_display}[/white]")
-        console.print()
-
-        # Repository Context section
-        console.print("[bold]Repository Context[/bold]")
-        console.print("[dim]────────────────────────[/dim]")
-
-        red_abs = run.get("reduction_tokens", 0)
-        red_pct = run.get("reduction_pct", 0.0)
-
-        if red_abs <= 0:
-            console.print(
-                "[yellow]Repository already fits within the optimization budget.[/yellow]"
-            )
-        else:
-            console.print(
-                f"Original Context Size      : [white]{run.get('original_tokens', 0):,} tokens (estimated)[/white]"
-            )
-            console.print(
-                f"Optimized Context Size     : [white]{run.get('optimized_tokens', 0):,} tokens (estimated)[/white]"
-            )
-            console.print(f"Estimated Tokens Saved     : [green]{red_abs:,}[/green]")
-            console.print(f"Context Compression        : [green]{red_pct:.1f}%[/green]")
-            console.print("Context Budget             : [white]8,000 tokens[/white]")
-        console.print()
-
-        # Optimization section
-        console.print("[bold]Optimization[/bold]")
-        console.print("[dim]────────────────────────[/dim]")
-
-        prompt_opt_raw = run.get("prompt_opt_status", "Disabled")
-        prompt_opt_display = "Enabled" if "enable" in str(prompt_opt_raw).lower() else "Disabled"
-
-        token_opt_raw = run.get("token_opt_status", "Disabled")
-        token_opt_display = "Enabled" if "enable" in str(token_opt_raw).lower() else "Disabled"
-
-        cache_status_raw = run.get("cache_status", "MISS")
-        cache_status_display = "HIT" if "hit" in str(cache_status_raw).lower() else "MISS"
-
-        kg_cache_raw = run.get("kg_cache", "Cache Miss")
-        kg_cache_display = "Cache HIT" if "hit" in str(kg_cache_raw).lower() else "Cache MISS"
-
-        console.print(f"Files Scanned             : [white]{run.get('files_scanned', 0)}[/white]")
-        console.print(f"Relevant Files            : [white]{run.get('files_count', 0)}[/white]")
-        console.print(f"Excluded Files            : [white]{run.get('excluded_files', 0)}[/white]")
-        console.print(f"Knowledge Graph           : [white]{kg_cache_display}[/white]")
-        console.print(
-            f"Preparation Time          : [white]{format_precision_time(run.get('prep_time', 0.0))}[/white]"
-        )
-
-        graph_build = run.get("graph_build_time")
-        if graph_build is not None:
-            console.print(
-                f"Graph Build Time          : [white]{format_precision_time(graph_build)}[/white]"
-            )
-
-        console.print(f"Prompt Optimization       : [white]{prompt_opt_display}[/white]")
-        console.print(f"Token Optimization        : [white]{token_opt_display}[/white]")
-        console.print(f"Cache Status              : [white]{cache_status_display}[/white]")
-        console.print(f"Timestamp                 : [muted]{run.get('timestamp', 'N/A')}[/muted]")
-
-        if idx < len(history) - 1:
-            console.print()
-            console.print("[dim]==================================================[/dim]")
-            console.print()
-
-
 def _version_callback(value: bool) -> None:
     if value:
         get_console().print(f"{__app_name__} [muted]v{__version__}[/muted]")
@@ -267,7 +137,6 @@ def main(
         "    [cyan]forge antigravity[/cyan]  Launch Antigravity CLI with optimized context\n"
         "    [cyan]forge start[/cyan]        Start the background context optimization daemon\n"
         "    [cyan]forge mcp[/cyan]          Start the stdio Model Context Protocol (MCP) server\n"
-        "    [cyan]forge stats[/cyan]        Display optimization statistics\n"
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"
         "    [cyan]forge --help[/cyan]       Show all options\n"
     )

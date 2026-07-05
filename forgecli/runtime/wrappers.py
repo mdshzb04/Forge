@@ -106,15 +106,7 @@ def launch_wrapper(
             time.sleep(0.2)
 
     # 3. Optimize context, prompts, and tokens (aggressively reusing cache)
-    import time
-
-    from forgecli.utils.stats import record_wrapper_stats
-
-    start_time = time.perf_counter()
     prepared = prepare_runtime_sync(repo_root, force=force_prepare, quiet=False)
-    prep_time = time.perf_counter() - start_time
-
-    record_wrapper_stats(wrapper_id, repo_root, prepared, prep_time)
 
     if prepared.from_cache:
         info("Reusing cached Forge context.")
