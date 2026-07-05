@@ -167,6 +167,7 @@ def test_wrapper_command_works_without_api_key(
     def _fake_run(argv, *args, **kwargs):
         if argv and (binary_name in argv[0]):
             launched["argv"] = argv
+            launched["env"] = kwargs.get("env", {})
 
             class _Result:
                 returncode = 0
@@ -184,6 +185,9 @@ def test_wrapper_command_works_without_api_key(
     assert result.exit_code == 0
     assert launched.get("argv") is not None
     assert binary_name in launched["argv"][0]
+    assert "FORGE_CONTEXT" in launched["env"]
+    assert "FORGE_CONTEXT_FILE" in launched["env"]
+    assert "FORGE_REPO_ROOT" in launched["env"]
 
 
 def test_mcp_auto_configuration(tmp_path: Path, monkeypatch) -> None:
