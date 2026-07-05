@@ -106,10 +106,10 @@ def test_stats_cli_with_runs(tmp_path: Path, monkeypatch) -> None:
     assert result.exit_code == 0
     assert "Forge Optimization Report" in result.output
     assert "AI CLI              : Claude" in result.output
-    assert "Estimated Original Tokens  :" in result.output
-    assert "Estimated Optimized Tokens :" in result.output
+    assert "Original Context Size      :" in result.output
+    assert "Optimized Context Size     :" in result.output
     assert "Estimated Tokens Saved     :" in result.output
-    assert "Prompt Optimization : Enabled" in result.output
+    assert "Prompt Optimization       : Enabled" in result.output
 
 
 def test_stats_shrinking_repo(tmp_path: Path, monkeypatch) -> None:
@@ -213,4 +213,4 @@ def test_record_graph_build_stats(tmp_path: Path, monkeypatch) -> None:
     result = runner.invoke(app, ["stats"])
     assert result.exit_code == 0
     assert "Status              : ✓ Graph Built" in result.output
-    assert "Graph Build Time    : 1.457 s" in result.output
+    assert "Graph Build Time          : 1.457 s" in result.output

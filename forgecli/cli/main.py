@@ -157,8 +157,8 @@ def stats_cmd() -> None:
         console.print(f"AI CLI              : [white]{cli_display}[/white]")
         console.print()
 
-        # Estimated Context section
-        console.print("[bold]Estimated Context[/bold]")
+        # Repository Context section
+        console.print("[bold]Repository Context[/bold]")
         console.print("[dim]────────────────────────[/dim]")
 
         red_abs = run.get("reduction_tokens", 0)
@@ -170,13 +170,14 @@ def stats_cmd() -> None:
             )
         else:
             console.print(
-                f"Estimated Original Tokens  : [white]{run.get('original_tokens', 0):,}[/white]"
+                f"Original Context Size      : [white]{run.get('original_tokens', 0):,} tokens (estimated)[/white]"
             )
             console.print(
-                f"Estimated Optimized Tokens : [white]{run.get('optimized_tokens', 0):,}[/white]"
+                f"Optimized Context Size     : [white]{run.get('optimized_tokens', 0):,} tokens (estimated)[/white]"
             )
             console.print(f"Estimated Tokens Saved     : [green]{red_abs:,}[/green]")
-            console.print(f"Estimated Reduction        : [green]{red_pct:.1f}%[/green]")
+            console.print(f"Context Compression        : [green]{red_pct:.1f}%[/green]")
+            console.print("Context Budget             : [white]8,000 tokens[/white]")
         console.print()
 
         # Optimization section
@@ -192,25 +193,27 @@ def stats_cmd() -> None:
         cache_status_raw = run.get("cache_status", "MISS")
         cache_status_display = "HIT" if "hit" in str(cache_status_raw).lower() else "MISS"
 
-        console.print(f"Files Scanned       : [white]{run.get('files_scanned', 0)}[/white]")
-        console.print(f"Relevant Files      : [white]{run.get('files_count', 0)}[/white]")
-        console.print(f"Excluded Files      : [white]{run.get('excluded_files', 0)}[/white]")
-        console.print(f"Knowledge Graph     : [white]{run.get('kg_cache', 'Cache Miss')}[/white]")
+        kg_cache_raw = run.get("kg_cache", "Cache Miss")
+        kg_cache_display = "Cache HIT" if "hit" in str(kg_cache_raw).lower() else "Cache MISS"
+
+        console.print(f"Files Scanned             : [white]{run.get('files_scanned', 0)}[/white]")
+        console.print(f"Relevant Files            : [white]{run.get('files_count', 0)}[/white]")
+        console.print(f"Excluded Files            : [white]{run.get('excluded_files', 0)}[/white]")
+        console.print(f"Knowledge Graph           : [white]{kg_cache_display}[/white]")
         console.print(
-            f"Preparation Time    : [white]{format_precision_time(run.get('prep_time', 0.0))}[/white]"
+            f"Preparation Time          : [white]{format_precision_time(run.get('prep_time', 0.0))}[/white]"
         )
 
         graph_build = run.get("graph_build_time")
         if graph_build is not None:
             console.print(
-                f"Graph Build Time    : [white]{format_precision_time(graph_build)}[/white]"
+                f"Graph Build Time          : [white]{format_precision_time(graph_build)}[/white]"
             )
 
-        console.print("Context Budget      : [white]8,000 tokens[/white]")
-        console.print(f"Prompt Optimization : [white]{prompt_opt_display}[/white]")
-        console.print(f"Token Optimization  : [white]{token_opt_display}[/white]")
-        console.print(f"Cache Status        : [white]{cache_status_display}[/white]")
-        console.print(f"Timestamp           : [muted]{run.get('timestamp', 'N/A')}[/muted]")
+        console.print(f"Prompt Optimization       : [white]{prompt_opt_display}[/white]")
+        console.print(f"Token Optimization        : [white]{token_opt_display}[/white]")
+        console.print(f"Cache Status              : [white]{cache_status_display}[/white]")
+        console.print(f"Timestamp                 : [muted]{run.get('timestamp', 'N/A')}[/muted]")
 
         if idx < len(history) - 1:
             console.print()
