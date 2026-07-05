@@ -9,6 +9,7 @@ import pytest
 
 from forgecli.optimizer.caveman import (
     CavemanIntensity,
+    CavemanPromptOptimizer,
     CavemanRulesetOptimizer,
 )
 from forgecli.optimizer.caveman.cli import CavemanCLIOptimizer
@@ -17,6 +18,7 @@ from forgecli.providers.base import (
     ChatMessage,
     ChatRequest,
     ChatResponse,
+    Provider,
     Role,
 )
 
@@ -45,13 +47,13 @@ def test_cli_stub_returns_passthrough(monkeypatch) -> None:
     assert any("CLI stub" in n for n in result.notes)
 
 
-class _StubProvider:
+class _StubProvider(Provider[Any]):
     """Minimal Provider stand-in used by the decorator tests."""
 
     name = "stub"
 
     def __init__(self) -> None:
-        self.config = object()
+        super().__init__(object())
         self.calls: list[ChatRequest] = []
 
     async def chat(self, request: ChatRequest) -> ChatResponse:
@@ -62,10 +64,10 @@ class _StubProvider:
             finish_reason="stop",
         )
 
-    async def embed(self, request):  # pragma: no cover - not exercised
+    async def embed(self, request: Any) -> Any:  # pragma: no cover - not exercised
         raise NotImplementedError
 
-    async def list_models(self) -> list:  # pragma: no cover
+    async def list_models(self) -> list[Any]:  # pragma: no cover
         return []
 
 
@@ -84,10 +86,10 @@ def test_caveman_provider_runs_optimizer_before_chat() -> None:
 def test_caveman_provider_passes_through_when_optimizer_off() -> None:
     from forgecli.optimizer.caveman import OptimizedRequest
 
-    class _PassthroughOpt:
+    class _PassthroughOpt(CavemanPromptOptimizer):
         name = "caveman-passthrough"
 
-        async def optimize_chat(self, request):
+        async def optimize_chat(self, request: ChatRequest) -> OptimizedRequest:
             return OptimizedRequest(
                 request=request,
                 notes=("caveman noop",),

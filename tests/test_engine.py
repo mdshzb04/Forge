@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -40,13 +42,13 @@ from forgecli.engine.plugins import HookManager, PluginHook
 
 
 def test_stage_is_callable() -> None:
-    async def run(ctx: StageContext) -> StageResult:
+    async def run(context: StageContext) -> StageResult:
         return StageResult(status=StageStatus.SUCCEEDED, notes=("hi",))
 
     stage: Stage = run  # type: ignore[assignment]
     stage.name = "echo"
     ctx = StageContext(
-        engine=EngineContext(prompt="x", cwd="/tmp"),
+        engine=EngineContext(prompt="x", cwd=Path("/tmp")),
         bus=EventBus(),
     )
     result = asyncio.run(stage(ctx))
@@ -57,7 +59,7 @@ def test_stage_protocol_is_runtime_checkable() -> None:
     class _S:
         name = "s"
 
-        async def __call__(self, ctx: StageContext) -> StageResult:
+        async def __call__(self, context: StageContext) -> StageResult:
             return StageResult(status=StageStatus.SUCCEEDED)
 
     # ``isinstance`` works for Protocol classes that have non-method
@@ -75,7 +77,7 @@ def test_event_bus_publishes_to_subscribers() -> None:
     bus = EventBus()
     received: list[StageEvent] = []
 
-    def handler(event: StageEvent) -> None:
+    def handler(event: Any) -> None:
         received.append(event)
 
     bus.subscribe(StageEvent, handler)
@@ -100,7 +102,7 @@ def test_event_bus_unsubscribe() -> None:
     bus = EventBus()
     received: list[int] = []
 
-    def handler(_: StageEvent) -> None:
+    def handler(_: Any) -> None:
         received.append(1)
 
     bus.subscribe(StageEvent, handler)
@@ -123,7 +125,7 @@ def test_event_bus_async_subscriber() -> None:
     bus = EventBus()
     received: list[str] = []
 
-    async def handler(event: TextLogEvent) -> None:
+    async def handler(event: Any) -> None:
         received.append(event.message)
 
     bus.subscribe(TextLogEvent, handler)
@@ -143,7 +145,7 @@ def test_event_bus_async_subscriber() -> None:
 def test_stage_context_log_and_progress_publish_events() -> None:
     bus = EventBus()
     ctx = StageContext(
-        engine=EngineContext(prompt="x", cwd="/tmp", extras={"stage_name": "demo"}),
+        engine=EngineContext(prompt="x", cwd=Path("/tmp"), extras={"stage_name": "demo"}),
         bus=bus,
     )
     ctx.log("hello", level=LogLevel.INFO)
@@ -151,8 +153,8 @@ def test_stage_context_log_and_progress_publish_events() -> None:
     types = [type(e) for e in bus.history]
     assert TextLogEvent in types
     assert ProgressEvent in types
-    assert bus.history[0].source == "demo"
-    assert bus.history[1].progress == 0.42
+    assert cast(TextLogEvent, bus.history[0]).source == "demo"
+    assert cast(ProgressEvent, bus.history[1]).progress == 0.42
 
 
 # ---------------------------------------------------------------------------
@@ -170,9 +172,9 @@ class _EchoStage:
         self.note = note
         self.calls = 0
 
-    async def __call__(self, ctx: StageContext) -> StageResult:
+    async def __call__(self, context: StageContext) -> StageResult:
         self.calls += 1
-        ctx.log(f"running {self.name}", level=LogLevel.INFO)
+        context.log(f"running {self.name}", level=LogLevel.INFO)
         return StageResult(status=StageStatus.SUCCEEDED, notes=(self.note,))
 
 
@@ -183,7 +185,7 @@ class _FlakyStage:
         self.fail_count = fail_count
         self.calls = 0
 
-    async def __call__(self, ctx: StageContext) -> StageResult:
+    async def __call__(self, context: StageContext) -> StageResult:
         self.calls += 1
         if self.calls <= self.fail_count:
             raise RuntimeError("transient")
@@ -193,15 +195,15 @@ class _FlakyStage:
 class _BoomStage:
     name = "boom"
 
-    async def __call__(self, ctx: StageContext) -> StageResult:
+    async def __call__(self, context: StageContext) -> StageResult:
         raise RuntimeError("permanent")
 
 
 class _CancelStage:
     name = "cancel"
 
-    async def __call__(self, ctx: StageContext) -> StageResult:
-        ctx.bus.cancel()
+    async def __call__(self, context: StageContext) -> StageResult:
+        context.bus.cancel()
         return StageResult(status=StageStatus.SUCCEEDED)
 
 
@@ -209,7 +211,7 @@ def test_engine_runs_all_stages_in_order() -> None:
     bus = EventBus()
     a, b, c = _EchoStage("a"), _EchoStage("b"), _EchoStage("c")
     engine = ExecutionEngine(stages=[a, b, c], bus=bus)
-    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd=Path("/tmp"))))
     assert result.success
     assert len(result.stage_results) == 3
     assert [a.calls, b.calls, c.calls] == [1, 1, 1]
@@ -219,7 +221,7 @@ def test_engine_short_circuits_on_failure() -> None:
     bus = EventBus()
     a, boom, c = _EchoStage(), _BoomStage(), _EchoStage()
     engine = ExecutionEngine(stages=[a, boom, c], bus=bus)
-    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd=Path("/tmp"))))
     assert not result.success
     assert result.failed_stage == "boom"
     assert a.calls == 1
@@ -235,7 +237,7 @@ def test_engine_retries_then_succeeds() -> None:
         max_attempts_per_stage=3,
         retry_backoff_seconds=0.0,
     )
-    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd=Path("/tmp"))))
     assert result.success
     assert flaky.calls == 3
     # Stage events: running, retrying, retrying, succeeded.
@@ -253,7 +255,7 @@ def test_engine_gives_up_after_max_attempts() -> None:
         max_attempts_per_stage=3,
         retry_backoff_seconds=0.0,
     )
-    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd=Path("/tmp"))))
     assert not result.success
     assert flaky.calls == 3
     assert result.error is not None
@@ -263,7 +265,7 @@ def test_engine_emits_cancelled_when_token_set_before_stage() -> None:
     bus = EventBus()
     bus.cancel()
     engine = ExecutionEngine(stages=[_EchoStage("cancel-pre")], bus=bus)
-    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd=Path("/tmp"))))
     assert not result.success
     assert result.cancelled is True
 
@@ -274,7 +276,7 @@ def test_engine_emits_cancelled_when_stage_cancels_midway() -> None:
     cancel = _CancelStage()
     c = _EchoStage("cancel-mid-c")
     engine = ExecutionEngine(stages=[a, cancel, c], bus=bus)
-    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd=Path("/tmp"))))
     assert not result.success
     assert result.cancelled is True
     assert a.calls == 1
@@ -285,7 +287,7 @@ def test_engine_records_stage_logs() -> None:
     bus = EventBus()
     a = _EchoStage("log-test", note="done")
     engine = ExecutionEngine(stages=[a], bus=bus)
-    context = EngineContext(prompt="p", cwd="/tmp")
+    context = EngineContext(prompt="p", cwd=Path("/tmp"))
     asyncio.run(engine.run(context))
     assert len(context.log) == 1
     log = context.log[0]
@@ -309,13 +311,13 @@ def test_engine_from_registry_unknown_stage_raises() -> None:
 
 
 def test_engine_rejects_sync_stage() -> None:
-    def sync_stage(ctx: StageContext) -> StageResult:
+    def sync_stage(context: StageContext) -> StageResult:
         return StageResult(status=StageStatus.SUCCEEDED)
 
     sync_stage.name = "sync-stage"  # type: ignore[attr-defined]
     bus = EventBus()
     engine = ExecutionEngine(stages=[sync_stage], bus=bus)  # type: ignore[list-item]
-    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd=Path("/tmp"))))
     assert not result.success
     assert "did not return an awaitable" in (result.error or "")
 
@@ -352,7 +354,8 @@ def test_stage_registry_replace_succeeds() -> None:
     registry = StageRegistry()
     registry.register(_EchoStage("replace-me", note="v1"))
     registry.replace(_EchoStage("replace-me", note="v2"))
-    assert registry.get("replace-me").note == "v2"
+    stage = cast(_EchoStage, registry.get("replace-me"))
+    assert stage.note == "v2"
 
 
 # ---------------------------------------------------------------------------
@@ -381,7 +384,7 @@ def test_hooks_fire_in_registration_order() -> None:
         manager.add_before(PluginHook(name="b2", callback=await make_before("b2")))
         manager.add_after(PluginHook(name="a1", callback=await make_after("a1")))
         manager.add_after(PluginHook(name="a2", callback=await make_after("a2")))
-        context = EngineContext(prompt="p", cwd="/tmp")
+        context = EngineContext(prompt="p", cwd=Path("/tmp"))
         await manager.fire_before(context, EventBus())
         # fake result for the after hooks
         result = EngineResult(success=True, context=context, stage_results=[])
@@ -398,7 +401,7 @@ def test_hooks_fire_in_registration_order() -> None:
 
 def test_hook_failure_does_not_abort_engine() -> None:
     bus = EventBus()
-    context = EngineContext(prompt="p", cwd="/tmp")
+    context = EngineContext(prompt="p", cwd=Path("/tmp"))
     manager = HookManager()
     manager.add_before(
         PluginHook(name="bad", callback=lambda: (_ for _ in ()).throw(RuntimeError("boom")))
@@ -415,7 +418,7 @@ def test_hook_failure_does_not_abort_engine() -> None:
 
 
 def test_engine_context_to_log_dict_is_serializable() -> None:
-    context = EngineContext(prompt="x", cwd="/tmp")
+    context = EngineContext(prompt="x", cwd=Path("/tmp"))
     context.intent_analysis = None
     context.applied_files = []
     payload = context.to_log_dict()

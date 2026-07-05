@@ -378,5 +378,5 @@ def test_cache_path_lives_under_data_dir(monkeypatch, tmp_path: Path) -> None:
 
 
 # Silence unused-import warnings for symbols only used in some branches.
-_ = stat
-_ = patch
+_stat = stat
+_patch = patch

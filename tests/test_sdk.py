@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import textwrap
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -95,7 +96,9 @@ def test_requirement_extras() -> None:
 
 def test_resolve_picks_highest_compatible() -> None:
     reqs = [Requirement.parse("foo", ">=1.0,<2.0")]
-    candidates = {"foo": (Version.parse("0.9"), Version.parse("1.5"), Version.parse("2.0"))}
+    candidates: dict[str, tuple[Version, ...]] = {
+        "foo": (Version.parse("0.9"), Version.parse("1.5"), Version.parse("2.0"))
+    }
     chosen = resolve(reqs, candidates)
     assert chosen["foo"] == Version.parse("1.5")
 
@@ -427,7 +430,7 @@ def test_event_bus_publishes_to_subscribers() -> None:
 
 def test_event_bus_unsubscribe() -> None:
     bus = PluginEventBus()
-    received: list[PluginEvent] = []
+    received: list[Any] = []
 
     def handler(_: PluginEvent) -> None:
         received.append(1)
@@ -525,7 +528,7 @@ def test_health_report_to_dict() -> None:
         ),
         healthy=False,
     )
-    payload = report.to_dict()
+    payload = cast("dict[str, Any]", report.to_dict())
     assert payload["plugin"] == "acme"
     assert payload["healthy"] is False
     assert len(payload["issues"]) == 2
@@ -550,7 +553,7 @@ def test_resolve_raises_on_cycle() -> None:
     a cycle by passing two requirements with incompatible ranges
     whose only candidate is rejected by both."""
     reqs = [Requirement.parse("foo", ">=1.0,<1.0")]  # empty range
-    candidates = {"foo": (Version.parse("1.0"),)}
+    candidates: dict[str, tuple[Version, ...]] = {"foo": (Version.parse("1.0"),)}
     with pytest.raises(UnsatisfiableRequirementError):
         resolve(reqs, candidates)
 
@@ -578,6 +581,6 @@ def test_entry_point_kind_has_all_ten_values() -> None:
 
 
 # Silence unused-import warnings for symbols only used in some branches.
-_ = Op
-_ = Spec
-_ = json
+_op = Op
+_spec = Spec
+_json = json

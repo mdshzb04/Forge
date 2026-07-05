@@ -169,5 +169,5 @@ class _FakeProc:
 
 
 # Silence unused-import warnings for symbols used only in some branches.
-_ = ForgeCLIError
-_ = pytest
+_err = ForgeCLIError
+_pytest = pytest

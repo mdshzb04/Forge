@@ -13,12 +13,14 @@ from forgecli.optimizer.ponytail import (
     Intensity,
     PonytailCLIOptimizer,
     PonytailRulesetOptimizer,
+    PromptOptimizer,
 )
 from forgecli.optimizer.ponytail.decorator import OptimizedProvider
 from forgecli.providers.base import (
     ChatMessage,
     ChatRequest,
     ChatResponse,
+    Provider,
     Role,
 )
 
@@ -124,13 +126,13 @@ def test_optimize_chat_raises_on_invalid_json(monkeypatch) -> None:
         asyncio.run(opt.optimize_chat(_request(ChatMessage(role=Role.USER, content="hi"))))
 
 
-class _StubProvider:
+class _StubProvider(Provider[Any]):
     """Minimal Provider stand-in used by the decorator tests."""
 
     name = "stub"
 
     def __init__(self) -> None:
-        self.config = object()
+        super().__init__(object())
         self.calls: list[ChatRequest] = []
 
     async def chat(self, request: ChatRequest) -> ChatResponse:
@@ -141,10 +143,10 @@ class _StubProvider:
             finish_reason="stop",
         )
 
-    async def embed(self, request):  # pragma: no cover - not exercised
+    async def embed(self, request: Any) -> Any:  # pragma: no cover - not exercised
         raise NotImplementedError
 
-    async def list_models(self) -> list:  # pragma: no cover
+    async def list_models(self) -> list[Any]:  # pragma: no cover
         return []
 
 
@@ -164,13 +166,10 @@ def test_optimized_provider_runs_optimizer_before_chat() -> None:
 def test_optimized_provider_passes_through_when_optimizer_off() -> None:
     from forgecli.optimizer.ponytail import OptimizedRequest
 
-    class _Passthrough(PonytailRulesetOptimizer if False else object):  # type: ignore[misc]
-        pass
-
-    class _PassthroughOpt:
+    class _PassthroughOpt(PromptOptimizer):
         name = "passthrough"
 
-        async def optimize_chat(self, request):
+        async def optimize_chat(self, request: ChatRequest) -> OptimizedRequest:
             return OptimizedRequest(
                 request=request,
                 notes=("noop",),
@@ -179,7 +178,7 @@ def test_optimized_provider_passes_through_when_optimizer_off() -> None:
             )
 
     base = _StubProvider()
-    wrapped = OptimizedProvider(base=base, optimizer=_PassthroughOpt())  # type: ignore[arg-type]
+    wrapped = OptimizedProvider(base=base, optimizer=_PassthroughOpt())
     asyncio.run(wrapped.chat(_request(ChatMessage(role=Role.USER, content="hi"))))
     sent = base.calls[0]
     assert [m.content for m in sent.messages] == ["hi"]
@@ -200,5 +199,5 @@ def test_optimized_provider_embed_passthrough() -> None:
 
 
 # Silence the unused-import warning for monkeypatch's framework dep.
-_ = pytest
-_ = patch
+_pytest = pytest
+_patch = patch

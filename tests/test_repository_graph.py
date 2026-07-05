@@ -247,6 +247,6 @@ def test_build_uses_client_and_caches_snapshot(tmp_path: Path) -> None:
     assert result.snapshot.node("a") is not None
 
     # Subsequent load() should reuse the cache.
-    client.load_graph = lambda _p: {"nodes": [], "links": []}  # type: ignore[method-assign]
+    client.load_graph = lambda path: {"nodes": [], "links": []}  # type: ignore[method-assign]
     snap = asyncio.run(backend.load())
     assert snap is result.snapshot

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -11,7 +12,7 @@ from forgecli.memory.store import MemoryStore
 
 
 @pytest.fixture
-def store(tmp_path: Path) -> MemoryStore:
+def store(tmp_path: Path) -> Iterator[MemoryStore]:
     s = MemoryStore(tmp_path / "history.db")
     s.connect()
     yield s
