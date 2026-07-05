@@ -86,8 +86,8 @@ ruff check forgecli tests
 Push a version tag to publish to TestPyPI and PyPI:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 Publish jobs run **only on `v*` tags**. On regular pushes to `main`, those jobs show as **Skipped** — that is expected, not a failure.

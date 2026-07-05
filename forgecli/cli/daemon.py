@@ -545,7 +545,7 @@ def run_mcp_stdio() -> None:
                         "result": {
                             "protocolVersion": "2024-11-05",
                             "capabilities": {"tools": {}},
-                            "serverInfo": {"name": "forge", "version": "1.0.0"},
+                            "serverInfo": {"name": "forge", "version": "0.1.0"},
                         },
                     }
                     sys.stdout.write(json.dumps(res) + "\n")

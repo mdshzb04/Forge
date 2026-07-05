@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "forgectx"
-version = "1.0.0"
+version = "0.1.0"
 description = "Forge — AI optimization runtime. Fast prompt and token optimization for Claude Code, Codex, Cursor, OpenCode, and CommandCode CLI."
 readme = "README.md"
 license = { file = "LICENSE" }
