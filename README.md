@@ -9,9 +9,9 @@ The primary purpose of Forge is to construct an optimized representation of a co
 Forge prepares repository-aware context for AI coding assistants using knowledge graph generation, intelligent context selection, prompt optimization, token optimization, and aggressive caching. 
 
 Forge is powered internally by three integrated optimization engines:
-1. **Graphify**: Generates a conceptual knowledge graph of file relationships, imports, and symbols to ensure the most relevant context is selected.
-2. **Ponytail**: A lightweight prompt optimization engine inspired by YAGNI principles. It rewrites system instructions to encourage simpler, incremental implementations that prefer correctness and reuse existing patterns instead of introducing speculative code.
-3. **Caveman**: A response-style optimization engine that instructs models to respond concisely and cleanly, stripping filler words and pleasantries to improve response efficiency while preserving code accuracy.
+1. **Graphify** 
+2. **Ponytail**
+3. **Caveman** 
 
 ### Hybrid Optimization Pipeline
 Both **Ponytail** and **Caveman** feature a hybrid architecture:
@@ -94,25 +94,6 @@ Wrappers export:
 | `FORGE_CONTEXT` | Optimized text context |
 | `FORGE_CONTEXT_FILE` | Path to the optimized context file |
 | `FORGE_REPO_ROOT` | Detected repository root |
-
----
-
-## Internal Optimization Engines in Detail
-
-### Ponytail
-A lightweight prompt optimizer focused on simplicity and correctness.
-- **Off**: No modification; passes prompts through unchanged.
-- **Lite** (Default): Appends a brief hint reminding the model to favor simpler alternatives.
-- **Full**: Instructs the model to use the shortest necessary implementation path and minimal diffs.
-- **Ultra**: Instructs the model to actively favor the simplest implementation that satisfies requirements.
-
-### Caveman
-A lightweight response-style optimizer focused on response efficiency.
-- **Off**: Standard conversational replies.
-- **Lite**: Concise replies omitting typical filler phrases and pleasantries.
-- **Full**: Fragment-based technical responses using clear, compact patterns.
-- **Ultra**: Highly compressed responses optimizing for the highest signal-to-noise ratio.
-- **Wenyan**: Formats system messages to output in Classical Chinese literary style to maximize semantic density.
 
 ---
 
