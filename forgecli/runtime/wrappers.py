@@ -126,9 +126,15 @@ def launch_wrapper(
     except Exception:
         pass
 
+    from forgecli.runtime.prepare import get_merged_context
+
+    merged_context = get_merged_context(prepared.context_summary)
+    merged_file = prepared.context_file.parent / f"{prepared.context_file.stem}_merged.md"
+    merged_file.write_text(merged_context, encoding="utf-8")
+
     env = os.environ.copy()
-    env["FORGE_CONTEXT"] = prepared.context_summary
-    env["FORGE_CONTEXT_FILE"] = str(prepared.context_file)
+    env["FORGE_CONTEXT"] = merged_context
+    env["FORGE_CONTEXT_FILE"] = str(merged_file)
     env["FORGE_REPO_ROOT"] = str(prepared.root)
 
     argv = [binary_path, *(extra_args or [])]

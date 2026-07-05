@@ -7,8 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from forgecli.optimizer.optimizer import ContextOptimizer
-from forgecli.optimizer.ponytail import Intensity, PonytailRulesetOptimizer
-from forgecli.providers.base import ChatMessage, ChatRequest, Role
 from forgecli.runtime.cache_store import (
     CachedRuntime,
     load_runtime_cache,
@@ -113,35 +111,6 @@ def _scan_repo_light(root: Path) -> str:
     return "\n".join(lines)
 
 
-def _optimize_prompt(context: str) -> str:
-    import asyncio
-
-    optimizer = PonytailRulesetOptimizer(intensity=Intensity.LITE)
-    request = ChatRequest(
-        model="runtime",
-        messages=[
-            ChatMessage(
-                role=Role.SYSTEM,
-                content="Prepare concise repository context for an AI coding assistant.",
-            ),
-            ChatMessage(
-                role=Role.USER,
-                content=(
-                    "Optimize this repo snapshot for the next coding task. "
-                    "Prefer reuse, minimal diffs, and existing patterns.\n\n"
-                    f"{context}"
-                ),
-            ),
-        ],
-    )
-    optimized = asyncio.run(optimizer.optimize_chat(request))
-    user = next(
-        (message.content for message in optimized.request.messages if message.role is Role.USER),
-        context,
-    )
-    return user.strip() or context
-
-
 def _optimize_tokens(text: str) -> str:
     optimizer = ContextOptimizer(max_context_tokens=8_000)
     result = optimizer.optimize(text)
@@ -151,37 +120,74 @@ def _optimize_tokens(text: str) -> str:
     return merged[:12_000]
 
 
-def _apply_caveman_instructions(context: str) -> str:
-    from forgecli.config.loader import ConfigLoader
+def get_ponytail_instructions(settings) -> str:
+    from forgecli.optimizer.ponytail import Intensity
+    from forgecli.optimizer.ponytail.ruleset import _INTENSITY_GUIDANCE
+
+    enabled = settings.prompt_optimizer.enabled
+    intensity_str = settings.prompt_optimizer.intensity
+    if not enabled or intensity_str == "off":
+        return ""
+
+    try:
+        intensity = Intensity.parse(intensity_str)
+    except ValueError:
+        intensity = Intensity.LITE
+
+    return _INTENSITY_GUIDANCE.get(intensity, "")
+
+
+def get_caveman_instructions(settings) -> str:
     from forgecli.optimizer.caveman import CavemanIntensity
     from forgecli.optimizer.caveman.ruleset import _CAVEMAN_GUIDANCE
 
-    try:
-        settings = ConfigLoader().load()
-        enabled = settings.caveman.enabled
-        intensity_str = settings.caveman.intensity
-    except Exception:
-        enabled = True
-        intensity_str = "lite"
-
+    enabled = settings.caveman.enabled
+    intensity_str = settings.caveman.intensity
     if not enabled or intensity_str == "off":
-        return context
+        return ""
 
     try:
         intensity = CavemanIntensity.parse(intensity_str)
     except ValueError:
         intensity = CavemanIntensity.LITE
 
-    guidance = _CAVEMAN_GUIDANCE.get(intensity, "")
-    if not guidance:
-        return context
+    return _CAVEMAN_GUIDANCE.get(intensity, "")
 
-    instruction_block = (
-        "=== SYSTEM INSTRUCTION: RESPOND STYLE (CAVEMAN) ===\n"
-        f"{guidance}\n"
-        "===================================================\n\n"
-    )
-    return instruction_block + context
+
+def build_behavior_instructions() -> str:
+    from forgecli.config.loader import ConfigLoader
+
+    try:
+        settings = ConfigLoader().load()
+    except Exception:
+        from forgecli.config.settings import ForgeSettings
+
+        settings = ForgeSettings()
+
+    ponytail_guidance = get_ponytail_instructions(settings)
+    caveman_guidance = get_caveman_instructions(settings)
+
+    blocks = []
+    if ponytail_guidance:
+        blocks.append(
+            "=== SYSTEM INSTRUCTION: IMPLEMENTATION STYLE (PONYTAIL) ===\n"
+            f"{ponytail_guidance}\n"
+            "==========================================================="
+        )
+    if caveman_guidance:
+        blocks.append(
+            "=== SYSTEM INSTRUCTION: RESPOND STYLE (CAVEMAN) ===\n"
+            f"{caveman_guidance}\n"
+            "==================================================="
+        )
+    if blocks:
+        return "\n\n".join(blocks) + "\n\n"
+    return ""
+
+
+def get_merged_context(repo_context: str) -> str:
+    instructions = build_behavior_instructions()
+    return instructions + repo_context
 
 
 def prepare_runtime_sync(
@@ -200,13 +206,12 @@ def prepare_runtime_sync(
             return PreparedRuntime.from_cached(root, cached)
 
     raw_context = _scan_repo_light(root)
-    prompt_optimized = _optimize_prompt(raw_context)
-    caveman_optimized = _apply_caveman_instructions(prompt_optimized)
-    token_optimized = _optimize_tokens(caveman_optimized)
+    # Repository context is strictly limited to summaries, relevant files, layout, dependency info etc.
+    token_optimized = _optimize_tokens(raw_context)
 
     # Optimization pipeline check: never allow optimized context to be larger than raw context
     if len(token_optimized) > len(raw_context):
-        token_optimized = _apply_caveman_instructions(raw_context)
+        token_optimized = raw_context
 
     cache_dir = ProjectPaths.from_env().cache_dir / "runtime" / "context"
     cache_dir.mkdir(parents=True, exist_ok=True)

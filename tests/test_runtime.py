@@ -44,8 +44,13 @@ def test_prepare_runtime_applies_caveman_injection(tmp_path: Path, monkeypatch) 
     (tmp_path / "README.md").write_text("# demo\n", encoding="utf-8")
 
     prepared = prepare_runtime_sync(tmp_path, force=True)
-    assert "SYSTEM INSTRUCTION: RESPOND STYLE (CAVEMAN)" in prepared.context_summary
-    assert "CAVEMAN (lite)" in prepared.context_summary
+    assert "SYSTEM INSTRUCTION: RESPOND STYLE (CAVEMAN)" not in prepared.context_summary
+
+    from forgecli.runtime.prepare import get_merged_context
+
+    merged = get_merged_context(prepared.context_summary)
+    assert "SYSTEM INSTRUCTION: RESPOND STYLE (CAVEMAN)" in merged
+    assert "CAVEMAN (lite)" in merged
 
 
 def test_runtime_cache_roundtrip(tmp_path: Path, monkeypatch) -> None:

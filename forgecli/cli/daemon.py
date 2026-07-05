@@ -665,8 +665,12 @@ def run_mcp_stdio() -> None:
                         r = client.get(f"{daemon_url}/summary?path={path_param}")
                         content = r.json()["markdown"]
                     elif tool_name == "get_optimized_context":
-                        r = client.get(f"{daemon_url}/context?path={path_param}")
-                        content = r.json()["markdown"]
+                        env_context = os.environ.get("FORGE_CONTEXT")
+                        if env_context:
+                            content = env_context
+                        else:
+                            r = client.get(f"{daemon_url}/context?path={path_param}")
+                            content = r.json()["markdown"]
                     elif tool_name == "get_dependency_graph":
                         r = client.get(f"{daemon_url}/dependencies?path={path_param}")
                         content = r.json()["markdown"]
