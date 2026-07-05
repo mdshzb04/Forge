@@ -13,9 +13,8 @@ The four intensity levels match the official ``/ponytail`` command:
               name the lazier alternative and lets the user pick.
 * ``full``  - prepends the full "ladder" instruction and tells the
               model to ship the shortest diff.
-* ``ultra`` - aggressive YAGNI; tells the model to ship the one-liner
-              and challenge the rest of the requirement in the same
-              breath.
+* ``ultra`` - aggressive YAGNI; tells the model to ship the simplest
+              implementation that satisfies requirements.
 
 The output is deterministic for a given (intensity, prompt) pair, so
 tests can pin it.

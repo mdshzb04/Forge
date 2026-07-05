@@ -1,28 +1,50 @@
 # Forge
 
-Forge is an AI optimization runtime. It prepares your repository context at light speed — prompt optimization and token compression — then launches the AI CLI you already use.
+Forge is a lightweight, high-performance AI optimization runtime designed to prepare repository-aware context before launching supported AI coding tools. 
 
-Install:
+The primary purpose of Forge is to construct an optimized representation of a codebase so that AI coding assistants can operate with maximum correctness, lower response latency, and reduced context-budget overhead.
 
-**Development:**
+## Architecture & How It Works
+
+Forge prepares repository-aware context for AI coding assistants using knowledge graph generation, intelligent context selection, prompt optimization, token optimization, and aggressive caching. 
+
+Forge is powered internally by three integrated optimization engines:
+1. **Graphify**: Generates a conceptual knowledge graph of file relationships, imports, and symbols to ensure the most relevant context is selected.
+2. **Ponytail**: A lightweight prompt optimization engine inspired by YAGNI principles. It rewrites system instructions to encourage simpler, incremental implementations that prefer correctness and reuse existing patterns instead of introducing speculative code.
+3. **Caveman**: A response-style optimization engine that instructs models to respond concisely and cleanly, stripping filler words and pleasantries to improve response efficiency while preserving code accuracy.
+
+### Hybrid Optimization Pipeline
+Both **Ponytail** and **Caveman** feature a hybrid architecture:
+- If standalone external binaries (`ponytail` or `caveman`) exist on your system's `PATH`, Forge will invoke them directly.
+- If no external binaries are found, Forge automatically falls back to its built-in, self-contained Python implementation with zero setup or configuration required.
+
+---
+
+## Installation
+
+### Development
 ```bash
 uv tool install .
 ```
 
-**Release:**
+### Release
 ```bash
 uv tool install forgectx
 ```
 
-The command is `forge`.
+The CLI entrypoint is `forge`.
+
+---
 
 ## Convenience Wrappers vs. Core MCP Runtime
 
 Forge provides two primary interfaces to connect with your AI coding tools:
-1. **Convenience Wrappers** (`forge claude`, `forge cursor`, etc.): Commands that automatically prepare/optimize context, update local and global configurations, and launch the target AI CLI under an optimized environment.
+1. **Convenience Wrappers** (`forge claude`, `forge cursor`, `forge codex`, `forge opencode`, `forge commandcode`, `forge antigravity`): Commands that automatically prepare/optimize context, update local and global configurations, and launch the target AI CLI under an optimized environment.
 2. **Core MCP Runtime** (`forge mcp`): The standard Model Context Protocol (MCP) interface that compatible AI clients communicate with over stdio.
 
-## Commands
+---
+
+## Command Reference
 
 | Command | Type | Description |
 | -------- | ---- | ----------- |
@@ -43,6 +65,8 @@ Forge provides two primary interfaces to connect with your AI coding tools:
 > forge claude --refresh
 > ```
 
+---
+
 ## Model Context Protocol (MCP) Integration
 
 Forge automatically registers its MCP server globally and project-locally for launched clients (updating `~/.claude.json`, `~/.cursor/mcp.json`, and project `.mcp.json` files).
@@ -59,9 +83,9 @@ Forge exposes the following schema tools over MCP:
 > [!IMPORTANT]
 > **Client Behavior Notice:** While Forge exposes these tools to the MCP client, whether and when they are invoked depends entirely on the AI client's internal orchestration logic. Forge makes these capabilities available, but the client decides which tool to call.
 
+---
 
-
-## Environment variables
+## Environment Variables
 
 Wrappers export:
 
@@ -70,6 +94,27 @@ Wrappers export:
 | `FORGE_CONTEXT` | Optimized text context |
 | `FORGE_CONTEXT_FILE` | Path to the optimized context file |
 | `FORGE_REPO_ROOT` | Detected repository root |
+
+---
+
+## Internal Optimization Engines in Detail
+
+### Ponytail
+A lightweight prompt optimizer focused on simplicity and correctness.
+- **Off**: No modification; passes prompts through unchanged.
+- **Lite** (Default): Appends a brief hint reminding the model to favor simpler alternatives.
+- **Full**: Instructs the model to use the shortest necessary implementation path and minimal diffs.
+- **Ultra**: Instructs the model to actively favor the simplest implementation that satisfies requirements.
+
+### Caveman
+A lightweight response-style optimizer focused on response efficiency.
+- **Off**: Standard conversational replies.
+- **Lite**: Concise replies omitting typical filler phrases and pleasantries.
+- **Full**: Fragment-based technical responses using clear, compact patterns.
+- **Ultra**: Highly compressed responses optimizing for the highest signal-to-noise ratio.
+- **Wenyan**: Formats system messages to output in Classical Chinese literary style to maximize semantic density.
+
+---
 
 ## Development
 
@@ -81,25 +126,6 @@ pip install -e ".[dev]"
 pytest
 ruff check forgecli tests
 ```
-
-## Release
-
-Push a version tag to publish to TestPyPI and PyPI:
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-Publish jobs run **only on `v*` tags**. On regular pushes to `main`, those jobs show as **Skipped** — that is expected, not a failure.
-
-Configure GitHub environments `testpypi` and `pypi` with PyPI trusted publishing for package name `forgectx`.
-
----
-
-<img width="1854" height="1005" alt="image" src="https://github.com/user-attachments/assets/03f3c2e2-424c-4784-8a59-b2b0f4b99447" />
-
-<img width="1854" height="1005" alt="image" src="https://github.com/user-attachments/assets/6eb06d10-6f1f-4648-b679-028368362c24" />
 
 ## License
 

@@ -1,10 +1,9 @@
 """Caveman token-optimizer integration.
 
-Caveman is a prompt-level optimization technique that reduces LLM output
-tokens by ~65% on average. It works by injecting a system prompt that
-tells the model to communicate in a compressed, token-efficient style —
-dropping filler words, pleasantries, and using fragments — while keeping
-all technical terms exact.
+Caveman is a prompt-level optimization engine that reduces LLM output
+verbosity. It works by injecting system prompts that instruct the model
+to communicate in a concise, token-efficient style — dropping filler words
+and pleasantries while keeping all technical terms and code exact.
 
 Two implementations are shipped:
 
