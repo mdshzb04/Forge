@@ -61,9 +61,10 @@ def test_wrapper_prepares_context_and_launches(tmp_path: Path, monkeypatch) -> N
     monkeypatch.setenv("FORGECLI_GRAPHIFY_BIN", "nonexistent-graphify")
 
     import subprocess
+    from typing import Any
 
     original_run = subprocess.run
-    launched: dict[str, object] = {}
+    launched: dict[str, Any] = {}
 
     def _fake_run(argv, *args, **kwargs):
         if argv and ("/usr/bin/claude" in argv[0] or argv[0] == "claude"):
