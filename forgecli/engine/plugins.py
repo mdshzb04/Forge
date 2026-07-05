@@ -98,9 +98,7 @@ class HookManager:
                     )
                 )
 
-    async def fire_after(
-        self, result: EngineResult, bus: EventBus
-    ) -> None:
+    async def fire_after(self, result: EngineResult, bus: EventBus) -> None:
         from forgecli.engine.events import LogLevel, TextLogEvent
 
         for hook in self._after:
@@ -131,6 +129,7 @@ def stage_as_plugin(stage: Stage) -> EnginePluginFactory:
     The plugin is registered under the stage's name; calling it
     again replaces the previous binding (last writer wins).
     """
+
     def _factory(registry: PluginRegistry) -> None:
         registry.register_stage(stage)  # type: ignore[attr-defined]
 

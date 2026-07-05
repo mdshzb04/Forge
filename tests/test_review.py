@@ -252,9 +252,7 @@ def test_dead_code_keeps_dunder_names(tmp_path: Path) -> None:
     package = project / "forgecli" / "x"
     package.mkdir(parents=True)
     (package / "__init__.py").write_text("")
-    (package / "mod.py").write_text(
-        "class C:\n    def __repr__(self):\n        return 'C'\n"
-    )
+    (package / "mod.py").write_text("class C:\n    def __repr__(self):\n        return 'C'\n")
     ctx = AnalysisContext.load(project / "forgecli")
     findings = DeadCodeAnalyzer().run(ctx)
     assert not findings
@@ -353,8 +351,7 @@ def test_review_repository_runs_all_analyzers(tmp_path: Path) -> None:
         "    with open('x') as fh:\n"
         "        return fh.read()\n"
         "\n"
-        "def big(x):\n"
-        + "\n".join(long_body_lines) + "\n"
+        "def big(x):\n" + "\n".join(long_body_lines) + "\n"
     )
     (package / "x.py").write_text(src)
     review = review_repository(project)

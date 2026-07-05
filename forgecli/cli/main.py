@@ -56,6 +56,36 @@ app.command(
 )(commands_wrappers.commandcode_cmd)
 
 
+@app.command("start", help="Start the long-running Forge Context Runtime daemon.")
+def start_cmd(
+    port: int = typer.Option(16868, "--port", "-p", help="Port to run the daemon HTTP server on."),
+) -> None:
+    """Start the long-running Forge Context Runtime daemon."""
+    import uvicorn
+
+    from forgecli.cli.daemon import get_watcher_for_path, is_daemon_running
+    from forgecli.cli.ui import info, success
+
+    if is_daemon_running():
+        info("Forge Runtime daemon is already running on http://127.0.0.1:16868")
+        raise typer.Exit(code=0)
+
+    success("Starting Forge Runtime daemon on http://127.0.0.1:16868...")
+    get_watcher_for_path(Path.cwd())
+
+    from forgecli.cli.daemon import app as daemon_app
+
+    uvicorn.run(daemon_app, host="127.0.0.1", port=port, log_level="warning")
+
+
+@app.command("mcp", help="Start the Forge MCP Server over stdio.")
+def mcp_cmd() -> None:
+    """Start the Forge MCP Server over stdio."""
+    from forgecli.cli.daemon import run_mcp_stdio
+
+    run_mcp_stdio()
+
+
 def _version_callback(value: bool) -> None:
     if value:
         get_console().print(f"{__app_name__} [muted]v{__version__}[/muted]")
@@ -91,9 +121,7 @@ def main(
         f"  [bold cyan]Forge[/bold cyan] [dim]v{__version__}[/dim] • "
         "[bold white]AI Optimization Runtime[/bold white]"
     )
-    console.print(
-        "  [dim]Prompt + token optimization for AI coding CLIs.[/dim]\n"
-    )
+    console.print("  [dim]Prompt + token optimization for AI coding CLIs.[/dim]\n")
     console.print(
         "  [bold]Commands[/bold]\n"
         "    [cyan]forge claude[/cyan]       Launch Claude Code with optimized context\n"
@@ -101,6 +129,8 @@ def main(
         "    [cyan]forge cursor[/cyan]       Launch Cursor CLI with optimized context\n"
         "    [cyan]forge opencode[/cyan]     Launch OpenCode CLI with optimized context\n"
         "    [cyan]forge commandcode[/cyan]  Launch CommandCode CLI with optimized context\n"
+        "    [cyan]forge start[/cyan]        Start the background context optimization daemon\n"
+        "    [cyan]forge mcp[/cyan]          Start the stdio Model Context Protocol (MCP) server\n"
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"
         "    [cyan]forge --help[/cyan]       Show all options\n"
     )

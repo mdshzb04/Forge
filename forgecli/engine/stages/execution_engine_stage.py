@@ -88,15 +88,9 @@ def _merge_caveman_request(
     ponytail_req: ChatRequest,
 ) -> ChatRequest:
     """Merge caveman and ponytail system prompts into one request."""
-    caveman_sys = [
-        m for m in caveman_req.messages if m.role is Role.SYSTEM
-    ]
-    ponytail_sys = [
-        m for m in ponytail_req.messages if m.role is Role.SYSTEM
-    ]
-    other_messages = [
-        m for m in ponytail_req.messages if m.role is not Role.SYSTEM
-    ]
+    caveman_sys = [m for m in caveman_req.messages if m.role is Role.SYSTEM]
+    ponytail_sys = [m for m in ponytail_req.messages if m.role is Role.SYSTEM]
+    other_messages = [m for m in ponytail_req.messages if m.role is not Role.SYSTEM]
 
     merged_sys_content = "\n\n".join(
         m.content for m in [*caveman_sys, *ponytail_sys] if m.content.strip()

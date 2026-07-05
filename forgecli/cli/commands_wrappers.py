@@ -60,4 +60,11 @@ def commandcode_cmd(
     launch_wrapper("commandcode", list(ctx.args), path=Path(path), force_prepare=refresh)
 
 
-__all__ = ["_WRAPPER_SETTINGS", "claude_cmd", "codex_cmd", "commandcode_cmd", "cursor_cmd", "opencode_cmd"]
+__all__ = [
+    "_WRAPPER_SETTINGS",
+    "claude_cmd",
+    "codex_cmd",
+    "commandcode_cmd",
+    "cursor_cmd",
+    "opencode_cmd",
+]

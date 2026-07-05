@@ -26,7 +26,11 @@ def test_ranker_prefers_overlapping_chunk() -> None:
     a = type("C", (), {"text": "the quick brown fox"})()
     b = type("C", (), {"text": "completely unrelated content"})()
     chunks = [
-        type("Chunk", (), {"text": c.text, "index": i, "start": 0, "end": len(c.text), "source_id": None})()
+        type(
+            "Chunk",
+            (),
+            {"text": c.text, "index": i, "start": 0, "end": len(c.text), "source_id": None},
+        )()
         for i, c in enumerate([a, b])
     ]
     from forgecli.optimizer.chunker import Chunk

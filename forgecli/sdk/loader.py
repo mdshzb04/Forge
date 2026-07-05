@@ -130,9 +130,7 @@ def discover_entry_points() -> list[LoadedPlugin]:
     return plugins
 
 
-def _load_entry_point_distribution(
-    dist_name: str | None, entry_points: list
-) -> LoadedPlugin:
+def _load_entry_point_distribution(dist_name: str | None, entry_points: list) -> LoadedPlugin:
     """Load a distribution's entry-points as a synthetic plugin."""
     if dist_name is None:
         raise PluginManifestNotFound("entry point has no distribution")
@@ -177,9 +175,7 @@ def _load_entry_point_distribution(
     )
 
 
-def _load_entry_point_factories(
-    manifest: PluginManifest, plugin_dir: Path
-) -> dict:
+def _load_entry_point_factories(manifest: PluginManifest, plugin_dir: Path) -> dict:
     """Import each ``module:attr`` reference declared in the manifest."""
     factories: dict = {}
     for ep in manifest.entry_points:

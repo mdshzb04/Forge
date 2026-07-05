@@ -43,12 +43,12 @@ if TYPE_CHECKING:
 class Intent(str, Enum):
     """A high-level description of what the user wants to do."""
 
-    BUILD = "build"        # generate / modify code
-    ASK = "ask"            # answer a question about the project
-    PLAN = "plan"          # produce a plan without writing code
-    DOCS = "docs"          # produce documentation
-    REVIEW = "review"      # run the code review pipeline
-    EXPLAIN = "explain"    # explain a single node / file
+    BUILD = "build"  # generate / modify code
+    ASK = "ask"  # answer a question about the project
+    PLAN = "plan"  # produce a plan without writing code
+    DOCS = "docs"  # produce documentation
+    REVIEW = "review"  # run the code review pipeline
+    EXPLAIN = "explain"  # explain a single node / file
     UNKNOWN = "unknown"
 
 
@@ -178,9 +178,7 @@ class PluginRegistry:
         except (ValueError, KeyError):
             pass
 
-    def register_configure_hook(
-        self, hook: Callable[[AppContext], None]
-    ) -> None:
+    def register_configure_hook(self, hook: Callable[[AppContext], None]) -> None:
         self.configure_hooks.append(hook)
 
     def link_engine_registry(self, engine_registry: StageRegistry) -> None:

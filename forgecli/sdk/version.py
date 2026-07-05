@@ -83,8 +83,7 @@ class Version:
         base = f"{self.major}.{self.minor}.{self.patch}"
         if self.pre:
             base += "-" + ".".join(
-                f"{ident}{num}" if num >= 0 else ident
-                for ident, num in self.pre
+                f"{ident}{num}" if num >= 0 else ident for ident, num in self.pre
             )
         if self.build:
             base += f"+{self.build}"
@@ -298,9 +297,7 @@ def resolve(
                 )
         if not progress:
             # Cycle or stuck.
-            raise DependencyCycleError(
-                f"could not resolve: {sorted(constraints)}"
-            )
+            raise DependencyCycleError(f"could not resolve: {sorted(constraints)}")
     return chosen
 
 

@@ -45,7 +45,7 @@ class GeminiConfig:
 
 
 _GEMINI_ROLE_MAP: dict[Role, str] = {
-    Role.SYSTEM: "user",   # Gemini has no "system" role; fold into a user turn
+    Role.SYSTEM: "user",  # Gemini has no "system" role; fold into a user turn
     Role.USER: "user",
     Role.ASSISTANT: "model",
     Role.TOOL: "user",
@@ -89,10 +89,7 @@ class GeminiProvider(HTTPChatProvider):
 
     def _chat_url_for(self, request) -> str:  # type: ignore[override]
         model = request.model or self.config.default_model
-        return (
-            f"{self._base_url}/models/{model}:generateContent"
-            f"?key={self._api_key or ''}"
-        )
+        return f"{self._base_url}/models/{model}:generateContent?key={self._api_key or ''}"
 
     def _embeddings_url(self) -> str:
         return (
@@ -141,9 +138,7 @@ class GeminiProvider(HTTPChatProvider):
             },
         }
         if system_parts:
-            body["systemInstruction"] = {
-                "parts": [{"text": "\n\n".join(system_parts)}]
-            }
+            body["systemInstruction"] = {"parts": [{"text": "\n\n".join(system_parts)}]}
         if request.top_p is not None:
             body["generationConfig"]["topP"] = request.top_p
         if request.stop:
@@ -169,17 +164,13 @@ class GeminiProvider(HTTPChatProvider):
 
     async def stream(self, request: ChatRequest) -> AsyncIterator[StreamChunk]:
         from forgecli.core.errors import ProviderError
+
         if not self._api_key:
             self.validate()
         body = self._format_request(request)
         model = request.model or self.config.default_model
-        url = (
-            f"{self._base_url}/models/{model}:streamGenerateContent"
-            f"?key={self._api_key or ''}"
-        )
-        req = self._client.build_request(
-            "POST", url, json=body, headers=self._auth_headers()
-        )
+        url = f"{self._base_url}/models/{model}:streamGenerateContent?key={self._api_key or ''}"
+        req = self._client.build_request("POST", url, json=body, headers=self._auth_headers())
         response = await self._client.send(req, stream=True)
         if response.status_code >= 400:
             await response.aread()
@@ -188,6 +179,7 @@ class GeminiProvider(HTTPChatProvider):
             )
 
         import json
+
         try:
             async for line in response.aiter_lines():
                 line = line.strip()
@@ -223,8 +215,7 @@ class GeminiProvider(HTTPChatProvider):
             from forgecli.core.errors import ProviderError
 
             raise ProviderError(
-                f"{self.name} embed() expects exactly one input; got "
-                f"{len(request.inputs)}"
+                f"{self.name} embed() expects exactly one input; got {len(request.inputs)}"
             )
         return {
             "content": {
@@ -259,7 +250,7 @@ class GeminiProvider(HTTPChatProvider):
                                     name=m.get("displayName", m_id),
                                     context_window=m.get("inputTokenLimit", 1_000_000),
                                     supports_tools=True,
-                                    supports_vision=True
+                                    supports_vision=True,
                                 )
                             )
                     if out:
@@ -270,25 +261,29 @@ class GeminiProvider(HTTPChatProvider):
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(
                 id=m.id,
                 name=m.display_name,
                 context_window=2_000_000 if "pro" in m.id else 1_000_000,
                 supports_tools=True,
-                supports_vision=True
+                supports_vision=True,
             )
-            for m in MODEL_CATALOG if m.provider == "google"
+            for m in MODEL_CATALOG
+            if m.provider == "google"
         ]
 
 
 def _fallback_api_key(primary: str) -> str | None:
     """Read ``primary`` or ``GEMINI_API_KEY`` from the environment, or secure storage."""
     import os
+
     env_val = os.environ.get(primary) or os.environ.get("GEMINI_API_KEY")
     if env_val:
         return env_val
     from forgecli.core.credentials import get_api_key
+
     return get_api_key("google") or get_api_key("gemini")
 
 

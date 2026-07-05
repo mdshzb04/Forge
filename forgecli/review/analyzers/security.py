@@ -100,8 +100,7 @@ class SecurityAnalyzer(Analyzer):
                             path=str(file.path),
                             line=index,
                             suggestion=(
-                                "Move the secret to an environment variable "
-                                "or a secret manager."
+                                "Move the secret to an environment variable or a secret manager."
                             ),
                         )
                     )
@@ -135,8 +134,7 @@ class SecurityAnalyzer(Analyzer):
                     )
                 )
             if qualified in {"subprocess.call", "subprocess.Popen"} and any(
-                isinstance(kw.value, ast.Constant)
-                and kw.value.value is True
+                isinstance(kw.value, ast.Constant) and kw.value.value is True
                 for kw in node.keywords
                 if kw.arg == "shell"
             ):
@@ -145,9 +143,7 @@ class SecurityAnalyzer(Analyzer):
                         rule_id="SEC013",
                         category="security",
                         severity=Severity.CRITICAL,
-                        message=(
-                            f"{qualified}(shell=True) is vulnerable to command injection."
-                        ),
+                        message=(f"{qualified}(shell=True) is vulnerable to command injection."),
                         path=str(file.path),
                         line=node.lineno,
                         suggestion=(
@@ -177,14 +173,11 @@ class SecurityAnalyzer(Analyzer):
                         rule_id="SEC021",
                         category="security",
                         severity=Severity.MEDIUM,
-                        message=(
-                            f"{name} is a weak hash; prefer sha256 or sha3_256."
-                        ),
+                        message=(f"{name} is a weak hash; prefer sha256 or sha3_256."),
                         path=str(file.path),
                         line=node.lineno,
                         suggestion=(
-                            "Use hashlib.sha256() (or stronger) for any "
-                            "security-sensitive use."
+                            "Use hashlib.sha256() (or stronger) for any security-sensitive use."
                         ),
                     )
                 )

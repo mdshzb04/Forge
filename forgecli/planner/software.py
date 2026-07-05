@@ -152,7 +152,7 @@ class Task(BaseModel):
     description: str
     milestone_id: str
     priority: Priority = Priority.P1
-    estimate: str = "M"          # S / M / L / XL
+    estimate: str = "M"  # S / M / L / XL
     status: TaskStatus = TaskStatus.PLANNED
     owner: str = "agent"
     acceptance: list[str] = Field(default_factory=list)
@@ -500,9 +500,7 @@ def _milestone_description(mid: str, title: str, goal: str, kind: str) -> str:
     return summaries.get(mid, title)
 
 
-def _build_tasks(
-    milestones: list[Milestone], kind: str, options: PlannerOptions
-) -> list[Task]:
+def _build_tasks(milestones: list[Milestone], kind: str, options: PlannerOptions) -> list[Task]:
     tasks: list[Task] = []
     counter = 0
 

@@ -24,9 +24,7 @@ class OptimizerState:
     @classmethod
     def from_extras(cls, extras: dict[str, object]) -> OptimizerState:
         state = cls()
-        intensity = extras.get("optimizer.intensity") or extras.get(
-            "optimizer_intensity"
-        )
+        intensity = extras.get("optimizer.intensity") or extras.get("optimizer_intensity")
         backend = extras.get("optimizer.backend") or extras.get("optimizer_backend")
         binary = extras.get("optimizer.binary") or extras.get("optimizer_binary")
         if isinstance(intensity, str):

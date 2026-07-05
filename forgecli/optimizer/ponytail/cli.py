@@ -46,9 +46,7 @@ class PonytailCLIOptimizer(PromptOptimizer):
         executable: str | None = None,
         timeout: float = 30.0,
     ) -> None:
-        self._executable = executable or os.environ.get(
-            "FORGECLI_PONYTAIL_BIN", "ponytail"
-        )
+        self._executable = executable or os.environ.get("FORGECLI_PONYTAIL_BIN", "ponytail")
         self._timeout = timeout
 
     @property
@@ -60,9 +58,7 @@ class PonytailCLIOptimizer(PromptOptimizer):
 
     async def optimize_chat(self, request: ChatRequest) -> OptimizedRequest:
         if not await self.is_available():
-            raise PonytailCLIError(
-                f"Ponytail executable {self._executable!r} not found on PATH"
-            )
+            raise PonytailCLIError(f"Ponytail executable {self._executable!r} not found on PATH")
 
         binary = shutil.which(self._executable) or self._executable
         payload = _request_to_json(request)
@@ -81,9 +77,7 @@ class PonytailCLIOptimizer(PromptOptimizer):
                 stderr=asyncio.subprocess.PIPE,
             )
             try:
-                stdout, stderr = await asyncio.wait_for(
-                    proc.communicate(), timeout=self._timeout
-                )
+                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
             except TimeoutError as exc:
                 proc.kill()
                 raise PonytailCLIError(
@@ -95,8 +89,7 @@ class PonytailCLIOptimizer(PromptOptimizer):
 
         if proc.returncode != 0:
             raise PonytailCLIError(
-                f"ponytail exited with {proc.returncode}: "
-                f"{stderr.decode(errors='replace').strip()}"
+                f"ponytail exited with {proc.returncode}: {stderr.decode(errors='replace').strip()}"
             )
 
         return _json_to_optimized(stdout.decode(errors="replace"))
@@ -146,9 +139,7 @@ def _json_to_optimized(raw: str) -> OptimizedRequest:
             for m in payload.get("messages", [])
         ]
     except (KeyError, ValueError) as exc:
-        raise PonytailCLIError(
-            f"ponytail returned an unexpected payload: {exc}"
-        ) from exc
+        raise PonytailCLIError(f"ponytail returned an unexpected payload: {exc}") from exc
 
     new_request = ChatRequest(
         model=payload.get("model"),

@@ -84,8 +84,7 @@ class DependencyReport:
     @property
     def missing_required(self) -> tuple[Dependency, ...]:
         return tuple(
-            d for d in self.dependencies
-            if d.status is DependencyStatus.MISSING and d.required
+            d for d in self.dependencies if d.status is DependencyStatus.MISSING and d.required
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -188,17 +187,23 @@ def check_dependencies() -> DependencyReport:
     deps.append(_probe_required("python", has_python, lambda: python_version()))
     # Ponytail is built-in — the PonytailRulesetOptimizer ships with
     # ForgeCLI and requires no external binary.
-    deps.append(Dependency(
-        name="ponytail",
-        status=DependencyStatus.FOUND,
-        version="built-in",
-        required=False,
-        note="Ruleset optimizer ships with ForgeCLI (no external binary needed)",
-    ))
-    deps.append(_probe_optional(
-        "graphify", has_graphify, _version_for("graphify"),
-        note="Optional. Install with: uv tool install graphifyy",
-    ))
+    deps.append(
+        Dependency(
+            name="ponytail",
+            status=DependencyStatus.FOUND,
+            version="built-in",
+            required=False,
+            note="Ruleset optimizer ships with ForgeCLI (no external binary needed)",
+        )
+    )
+    deps.append(
+        _probe_optional(
+            "graphify",
+            has_graphify,
+            _version_for("graphify"),
+            note="Optional. Install with: uv tool install graphifyy",
+        )
+    )
     deps.append(_probe_optional("node", has_node, _version_for("node")))
     deps.append(_probe_optional("pip", has_pip, _version_for("pip")))
     deps.append(_probe_optional("uv", has_uv, _version_for("uv")))
@@ -215,8 +220,10 @@ def check_dependencies() -> DependencyReport:
 
 def _version_for(executable: str):
     """Return a zero-arg callable that fetches the version of ``executable``."""
+
     def _callable() -> str | None:
         return _run_version(executable)
+
     return _callable
 
 

@@ -29,7 +29,9 @@ def _request(*messages: ChatMessage) -> ChatRequest:
 
 def test_is_available_uses_path(monkeypatch) -> None:
     opt = PonytailCLIOptimizer(executable="ponytail")
-    monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None)
+    monkeypatch.setattr(
+        "shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None
+    )
     assert asyncio.run(opt.is_available()) is True
     monkeypatch.setattr("shutil.which", lambda name: None)
     assert asyncio.run(opt.is_available()) is False
@@ -37,7 +39,9 @@ def test_is_available_uses_path(monkeypatch) -> None:
 
 def test_optimize_chat_pipes_json_through_subprocess(monkeypatch) -> None:
     opt = PonytailCLIOptimizer(executable="ponytail")
-    monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None)
+    monkeypatch.setattr(
+        "shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None
+    )
 
     captured: dict[str, Any] = {}
 
@@ -78,7 +82,9 @@ def test_optimize_chat_pipes_json_through_subprocess(monkeypatch) -> None:
 
 def test_optimize_chat_raises_on_nonzero_exit(monkeypatch) -> None:
     opt = PonytailCLIOptimizer(executable="ponytail")
-    monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None)
+    monkeypatch.setattr(
+        "shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None
+    )
 
     class _Proc:
         returncode = 1
@@ -98,7 +104,9 @@ def test_optimize_chat_raises_on_nonzero_exit(monkeypatch) -> None:
 
 def test_optimize_chat_raises_on_invalid_json(monkeypatch) -> None:
     opt = PonytailCLIOptimizer(executable="ponytail")
-    monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None)
+    monkeypatch.setattr(
+        "shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None
+    )
 
     class _Proc:
         returncode = 0

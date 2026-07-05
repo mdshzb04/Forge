@@ -187,7 +187,9 @@ def test_manifest_load_rejects_missing_name(tmp_path: Path) -> None:
 
 def test_manifest_load_rejects_invalid_version(tmp_path: Path) -> None:
     path = tmp_path / "forgecli-plugin.toml"
-    path.write_text('[plugin]\nname = "x"\nversion = "not-a-version"\nsummary = "x"\n', encoding="utf-8")
+    path.write_text(
+        '[plugin]\nname = "x"\nversion = "not-a-version"\nsummary = "x"\n', encoding="utf-8"
+    )
     with pytest.raises(ValueError, match="invalid version"):
         PluginManifest.load(path)
 

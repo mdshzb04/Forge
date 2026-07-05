@@ -78,9 +78,7 @@ def build_cmd(
         "--force",
         help="Overwrite graph.json even if the rebuild has fewer nodes.",
     ),
-    no_cluster: bool = typer.Option(
-        False, "--no-cluster", help="Skip Leiden clustering."
-    ),
+    no_cluster: bool = typer.Option(False, "--no-cluster", help="Skip Leiden clustering."),
 ) -> None:
     """Build (or rebuild) the codebase graph for ``path``."""
     import asyncio

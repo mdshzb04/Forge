@@ -23,9 +23,7 @@ class CavemanState:
     @classmethod
     def from_extras(cls, extras: dict[str, object]) -> CavemanState:
         state = cls()
-        intensity = extras.get("caveman.intensity") or extras.get(
-            "caveman_intensity"
-        )
+        intensity = extras.get("caveman.intensity") or extras.get("caveman_intensity")
         backend = extras.get("caveman.backend") or extras.get("caveman_backend")
         binary = extras.get("caveman.binary") or extras.get("caveman_binary")
         if isinstance(intensity, str):

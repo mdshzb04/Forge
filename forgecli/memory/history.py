@@ -50,9 +50,7 @@ class HistoryRepository:
             )
             """
         )
-        self._store.execute(
-            "CREATE INDEX IF NOT EXISTS idx_history_ts ON history(ts DESC)"
-        )
+        self._store.execute("CREATE INDEX IF NOT EXISTS idx_history_ts ON history(ts DESC)")
 
     def record(
         self,

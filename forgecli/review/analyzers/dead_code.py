@@ -169,10 +169,7 @@ class DeadCodeAnalyzer(Analyzer):
                     rule_id="DEAD001",
                     category="dead-code",
                     severity=Severity.LOW,
-                    message=(
-                        f"{kind} {name!r} is defined in {module} but never "
-                        "referenced."
-                    ),
+                    message=(f"{kind} {name!r} is defined in {module} but never referenced."),
                     path=str(path),
                     line=line,
                     suggestion=(
@@ -202,9 +199,7 @@ class DeadCodeAnalyzer(Analyzer):
                     ):
                         names: set[str] = set()
                         for element in node.value.elts:
-                            if isinstance(element, ast.Constant) and isinstance(
-                                element.value, str
-                            ):
+                            if isinstance(element, ast.Constant) and isinstance(element.value, str):
                                 names.add(element.value)
                         all_overrides[module] = names
                 continue
@@ -229,9 +224,7 @@ class DeadCodeAnalyzer(Analyzer):
                     "Variable",
                 )
 
-    def _collect_references(
-        self, tree: ast.AST, module: str, references: dict
-    ) -> None:
+    def _collect_references(self, tree: ast.AST, module: str, references: dict) -> None:
         for node in ast.walk(tree):
             if isinstance(node, ast.Name):
                 references[(module, node.id)] += 1

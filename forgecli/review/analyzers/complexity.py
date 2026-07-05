@@ -70,8 +70,7 @@ class ComplexityAnalyzer(Analyzer):
                     category="complexity",
                     severity=Severity.LOW,
                     message=(
-                        f"Function {name} is {line_count} lines long "
-                        f"(>{self.max_function_lines})."
+                        f"Function {name} is {line_count} lines long (>{self.max_function_lines})."
                     ),
                     path=str(file.path),
                     line=function.lineno,
@@ -107,9 +106,7 @@ class ComplexityAnalyzer(Analyzer):
                     ),
                     path=str(file.path),
                     line=function.lineno,
-                    suggestion=(
-                        "Decompose the function along its decision points."
-                    ),
+                    suggestion=("Decompose the function along its decision points."),
                     extra={"cyclomatic": cyclomatic},
                 )
             )
@@ -118,9 +115,7 @@ class ComplexityAnalyzer(Analyzer):
 
 def _walk_functions(tree: ast.AST) -> list[ast.FunctionDef | ast.AsyncFunctionDef]:
     return [
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
     ]
 
 

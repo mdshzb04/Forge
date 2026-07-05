@@ -30,8 +30,16 @@ class ProjectPaths:
 
         dirs = PlatformDirs("forgecli", appauthor=False, version=None)
         cwd_path = Path(cwd) if cwd is not None else Path.cwd()
-        data_dir = Path(os.environ["FORGECLI_DATA_DIR"]) if os.environ.get("FORGECLI_DATA_DIR") else Path(dirs.user_data_dir)
-        config_dir = Path(os.environ["FORGECLI_CONFIG_DIR"]) if os.environ.get("FORGECLI_CONFIG_DIR") else Path(dirs.user_config_dir)
+        data_dir = (
+            Path(os.environ["FORGECLI_DATA_DIR"])
+            if os.environ.get("FORGECLI_DATA_DIR")
+            else Path(dirs.user_data_dir)
+        )
+        config_dir = (
+            Path(os.environ["FORGECLI_CONFIG_DIR"])
+            if os.environ.get("FORGECLI_CONFIG_DIR")
+            else Path(dirs.user_config_dir)
+        )
         return cls(
             cwd=cwd_path,
             config_dir=config_dir,

@@ -134,23 +134,15 @@ class EngineContext:
         return {
             "run_id": self.run_id,
             "started_at": self.started_at,
-            "intent": self.intent_analysis.intent.value
-            if self.intent_analysis
-            else None,
-            "intent_confidence": self.intent_analysis.confidence
-            if self.intent_analysis
-            else 0.0,
+            "intent": self.intent_analysis.intent.value if self.intent_analysis else None,
+            "intent_confidence": self.intent_analysis.confidence if self.intent_analysis else 0.0,
             "retrieval_query": self.retrieval.query if self.retrieval else None,
-            "retrieval_match_count": len(self.retrieval.matched_nodes)
-            if self.retrieval
-            else 0,
+            "retrieval_match_count": len(self.retrieval.matched_nodes) if self.retrieval else 0,
             "caveman_optimized_notes": list(self.caveman_optimized_notes),
             "optimized_notes": list(self.optimized_notes),
             "has_plan": self.plan is not None,
             "model": self.model_selection.model if self.model_selection else None,
-            "provider": self.model_selection.provider
-            if self.model_selection
-            else None,
+            "provider": self.model_selection.provider if self.model_selection else None,
             "response_present": self.response is not None,
             "diff_length": len(self.diff_text),
             "applied_files": [str(p) for p in self.applied_files],

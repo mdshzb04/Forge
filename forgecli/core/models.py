@@ -32,30 +32,76 @@ MODEL_CATALOG: list[ModelDef] = [
     ModelDef(id="o1", display_name="o1", tier="legacy", provider="openai"),
     ModelDef(id="o1-preview", display_name="o1 Preview", tier="legacy", provider="openai"),
     ModelDef(id="o1-mini", display_name="o1 Mini", tier="legacy", provider="openai"),
-
     # ---------------------------------------------------------------------------
     # Anthropic
     # ---------------------------------------------------------------------------
-    ModelDef(id="claude-opus-4.8", display_name="Claude Opus 4.8", tier="latest", provider="anthropic"),
-    ModelDef(id="claude-opus-4.6", display_name="Claude Opus 4.6", tier="latest", provider="anthropic"),
-    ModelDef(id="claude-sonnet-4.6", display_name="Claude Sonnet 4.6", tier="recommended", provider="anthropic"),
-    ModelDef(id="claude-sonnet-4.5", display_name="Claude Sonnet 4.5", tier="legacy", provider="anthropic"),
-    ModelDef(id="claude-haiku-4.5", display_name="Claude Haiku 4.5", tier="legacy", provider="anthropic"),
-    ModelDef(id="claude-3-5-sonnet-latest", display_name="Claude 3.5 Sonnet", tier="legacy", provider="anthropic"),
-    ModelDef(id="claude-3-5-haiku-latest", display_name="Claude 3.5 Haiku", tier="legacy", provider="anthropic"),
-    ModelDef(id="claude-3-opus-latest", display_name="Claude 3 Opus", tier="legacy", provider="anthropic"),
-
+    ModelDef(
+        id="claude-opus-4.8", display_name="Claude Opus 4.8", tier="latest", provider="anthropic"
+    ),
+    ModelDef(
+        id="claude-opus-4.6", display_name="Claude Opus 4.6", tier="latest", provider="anthropic"
+    ),
+    ModelDef(
+        id="claude-sonnet-4.6",
+        display_name="Claude Sonnet 4.6",
+        tier="recommended",
+        provider="anthropic",
+    ),
+    ModelDef(
+        id="claude-sonnet-4.5",
+        display_name="Claude Sonnet 4.5",
+        tier="legacy",
+        provider="anthropic",
+    ),
+    ModelDef(
+        id="claude-haiku-4.5", display_name="Claude Haiku 4.5", tier="legacy", provider="anthropic"
+    ),
+    ModelDef(
+        id="claude-3-5-sonnet-latest",
+        display_name="Claude 3.5 Sonnet",
+        tier="legacy",
+        provider="anthropic",
+    ),
+    ModelDef(
+        id="claude-3-5-haiku-latest",
+        display_name="Claude 3.5 Haiku",
+        tier="legacy",
+        provider="anthropic",
+    ),
+    ModelDef(
+        id="claude-3-opus-latest", display_name="Claude 3 Opus", tier="legacy", provider="anthropic"
+    ),
     # ---------------------------------------------------------------------------
     # Google Gemini
     # ---------------------------------------------------------------------------
-    ModelDef(id="gemini-2.5-pro", display_name="Gemini 2.5 Pro", tier="recommended", provider="google"),
-    ModelDef(id="gemini-2.5-flash", display_name="Gemini 2.5 Flash", tier="recommended", provider="google"),
-    ModelDef(id="gemini-2.5-flash-lite", display_name="Gemini 2.5 Flash Lite", tier="normal", provider="google"),
-    ModelDef(id="gemini-2.0-flash", display_name="Gemini 2.0 Flash", tier="legacy", provider="google"),
+    ModelDef(
+        id="gemini-2.5-pro", display_name="Gemini 2.5 Pro", tier="recommended", provider="google"
+    ),
+    ModelDef(
+        id="gemini-2.5-flash",
+        display_name="Gemini 2.5 Flash",
+        tier="recommended",
+        provider="google",
+    ),
+    ModelDef(
+        id="gemini-2.5-flash-lite",
+        display_name="Gemini 2.5 Flash Lite",
+        tier="normal",
+        provider="google",
+    ),
+    ModelDef(
+        id="gemini-2.0-flash", display_name="Gemini 2.0 Flash", tier="legacy", provider="google"
+    ),
     ModelDef(id="gemini-1.5-pro", display_name="Gemini 1.5 Pro", tier="legacy", provider="google"),
-    ModelDef(id="gemini-1.5-flash", display_name="Gemini 1.5 Flash", tier="legacy", provider="google"),
-    ModelDef(id="gemini-2.0-flash-exp", display_name="Gemini 2.0 Flash Exp", tier="legacy", provider="google"),
-
+    ModelDef(
+        id="gemini-1.5-flash", display_name="Gemini 1.5 Flash", tier="legacy", provider="google"
+    ),
+    ModelDef(
+        id="gemini-2.0-flash-exp",
+        display_name="Gemini 2.0 Flash Exp",
+        tier="legacy",
+        provider="google",
+    ),
     # ---------------------------------------------------------------------------
     # OpenRouter
     # ---------------------------------------------------------------------------
@@ -65,15 +111,22 @@ MODEL_CATALOG: list[ModelDef] = [
     ModelDef(id="qwen3-coder", display_name="Qwen3 Coder", tier="normal", provider="openrouter"),
     ModelDef(id="qwen3-32b", display_name="Qwen3 32B", tier="normal", provider="openrouter"),
     ModelDef(id="kimi-k2", display_name="Kimi K2", tier="normal", provider="openrouter"),
-    ModelDef(id="llama-4-maverick", display_name="Llama 4 Maverick", tier="normal", provider="openrouter"),
-    ModelDef(id="llama-4-scout", display_name="Llama 4 Scout", tier="normal", provider="openrouter"),
-    ModelDef(id="llama-3.3-70b", display_name="Llama 3.3 70B", tier="normal", provider="openrouter"),
+    ModelDef(
+        id="llama-4-maverick", display_name="Llama 4 Maverick", tier="normal", provider="openrouter"
+    ),
+    ModelDef(
+        id="llama-4-scout", display_name="Llama 4 Scout", tier="normal", provider="openrouter"
+    ),
+    ModelDef(
+        id="llama-3.3-70b", display_name="Llama 3.3 70B", tier="normal", provider="openrouter"
+    ),
     ModelDef(id="gemma-3", display_name="Gemma 3", tier="normal", provider="openrouter"),
     ModelDef(id="devstral", display_name="Devstral", tier="normal", provider="openrouter"),
     ModelDef(id="codestral", display_name="Codestral", tier="normal", provider="openrouter"),
     ModelDef(id="phi-4", display_name="Phi-4", tier="normal", provider="openrouter"),
-    ModelDef(id="mistral-large", display_name="Mistral Large", tier="normal", provider="openrouter"),
-
+    ModelDef(
+        id="mistral-large", display_name="Mistral Large", tier="normal", provider="openrouter"
+    ),
     # ---------------------------------------------------------------------------
     # Groq
     # ---------------------------------------------------------------------------
@@ -81,7 +134,6 @@ MODEL_CATALOG: list[ModelDef] = [
     ModelDef(id="deepseek-r1", display_name="DeepSeek R1", tier="normal", provider="groq"),
     ModelDef(id="qwen3-32b", display_name="Qwen3 32B", tier="normal", provider="groq"),
     ModelDef(id="gemma-3", display_name="Gemma 3", tier="normal", provider="groq"),
-
     # ---------------------------------------------------------------------------
     # Mistral
     # ---------------------------------------------------------------------------
@@ -89,53 +141,56 @@ MODEL_CATALOG: list[ModelDef] = [
     ModelDef(id="magistral", display_name="Magistral", tier="normal", provider="mistral"),
     ModelDef(id="mistral-small", display_name="Mistral Small", tier="normal", provider="mistral"),
     ModelDef(id="codestral", display_name="Codestral", tier="normal", provider="mistral"),
-
     # ---------------------------------------------------------------------------
     # MiniMax
     # ---------------------------------------------------------------------------
-    ModelDef(id="abab6.5g-chat", display_name="Abab 6.5G Chat", tier="recommended", provider="minimax"),
+    ModelDef(
+        id="abab6.5g-chat", display_name="Abab 6.5G Chat", tier="recommended", provider="minimax"
+    ),
     ModelDef(id="abab6.5-chat", display_name="Abab 6.5 Chat", tier="legacy", provider="minimax"),
-
     # ---------------------------------------------------------------------------
     # xAI (Grok)
     # ---------------------------------------------------------------------------
     ModelDef(id="grok-2", display_name="Grok 2", tier="recommended", provider="xai"),
     ModelDef(id="grok-beta", display_name="Grok Beta", tier="latest", provider="xai"),
-
     # ---------------------------------------------------------------------------
     # Together AI
     # ---------------------------------------------------------------------------
-    ModelDef(id="llama-3.1-70b", display_name="Llama 3.1 70B", tier="recommended", provider="together"),
-    ModelDef(id="llama-3.1-405b", display_name="Llama 3.1 405B", tier="latest", provider="together"),
-
+    ModelDef(
+        id="llama-3.1-70b", display_name="Llama 3.1 70B", tier="recommended", provider="together"
+    ),
+    ModelDef(
+        id="llama-3.1-405b", display_name="Llama 3.1 405B", tier="latest", provider="together"
+    ),
     # ---------------------------------------------------------------------------
     # Fireworks AI
     # ---------------------------------------------------------------------------
-    ModelDef(id="llama-3.1-70b", display_name="Llama 3.1 70B", tier="recommended", provider="fireworks"),
-    ModelDef(id="llama-3.1-405b", display_name="Llama 3.1 405B", tier="latest", provider="fireworks"),
-
+    ModelDef(
+        id="llama-3.1-70b", display_name="Llama 3.1 70B", tier="recommended", provider="fireworks"
+    ),
+    ModelDef(
+        id="llama-3.1-405b", display_name="Llama 3.1 405B", tier="latest", provider="fireworks"
+    ),
     # ---------------------------------------------------------------------------
     # Cohere
     # ---------------------------------------------------------------------------
     ModelDef(id="command-r-plus", display_name="Command R+", tier="recommended", provider="cohere"),
     ModelDef(id="command-r", display_name="Command R", tier="normal", provider="cohere"),
-
     # ---------------------------------------------------------------------------
     # NVIDIA NIM
     # ---------------------------------------------------------------------------
-    ModelDef(id="llama-3.1-70b", display_name="Llama 3.1 70B", tier="recommended", provider="nvidia"),
+    ModelDef(
+        id="llama-3.1-70b", display_name="Llama 3.1 70B", tier="recommended", provider="nvidia"
+    ),
     ModelDef(id="llama-3.1-405b", display_name="Llama 3.1 405B", tier="latest", provider="nvidia"),
-
     # ---------------------------------------------------------------------------
     # Ollama
     # ---------------------------------------------------------------------------
     ModelDef(id="llama3", display_name="Llama 3", tier="normal", provider="ollama"),
-
     # ---------------------------------------------------------------------------
     # LM Studio
     # ---------------------------------------------------------------------------
     ModelDef(id="local-model", display_name="Local Model", tier="normal", provider="lmstudio"),
-
     # ---------------------------------------------------------------------------
     # vLLM
     # ---------------------------------------------------------------------------

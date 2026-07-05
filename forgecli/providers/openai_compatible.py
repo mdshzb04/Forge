@@ -14,6 +14,7 @@ from forgecli.providers.http_base import HTTPChatProvider, messages_to_openai
 # OpenRouter
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class OpenRouterConfig:
     api_key_env: str = "OPENROUTER_API_KEY"
@@ -51,7 +52,9 @@ class OpenRouterProvider(HTTPChatProvider):
         body = {
             "model": request.model or self.config.default_model,
             "messages": messages_to_openai(request.messages),
-            "temperature": request.temperature if request.temperature is not None else self.config.temperature,
+            "temperature": request.temperature
+            if request.temperature is not None
+            else self.config.temperature,
             "max_tokens": request.max_tokens or self.config.max_tokens,
         }
         return body
@@ -59,21 +62,25 @@ class OpenRouterProvider(HTTPChatProvider):
     def _parse_response(self, payload: dict[str, Any]) -> Any:
         # standard OpenAI response parsing
         from forgecli.providers.openai import OpenAIProvider
+
         # Re-use OpenAI's parser logic
         temp_provider = OpenAIProvider()
         return temp_provider._parse_response(payload)
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=128_000, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "openrouter"
+            for m in MODEL_CATALOG
+            if m.provider == "openrouter"
         ]
 
 
 # ---------------------------------------------------------------------------
 # Groq
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class GroqConfig:
@@ -112,26 +119,32 @@ class GroqProvider(HTTPChatProvider):
         return {
             "model": request.model or self.config.default_model,
             "messages": messages_to_openai(request.messages),
-            "temperature": request.temperature if request.temperature is not None else self.config.temperature,
+            "temperature": request.temperature
+            if request.temperature is not None
+            else self.config.temperature,
             "max_tokens": request.max_tokens or self.config.max_tokens,
         }
 
     def _parse_response(self, payload: dict[str, Any]) -> Any:
         from forgecli.providers.openai import OpenAIProvider
+
         temp_provider = OpenAIProvider()
         return temp_provider._parse_response(payload)
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=128_000, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "groq"
+            for m in MODEL_CATALOG
+            if m.provider == "groq"
         ]
 
 
 # ---------------------------------------------------------------------------
 # Mistral
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class MistralConfig:
@@ -170,26 +183,32 @@ class MistralProvider(HTTPChatProvider):
         return {
             "model": request.model or self.config.default_model,
             "messages": messages_to_openai(request.messages),
-            "temperature": request.temperature if request.temperature is not None else self.config.temperature,
+            "temperature": request.temperature
+            if request.temperature is not None
+            else self.config.temperature,
             "max_tokens": request.max_tokens or self.config.max_tokens,
         }
 
     def _parse_response(self, payload: dict[str, Any]) -> Any:
         from forgecli.providers.openai import OpenAIProvider
+
         temp_provider = OpenAIProvider()
         return temp_provider._parse_response(payload)
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=128_000, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "mistral"
+            for m in MODEL_CATALOG
+            if m.provider == "mistral"
         ]
 
 
 # ---------------------------------------------------------------------------
 # Local Providers
 # ---------------------------------------------------------------------------
+
 
 class LocalProvider(HTTPChatProvider):
     """Generic base class for local providers that support dynamic model list query."""
@@ -201,21 +220,22 @@ class LocalProvider(HTTPChatProvider):
         return {
             "model": request.model or self.config.default_model,
             "messages": messages_to_openai(request.messages),
-            "temperature": request.temperature if request.temperature is not None else self.config.temperature,
+            "temperature": request.temperature
+            if request.temperature is not None
+            else self.config.temperature,
             "max_tokens": request.max_tokens or self.config.max_tokens,
         }
 
     def _parse_response(self, payload: dict[str, Any]) -> Any:
         from forgecli.providers.openai import OpenAIProvider
+
         temp_provider = OpenAIProvider()
         return temp_provider._parse_response(payload)
 
     async def list_models(self) -> list[ModelInfo]:
         try:
             response = await self._client.get(
-                f"{self._base_url}/models",
-                headers=self._auth_headers(),
-                timeout=5.0
+                f"{self._base_url}/models", headers=self._auth_headers(), timeout=5.0
             )
             if response.status_code == 200:
                 data = response.json()
@@ -226,9 +246,10 @@ class LocalProvider(HTTPChatProvider):
                         name=str(m.get("id")),
                         context_window=128_000,
                         supports_tools=True,
-                        supports_vision=True
+                        supports_vision=True,
                     )
-                    for m in models_list if isinstance(m, dict) and m.get("id") is not None
+                    for m in models_list
+                    if isinstance(m, dict) and m.get("id") is not None
                 ]
         except Exception:
             pass
@@ -268,12 +289,8 @@ class OllamaProvider(LocalProvider):
     async def list_models(self) -> list[ModelInfo]:
         try:
             import subprocess
-            result = subprocess.run(
-                ["ollama", "list"],
-                capture_output=True,
-                text=True,
-                check=False
-            )
+
+            result = subprocess.run(["ollama", "list"], capture_output=True, text=True, check=False)
             if result.returncode == 0:
                 lines = result.stdout.strip().split("\n")
                 if len(lines) > 1:
@@ -287,7 +304,7 @@ class OllamaProvider(LocalProvider):
                                     id=model_id,
                                     name=model_id,
                                     context_window=8192,
-                                    supports_tools=True
+                                    supports_tools=True,
                                 )
                             )
                     if models:
@@ -298,9 +315,11 @@ class OllamaProvider(LocalProvider):
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=8192, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "ollama"
+            for m in MODEL_CATALOG
+            if m.provider == "ollama"
         ]
 
 
@@ -336,9 +355,11 @@ class LMStudioProvider(LocalProvider):
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=8192, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "lmstudio"
+            for m in MODEL_CATALOG
+            if m.provider == "lmstudio"
         ]
 
 
@@ -374,15 +395,18 @@ class VllmProvider(LocalProvider):
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=8192, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "vllm"
+            for m in MODEL_CATALOG
+            if m.provider == "vllm"
         ]
 
 
 # ---------------------------------------------------------------------------
 # MiniMax
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class MiniMaxConfig:
@@ -421,26 +445,32 @@ class MiniMaxProvider(HTTPChatProvider):
         return {
             "model": request.model or self.config.default_model,
             "messages": messages_to_openai(request.messages),
-            "temperature": request.temperature if request.temperature is not None else self.config.temperature,
+            "temperature": request.temperature
+            if request.temperature is not None
+            else self.config.temperature,
             "max_tokens": request.max_tokens or self.config.max_tokens,
         }
 
     def _parse_response(self, payload: dict[str, Any]) -> Any:
         from forgecli.providers.openai import OpenAIProvider
+
         temp_provider = OpenAIProvider()
         return temp_provider._parse_response(payload)
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=128_000, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "minimax"
+            for m in MODEL_CATALOG
+            if m.provider == "minimax"
         ]
 
 
 # ---------------------------------------------------------------------------
 # xAI (Grok)
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class XaiConfig:
@@ -479,26 +509,32 @@ class XaiProvider(HTTPChatProvider):
         return {
             "model": request.model or self.config.default_model,
             "messages": messages_to_openai(request.messages),
-            "temperature": request.temperature if request.temperature is not None else self.config.temperature,
+            "temperature": request.temperature
+            if request.temperature is not None
+            else self.config.temperature,
             "max_tokens": request.max_tokens or self.config.max_tokens,
         }
 
     def _parse_response(self, payload: dict[str, Any]) -> Any:
         from forgecli.providers.openai import OpenAIProvider
+
         temp_provider = OpenAIProvider()
         return temp_provider._parse_response(payload)
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=128_000, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "xai"
+            for m in MODEL_CATALOG
+            if m.provider == "xai"
         ]
 
 
 # ---------------------------------------------------------------------------
 # Together AI
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class TogetherConfig:
@@ -537,26 +573,32 @@ class TogetherProvider(HTTPChatProvider):
         return {
             "model": request.model or self.config.default_model,
             "messages": messages_to_openai(request.messages),
-            "temperature": request.temperature if request.temperature is not None else self.config.temperature,
+            "temperature": request.temperature
+            if request.temperature is not None
+            else self.config.temperature,
             "max_tokens": request.max_tokens or self.config.max_tokens,
         }
 
     def _parse_response(self, payload: dict[str, Any]) -> Any:
         from forgecli.providers.openai import OpenAIProvider
+
         temp_provider = OpenAIProvider()
         return temp_provider._parse_response(payload)
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=128_000, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "together"
+            for m in MODEL_CATALOG
+            if m.provider == "together"
         ]
 
 
 # ---------------------------------------------------------------------------
 # Fireworks AI
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class FireworksConfig:
@@ -595,26 +637,32 @@ class FireworksProvider(HTTPChatProvider):
         return {
             "model": request.model or self.config.default_model,
             "messages": messages_to_openai(request.messages),
-            "temperature": request.temperature if request.temperature is not None else self.config.temperature,
+            "temperature": request.temperature
+            if request.temperature is not None
+            else self.config.temperature,
             "max_tokens": request.max_tokens or self.config.max_tokens,
         }
 
     def _parse_response(self, payload: dict[str, Any]) -> Any:
         from forgecli.providers.openai import OpenAIProvider
+
         temp_provider = OpenAIProvider()
         return temp_provider._parse_response(payload)
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=128_000, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "fireworks"
+            for m in MODEL_CATALOG
+            if m.provider == "fireworks"
         ]
 
 
 # ---------------------------------------------------------------------------
 # Cohere
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CohereConfig:
@@ -653,26 +701,32 @@ class CohereProvider(HTTPChatProvider):
         return {
             "model": request.model or self.config.default_model,
             "messages": messages_to_openai(request.messages),
-            "temperature": request.temperature if request.temperature is not None else self.config.temperature,
+            "temperature": request.temperature
+            if request.temperature is not None
+            else self.config.temperature,
             "max_tokens": request.max_tokens or self.config.max_tokens,
         }
 
     def _parse_response(self, payload: dict[str, Any]) -> Any:
         from forgecli.providers.openai import OpenAIProvider
+
         temp_provider = OpenAIProvider()
         return temp_provider._parse_response(payload)
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=128_000, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "cohere"
+            for m in MODEL_CATALOG
+            if m.provider == "cohere"
         ]
 
 
 # ---------------------------------------------------------------------------
 # NVIDIA NIM
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class NvidiaConfig:
@@ -711,18 +765,23 @@ class NvidiaProvider(HTTPChatProvider):
         return {
             "model": request.model or self.config.default_model,
             "messages": messages_to_openai(request.messages),
-            "temperature": request.temperature if request.temperature is not None else self.config.temperature,
+            "temperature": request.temperature
+            if request.temperature is not None
+            else self.config.temperature,
             "max_tokens": request.max_tokens or self.config.max_tokens,
         }
 
     def _parse_response(self, payload: dict[str, Any]) -> Any:
         from forgecli.providers.openai import OpenAIProvider
+
         temp_provider = OpenAIProvider()
         return temp_provider._parse_response(payload)
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(id=m.id, name=m.display_name, context_window=128_000, supports_tools=True)
-            for m in MODEL_CATALOG if m.provider == "nvidia"
+            for m in MODEL_CATALOG
+            if m.provider == "nvidia"
         ]

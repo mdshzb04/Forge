@@ -165,9 +165,7 @@ class ProviderRegistry:
 
     def register(self, name: str, provider_cls: type[Provider[Any]]) -> None:
         if not issubclass(provider_cls, Provider):
-            raise ProviderError(
-                f"{provider_cls!r} must subclass forgecli.providers.Provider"
-            )
+            raise ProviderError(f"{provider_cls!r} must subclass forgecli.providers.Provider")
         if name in self._providers and self._providers[name] is not provider_cls:
             raise ProviderError(f"Provider {name!r} already registered")
         self._providers[name] = provider_cls

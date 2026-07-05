@@ -279,9 +279,7 @@ class PluginManager:
         self._state.plugins.pop(name, None)
         self._loaded.pop(name, None)
         self._save_state()
-        self._bus.publish(
-            PluginEvent(kind=PluginEventKind.UNINSTALLED, plugin_name=name)
-        )
+        self._bus.publish(PluginEvent(kind=PluginEventKind.UNINSTALLED, plugin_name=name))
 
     def enable(self, name: str) -> None:
         plugin_state = self._state.plugins.get(name)
@@ -295,9 +293,7 @@ class PluginManager:
         plugin_state.enabled = True
         plugin_state.enabled_at = _now_iso()
         self._save_state()
-        self._bus.publish(
-            PluginEvent(kind=PluginEventKind.ENABLED, plugin_name=name)
-        )
+        self._bus.publish(PluginEvent(kind=PluginEventKind.ENABLED, plugin_name=name))
 
     def disable(self, name: str) -> None:
         plugin_state = self._state.plugins.get(name)
@@ -308,9 +304,7 @@ class PluginManager:
         plugin_state.enabled = False
         plugin_state.enabled_at = None
         self._save_state()
-        self._bus.publish(
-            PluginEvent(kind=PluginEventKind.DISABLED, plugin_name=name)
-        )
+        self._bus.publish(PluginEvent(kind=PluginEventKind.DISABLED, plugin_name=name))
 
     def update(self, name: str, *, source: str | None = None) -> LoadedPlugin:
         plugin_state = self._state.plugins.get(name)
@@ -318,8 +312,7 @@ class PluginManager:
             raise PluginNotFoundError(name)
         if plugin_state.source == "filesystem" and source is None:
             raise PluginError(
-                f"plugin {name!r} was installed from a path; "
-                "pass --source to re-pull it"
+                f"plugin {name!r} was installed from a path; pass --source to re-pull it"
             )
         if source is None and plugin_state.source == "git":
             # Re-clone from the original URL.
@@ -379,9 +372,11 @@ class PluginManager:
             if state.enabled and _has_health_check(plugin):
                 with Sandbox(plugin_permissions=plugin.manifest.permissions):
                     try:
-                        reported = list(plugin.entry_point_factories[  # type: ignore[attr-defined]
-                            (EntryPointKind.OBSERVABILITY.value, "health")
-                        ]())
+                        reported = list(
+                            plugin.entry_point_factories[  # type: ignore[attr-defined]
+                                (EntryPointKind.OBSERVABILITY.value, "health")
+                            ]()
+                        )
                     except Exception:
                         reported = []
                 for issue in reported:
@@ -442,9 +437,7 @@ class PluginManager:
     def register_observability_provider(self, callback: Callable[..., Any]) -> None:
         self.observability_providers.append(callback)
 
-    def register_notification_provider(
-        self, name: str, callback: Callable[..., Any]
-    ) -> None:
+    def register_notification_provider(self, name: str, callback: Callable[..., Any]) -> None:
         self.notification_providers[name] = callback
 
     # ------------------------------------------------------------------
@@ -468,9 +461,7 @@ class PluginManager:
         # currently enabled plugins. Missing transitive deps are
         # surfaced as a warning only.
         requirements: list[Requirement] = list(manifest.dependencies)
-        candidates: dict[str, tuple[Version, ...]] = {
-            "forgecli-sdk": (sdk,)
-        }
+        candidates: dict[str, tuple[Version, ...]] = {"forgecli-sdk": (sdk,)}
         for name in self._state.plugins:
             try:
                 candidates[name] = (Version.parse(self._state.plugins[name].version),)
@@ -484,7 +475,9 @@ class PluginManager:
     def _load_for(self, name: str, state: PluginState) -> LoadedPlugin:
         if name in self._loaded:
             return self._loaded[name]
-        if (state.source == "filesystem" and state.install_path) or (state.source == "git" and state.install_path):
+        if (state.source == "filesystem" and state.install_path) or (
+            state.source == "git" and state.install_path
+        ):
             loaded = load_filesystem(Path(state.install_path))
         else:
             # Entry-point plugin; fall back to discovery.
@@ -509,9 +502,7 @@ class PluginManager:
                     if enabled:
                         factory(self)
                 except Exception:
-                    _logger.exception(
-                        "plugin %s: %s.%s failed", plugin.name, kind.value, name
-                    )
+                    _logger.exception("plugin %s: %s.%s failed", plugin.name, kind.value, name)
 
     # ------------------------------------------------------------------
     # Persistence
@@ -559,9 +550,7 @@ class PluginManager:
             },
         }
         with contextlib.suppress(OSError):
-            self._state_file.write_text(
-                json.dumps(payload, indent=2), encoding="utf-8"
-            )
+            self._state_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     def _git_origin(self, path: Path) -> str:
         result = subprocess.run(
@@ -608,10 +597,7 @@ def _check_compatibility(manifest: PluginManifest) -> list[HealthIssue]:
         issues.append(
             HealthIssue(
                 severity="error",
-                message=(
-                    f"requires forgecli-sdk>={manifest.compatibility.min_sdk}, "
-                    f"have {sdk}"
-                ),
+                message=(f"requires forgecli-sdk>={manifest.compatibility.min_sdk}, have {sdk}"),
                 suggestion="upgrade ForgeCLI",
             )
         )
@@ -620,8 +606,7 @@ def _check_compatibility(manifest: PluginManifest) -> list[HealthIssue]:
             HealthIssue(
                 severity="warn",
                 message=(
-                    f"tested up to forgecli-sdk<={manifest.compatibility.max_sdk}, "
-                    f"have {sdk}"
+                    f"tested up to forgecli-sdk<={manifest.compatibility.max_sdk}, have {sdk}"
                 ),
             )
         )

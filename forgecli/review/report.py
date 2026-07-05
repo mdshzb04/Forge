@@ -140,7 +140,13 @@ def _render_summary(review: RepositoryReview) -> Panel:
     )
     table.add_column("Severity")
     table.add_column("Count", justify="right")
-    for severity in (Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO):
+    for severity in (
+        Severity.CRITICAL,
+        Severity.HIGH,
+        Severity.MEDIUM,
+        Severity.LOW,
+        Severity.INFO,
+    ):
         count = counts.get(severity, 0)
         table.add_row(
             TextRenderable(severity.value, style=_SEVERITY_STYLE[severity]),
@@ -189,9 +195,7 @@ def _render_suggestions(suggestions: Iterable[Suggestion]) -> Panel:
     table.add_column("Count", justify="right")
     for suggestion in suggestions:
         table.add_row(
-            TextRenderable(
-                suggestion.severity.value, style=_SEVERITY_STYLE[suggestion.severity]
-            ),
+            TextRenderable(suggestion.severity.value, style=_SEVERITY_STYLE[suggestion.severity]),
             suggestion.category,
             suggestion.title,
             str(suggestion.count),
@@ -214,13 +218,19 @@ def _render_findings(findings: Iterable[Finding], *, full: bool = False) -> Grou
     # 3. Group by severity and then category
     by_severity: dict[Severity, dict[str, list[Finding]]] = {}
     for finding in displayed_findings:
-        by_severity.setdefault(finding.severity, {}).setdefault(finding.category, []).append(finding)
+        by_severity.setdefault(finding.severity, {}).setdefault(finding.category, []).append(
+            finding
+        )
 
     panels: list = []
     # Loop over severity in order of weight descending
     for severity in sorted(by_severity.keys(), key=lambda s: s.weight, reverse=True):
         sev_style = _SEVERITY_STYLE.get(severity, "white")
-        panels.append(TextRenderable(f"\n[bold {sev_style}]▲ {severity.value.upper()} FINDINGS[/bold {sev_style}]"))
+        panels.append(
+            TextRenderable(
+                f"\n[bold {sev_style}]▲ {severity.value.upper()} FINDINGS[/bold {sev_style}]"
+            )
+        )
 
         by_cat = by_severity[severity]
         for category in sorted(by_cat.keys()):

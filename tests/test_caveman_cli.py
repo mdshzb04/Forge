@@ -27,7 +27,9 @@ def _request(*messages: ChatMessage) -> ChatRequest:
 
 def test_is_available_uses_path(monkeypatch) -> None:
     opt = CavemanCLIOptimizer(executable="caveman")
-    monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/caveman" if name == "caveman" else None)
+    monkeypatch.setattr(
+        "shutil.which", lambda name: "/usr/bin/caveman" if name == "caveman" else None
+    )
     assert asyncio.run(opt.is_available()) is True
     monkeypatch.setattr("shutil.which", lambda name: None)
     assert asyncio.run(opt.is_available()) is False
@@ -35,7 +37,9 @@ def test_is_available_uses_path(monkeypatch) -> None:
 
 def test_cli_stub_returns_passthrough(monkeypatch) -> None:
     opt = CavemanCLIOptimizer(executable="caveman")
-    monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/caveman" if name == "caveman" else None)
+    monkeypatch.setattr(
+        "shutil.which", lambda name: "/usr/bin/caveman" if name == "caveman" else None
+    )
     result = asyncio.run(opt.optimize_chat(_request(ChatMessage(role=Role.USER, content="hi"))))
     assert result.source == "caveman-cli"
     assert any("CLI stub" in n for n in result.notes)

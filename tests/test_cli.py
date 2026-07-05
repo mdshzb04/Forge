@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from unittest.mock import patch
 
@@ -60,6 +61,7 @@ def test_wrapper_prepares_context_and_launches(tmp_path: Path, monkeypatch) -> N
     monkeypatch.setenv("FORGECLI_GRAPHIFY_BIN", "nonexistent-graphify")
 
     import subprocess
+
     original_run = subprocess.run
     launched: dict[str, object] = {}
 
@@ -125,7 +127,10 @@ def test_graph_build_no_api_key(tmp_path: Path, monkeypatch) -> None:
     result = runner.invoke(app, ["graph", "build", "-p", str(tmp_path)])
     assert result.exit_code == 1
     assert "❌ API key required." in result.output
-    assert "Forge Graph requires an AI provider API key before a knowledge graph can be" in result.output
+    assert (
+        "Forge Graph requires an AI provider API key before a knowledge graph can be"
+        in result.output
+    )
 
 
 @pytest.mark.parametrize(
@@ -138,7 +143,9 @@ def test_graph_build_no_api_key(tmp_path: Path, monkeypatch) -> None:
         ("commandcode", "commandcode"),
     ],
 )
-def test_wrapper_command_works_without_api_key(cmd_name: str, binary_name: str, tmp_path: Path, monkeypatch) -> None:
+def test_wrapper_command_works_without_api_key(
+    cmd_name: str, binary_name: str, tmp_path: Path, monkeypatch
+) -> None:
     monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
     monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
@@ -152,14 +159,17 @@ def test_wrapper_command_works_without_api_key(cmd_name: str, binary_name: str, 
     (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
 
     import subprocess
+
     original_run = subprocess.run
     launched = {}
 
     def _fake_run(argv, *args, **kwargs):
         if argv and (binary_name in argv[0]):
             launched["argv"] = argv
+
             class _Result:
                 returncode = 0
+
             return _Result()
         return original_run(argv, *args, **kwargs)
 
@@ -175,4 +185,46 @@ def test_wrapper_command_works_without_api_key(cmd_name: str, binary_name: str, 
     assert binary_name in launched["argv"][0]
 
 
+def test_mcp_auto_configuration(tmp_path: Path, monkeypatch) -> None:
+    # Set up mock directories
+    mock_home = tmp_path / "mock_home"
+    mock_home.mkdir()
+    mock_repo = tmp_path / "mock_repo"
+    mock_repo.mkdir()
+    (mock_repo / "main.py").write_text("print('hi')", encoding="utf-8")
 
+    # Monkeypatch Path.home() to return mock_home
+    monkeypatch.setattr(Path, "home", lambda: mock_home)
+    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
+
+    import subprocess
+
+    with (
+        patch("forgecli.runtime.wrappers.which", return_value="/usr/bin/claude"),
+        patch(
+            "forgecli.runtime.wrappers.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+        ),
+    ):
+        runner = CliRunner()
+        result = runner.invoke(app, ["claude", "-p", str(mock_repo)], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    # Verify ~/.claude.json got created and configured
+    claude_json_file = mock_home / ".claude.json"
+    assert claude_json_file.exists()
+    claude_config = json.loads(claude_json_file.read_text(encoding="utf-8"))
+    assert "forge" in claude_config.get("mcpServers", {})
+    assert claude_config["mcpServers"]["forge"]["command"] == "forge"
+
+    # Verify ~/.cursor/mcp.json got created and configured
+    cursor_global_file = mock_home / ".cursor" / "mcp.json"
+    assert cursor_global_file.exists()
+    cursor_global_config = json.loads(cursor_global_file.read_text(encoding="utf-8"))
+    assert "forge" in cursor_global_config.get("mcpServers", {})
+
+    # Verify project-local config files
+    assert (mock_repo / ".cursor" / "mcp.json").exists()
+    assert (mock_repo / ".mcp.json").exists()

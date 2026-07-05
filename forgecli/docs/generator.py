@@ -53,11 +53,7 @@ def generate_docs(context: AppContext, *, output: Path | None = None) -> Path:
     for community, members in sorted(communities.items()):
         lines.append(f"### {community}\n")
         for node in sorted(members, key=lambda n: str(n["path"])):
-            location = (
-                f"`{node['path']}:{node['line']}`"
-                if node["line"]
-                else f"`{node['path']}`"
-            )
+            location = f"`{node['path']}:{node['line']}`" if node["line"] else f"`{node['path']}`"
             lines.append(f"- {node['label']} — {location}")
         lines.append("")
     if not nodes:
@@ -100,7 +96,7 @@ def _extract_symbol_name(line: str) -> str | None:
     line = line.strip()
     for prefix in ("async def ", "def ", "class "):
         if line.startswith(prefix):
-            rest = line[len(prefix):]
+            rest = line[len(prefix) :]
             return rest.split("(", 1)[0].split(":", 1)[0].strip() or None
     return None
 

@@ -91,14 +91,10 @@ class PerformanceAnalyzer(Analyzer):
                             rule_id="PERF002",
                             category="performance",
                             severity=Severity.MEDIUM,
-                            message=(
-                                f"Sync {name}() in async code blocks the event loop."
-                            ),
+                            message=(f"Sync {name}() in async code blocks the event loop."),
                             path=str(file.path),
                             line=node.lineno,
-                            suggestion=(
-                                "Use asyncio.sleep / an async HTTP client."
-                            ),
+                            suggestion=("Use asyncio.sleep / an async HTTP client."),
                         )
                     )
         return out

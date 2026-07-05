@@ -101,9 +101,7 @@ class DuplicatesAnalyzer(Analyzer):
                                 ),
                                 path=a_path,
                                 line=a_start,
-                                suggestion=(
-                                    "Extract the shared block into a helper."
-                                ),
+                                suggestion=("Extract the shared block into a helper."),
                                 extra={
                                     "other_path": b_path,
                                     "other_line": b_start,

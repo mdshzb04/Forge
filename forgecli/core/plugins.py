@@ -40,9 +40,7 @@ def discover_plugins(group: str = "forgecli.plugins") -> list[Plugin]:
         except Exception as exc:
             raise PluginError(f"Failed to load plugin {ep.name!r}: {exc}") from exc
         if not isinstance(plugin, Plugin):
-            raise PluginError(
-                f"Plugin {ep.name!r} must subclass forgecli.plugins.Plugin"
-            )
+            raise PluginError(f"Plugin {ep.name!r} must subclass forgecli.plugins.Plugin")
         plugins.append(plugin)
     return plugins
 

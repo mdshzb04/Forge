@@ -79,14 +79,10 @@ class OpenAIProvider(HTTPChatProvider):
         }
         model_lower = (request.model or self.config.default_model).lower()
         is_reasoning_or_gpt5 = (
-            model_lower.startswith("o1")
-            or model_lower.startswith("o3")
-            or "gpt-5" in model_lower
+            model_lower.startswith("o1") or model_lower.startswith("o3") or "gpt-5" in model_lower
         )
         is_pure_reasoning = (
-            model_lower.startswith("o1")
-            or model_lower.startswith("o3")
-            or "gpt-5" in model_lower
+            model_lower.startswith("o1") or model_lower.startswith("o3") or "gpt-5" in model_lower
         )
 
         if not is_pure_reasoning:
@@ -95,7 +91,9 @@ class OpenAIProvider(HTTPChatProvider):
             else:
                 body["temperature"] = self.config.temperature
 
-        max_tokens_val = request.max_tokens if request.max_tokens is not None else self.config.max_tokens
+        max_tokens_val = (
+            request.max_tokens if request.max_tokens is not None else self.config.max_tokens
+        )
         if is_reasoning_or_gpt5:
             body["max_completion_tokens"] = max_tokens_val
         else:
@@ -129,6 +127,7 @@ class OpenAIProvider(HTTPChatProvider):
 
     async def stream(self, request: ChatRequest) -> AsyncIterator[StreamChunk]:
         from forgecli.core.errors import ProviderError
+
         if not self._api_key:
             self.validate()
         body = self._format_request(request)
@@ -145,6 +144,7 @@ class OpenAIProvider(HTTPChatProvider):
             )
 
         import json
+
         try:
             async for line in response.aiter_lines():
                 line = line.strip()
@@ -162,7 +162,9 @@ class OpenAIProvider(HTTPChatProvider):
                             content = delta.get("content", "")
                             finish_reason = choices[0].get("finish_reason")
                             if content or finish_reason:
-                                yield StreamChunk(delta=content, finish_reason=finish_reason, raw=payload)
+                                yield StreamChunk(
+                                    delta=content, finish_reason=finish_reason, raw=payload
+                                )
                     except Exception:
                         pass
         finally:
@@ -187,15 +189,17 @@ class OpenAIProvider(HTTPChatProvider):
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(
                 id=m.id,
                 name=m.display_name,
                 context_window=128_000,
                 supports_tools=not m.id.startswith("o1"),
-                supports_vision=True
+                supports_vision=True,
             )
-            for m in MODEL_CATALOG if m.provider == "openai"
+            for m in MODEL_CATALOG
+            if m.provider == "openai"
         ]
 
 

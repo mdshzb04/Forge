@@ -131,18 +131,14 @@ def _render_architecture(plan: SoftwarePlan) -> Panel:
         Text(""),
         flows,
     ]
-    return Panel(
-        Group(*body), title="Architecture", border_style="cyan", padding=(0, 1)
-    )
+    return Panel(Group(*body), title="Architecture", border_style="cyan", padding=(0, 1))
 
 
 def _render_folder_structure(plan: SoftwarePlan) -> Panel:
     root = plan.folder_structure.root
     tree = Tree(Text(root, style="bold magenta"), guide_style="cyan")
     _populate_tree(tree, plan.folder_structure.tree)
-    return Panel(
-        tree, title=f"Folder structure ({root}/)", border_style="cyan", padding=(0, 1)
-    )
+    return Panel(tree, title=f"Folder structure ({root}/)", border_style="cyan", padding=(0, 1))
 
 
 def _populate_tree(parent: Tree, nodes: list[FolderNode]) -> None:

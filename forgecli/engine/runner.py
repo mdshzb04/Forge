@@ -129,7 +129,10 @@ def render_engine_result(result: EngineResult) -> str:
             f"in=${ms.cost_in:.5f}/1k, out=${ms.cost_out:.5f}/1k)"
         )
     if ctx.applied_files:
-        rel = [str(p.relative_to(ctx.cwd) if p.is_relative_to(ctx.cwd) else p) for p in ctx.applied_files]
+        rel = [
+            str(p.relative_to(ctx.cwd) if p.is_relative_to(ctx.cwd) else p)
+            for p in ctx.applied_files
+        ]
         lines.append(f"Files touched ({len(rel)}):")
         for path in rel:
             lines.append(f"  - {path}")

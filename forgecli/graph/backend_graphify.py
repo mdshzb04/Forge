@@ -198,9 +198,7 @@ class GraphifyRepositoryGraph(RepositoryGraph):
         edges = _bfs_shortest_path(snapshot, ids_a[0], ids_b[0])
         if not edges:
             # Fall back to invoking the Graphify CLI for confirmation.
-            await self._client.path(
-                self._root, a, b, graph_path=self._artifacts.graph_json
-            )
+            await self._client.path(self._root, a, b, graph_path=self._artifacts.graph_json)
         return edges
 
     async def affected(
@@ -237,8 +235,7 @@ class GraphifyRepositoryGraph(RepositoryGraph):
             self._cached = snapshot
             return snapshot
         raise ConfigError(
-            f"No graph.json found at {self._artifacts.graph_json}. "
-            "Run `forge graph build` first."
+            f"No graph.json found at {self._artifacts.graph_json}. Run `forge graph build` first."
         )
 
     def _snapshot_from_payload(self, payload: dict[str, Any]) -> GraphSnapshot:
@@ -359,9 +356,7 @@ def _resolve_label(label_or_id: str, snapshot: GraphSnapshot) -> list[str]:
     return ids
 
 
-def _bfs_shortest_path(
-    snapshot: GraphSnapshot, src: str, dst: str
-) -> list[GraphEdge]:
+def _bfs_shortest_path(snapshot: GraphSnapshot, src: str, dst: str) -> list[GraphEdge]:
     """Breadth-first shortest path over undirected edges."""
     if src == dst:
         return []

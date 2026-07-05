@@ -49,9 +49,7 @@ class HTTPChatProvider(Provider[Any]):
         super().__init__(config)
         self._api_key = api_key or self._resolve_api_key()
         self._base_url = (
-            base_url
-            or getattr(config, "base_url", None)
-            or self._default_base_url()
+            base_url or getattr(config, "base_url", None) or self._default_base_url()
         ).rstrip("/")
         self._timeout = timeout
         self._client = client or httpx.AsyncClient(timeout=timeout)
@@ -70,6 +68,7 @@ class HTTPChatProvider(Provider[Any]):
             if env_val:
                 return env_val
         from forgecli.core.credentials import get_api_key
+
         # Check secure storage using provider name
         val = get_api_key(self.name)
         if val:
@@ -131,8 +130,7 @@ class HTTPChatProvider(Provider[Any]):
         )
         if response.status_code >= 400:
             raise ProviderError(
-                f"{self.name} chat failed ({response.status_code}): "
-                f"{response.text[:500]}"
+                f"{self.name} chat failed ({response.status_code}): {response.text[:500]}"
             )
         return self._parse_response(response.json())
 
@@ -145,8 +143,7 @@ class HTTPChatProvider(Provider[Any]):
         )
         if response.status_code >= 400:
             raise ProviderError(
-                f"{self.name} embed failed ({response.status_code}): "
-                f"{response.text[:500]}"
+                f"{self.name} embed failed ({response.status_code}): {response.text[:500]}"
             )
         return self._parse_embeddings(response.json())
 
@@ -156,9 +153,7 @@ class HTTPChatProvider(Provider[Any]):
             if self.name == "mock":
                 return self._known_models()
             response = await self._client.get(
-                f"{self._base_url}/models",
-                headers=self._auth_headers(),
-                timeout=5.0
+                f"{self._base_url}/models", headers=self._auth_headers(), timeout=5.0
             )
             if response.status_code == 200:
                 data = response.json()
@@ -170,9 +165,10 @@ class HTTPChatProvider(Provider[Any]):
                             name=str(m.get("id")),
                             context_window=128_000,
                             supports_tools=True,
-                            supports_vision=True
+                            supports_vision=True,
                         )
-                        for m in models_list if isinstance(m, dict) and m.get("id") is not None
+                        for m in models_list
+                        if isinstance(m, dict) and m.get("id") is not None
                     ]
         except Exception:
             pass

@@ -48,9 +48,7 @@ def plan_to_markdown(plan: SoftwarePlan) -> str:
 
     parts.append("\n## Roadmap\n")
     for milestone in plan.milestones:
-        parts.append(
-            f"### {milestone.id} — {milestone.title} ({milestone.priority.value})"
-        )
+        parts.append(f"### {milestone.id} — {milestone.title} ({milestone.priority.value})")
         parts.append(milestone.description)
         parts.append("\n**Deliverables:**")
         for deliverable in milestone.deliverables:

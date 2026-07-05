@@ -16,9 +16,7 @@ from forgecli.planner.software import (
 
 
 def _default_plan() -> SoftwarePlan:
-    return build_software_plan(
-        "Build a Python FastAPI service for user authentication"
-    )
+    return build_software_plan("Build a Python FastAPI service for user authentication")
 
 
 def test_plan_contains_all_sections() -> None:
@@ -44,9 +42,7 @@ def test_milestones_capped() -> None:
 
 
 def test_observability_omitted_when_disabled() -> None:
-    plan = build_software_plan(
-        "Build a Python API", PlannerOptions(include_observability=False)
-    )
+    plan = build_software_plan("Build a Python API", PlannerOptions(include_observability=False))
     titles = " ".join(t.title for t in plan.tasks)
     assert "metrics" not in titles.lower()
     # Risks tied to observability should be omitted too.
@@ -55,9 +51,7 @@ def test_observability_omitted_when_disabled() -> None:
 
 
 def test_tests_omitted_when_disabled() -> None:
-    plan = build_software_plan(
-        "Build a Python API", PlannerOptions(include_tests=False)
-    )
+    plan = build_software_plan("Build a Python API", PlannerOptions(include_tests=False))
     titles = " ".join(t.title for t in plan.tasks)
     assert "coverage" not in titles.lower()
 
@@ -190,7 +184,5 @@ def test_priority_distribution() -> None:
 
 def test_folder_node_is_recursive() -> None:
     plan = _default_plan()
-    src = next(
-        node for node in plan.folder_structure.tree if node.path == "src"
-    )
+    src = next(node for node in plan.folder_structure.tree if node.path == "src")
     assert any(child.children for child in src.children) or src.children

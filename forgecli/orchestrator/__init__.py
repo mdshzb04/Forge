@@ -94,9 +94,7 @@ class HeuristicIntentClassifier(IntentClassifier):
         "bootstrap",
     )
 
-    def classify(
-        self, prompt: str, *, history: tuple[str, ...] = ()
-    ) -> IntentPrediction:
+    def classify(self, prompt: str, *, history: tuple[str, ...] = ()) -> IntentPrediction:
         text = (prompt or "").strip().lower()
         if not text:
             return IntentPrediction(Intent.UNKNOWN, 0.0, ("empty prompt",))
@@ -146,7 +144,6 @@ class ForgeResult:
 
 
 class BuildWorkflow(Workflow):
-
     name = "build"
     intents = (Intent.BUILD, Intent.UNKNOWN)
 
@@ -240,9 +237,7 @@ class BuildWorkflow(Workflow):
             )
         return decision
 
-    async def _auto_fix_loop(
-        self, target: Path, build_context, last_result
-    ):
+    async def _auto_fix_loop(self, target: Path, build_context, last_result):
         """Re-run the LLM stage when tests fail, up to ``max_fix_attempts``."""
         from forgecli.build import BuildPipeline
 
@@ -446,10 +441,12 @@ class AskWorkflow(Workflow):
         else:
             if _asks_for_repo_context(context.prompt):
                 stages.append(("graphify-retrieval", graphify_retrieval))
-            stages.extend([
-                ("llm", llm_call),
-                ("summarize", summarize),
-            ])
+            stages.extend(
+                [
+                    ("llm", llm_call),
+                    ("summarize", summarize),
+                ]
+            )
 
         pipeline = BuildPipeline(stages)
         result = await pipeline.run(build_context)
@@ -518,7 +515,8 @@ class DocsWorkflow(Workflow):
         prompt = (
             f"Generate a comprehensive overview documentation for the project '{root.name}'.\n"
             f"Here are the main files in the project:\n"
-            + "\n".join(f"- {f}" for f in files_info[:30]) + "\n\n"
+            + "\n".join(f"- {f}" for f in files_info[:30])
+            + "\n\n"
             "Produce a clean, professional, and well-structured Markdown document containing:\n"
             "1. Executive Summary of the project purpose.\n"
             "2. High-level architecture overview.\n"
@@ -662,6 +660,7 @@ def _bootstrap_app_context() -> AppContext:
         return bootstrap_context()
     except Exception:
         from forgecli.config.loader import ConfigLoader
+
         paths = ProjectPaths.from_env().ensure()
         return AppContext(paths=paths, loader=ConfigLoader())
 

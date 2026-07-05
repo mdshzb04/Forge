@@ -151,9 +151,7 @@ class ProjectPaths:
     plugins_dir: Path
 
     @classmethod
-    def from_env(
-        cls, *, cwd: Path | str | None = None
-    ) -> ProjectPaths:
+    def from_env(cls, *, cwd: Path | str | None = None) -> ProjectPaths:
         """Resolve the default project paths for the current user.
 
         Environment variables take precedence: ``FORGECLI_DATA_DIR``,

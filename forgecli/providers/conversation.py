@@ -57,10 +57,7 @@ def greeting_reply(text: str) -> str:
     """Return a natural assistant greeting."""
     normalized = (text or "").strip().lower()
     if "how are you" in normalized:
-        return (
-            "I'm doing well, thanks for asking. "
-            "How can I help with your project today?"
-        )
+        return "I'm doing well, thanks for asking. How can I help with your project today?"
     if any(p in normalized for p in ("good morning", "good afternoon", "good evening")):
         return "Hello! How can I help you today?"
     return "Hi! How can I help you today?"

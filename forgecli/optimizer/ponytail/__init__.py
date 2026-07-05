@@ -54,8 +54,7 @@ class Intensity(str, Enum):
             return cls(value.lower())
         except ValueError as exc:
             raise ValueError(
-                f"Unknown intensity {value!r}; expected one of "
-                f"{', '.join(i.value for i in cls)}"
+                f"Unknown intensity {value!r}; expected one of {', '.join(i.value for i in cls)}"
             ) from exc
 
 
@@ -80,9 +79,7 @@ class PromptOptimizer(ABC):
     name: str = "abstract"
 
     @abstractmethod
-    async def optimize_chat(
-        self, request: ChatRequest
-    ) -> OptimizedRequest:
+    async def optimize_chat(self, request: ChatRequest) -> OptimizedRequest:
         """Return an optimized copy of ``request``."""
 
     async def is_available(self) -> bool:

@@ -59,8 +59,7 @@ class RepositoryReview:
             "stats": self.stats,
             "analyzer_names": self.analyzer_names,
             "counts_by_severity": {
-                severity.value: count
-                for severity, count in self.counts_by_severity().items()
+                severity.value: count for severity, count in self.counts_by_severity().items()
             },
             "counts_by_category": self.counts_by_category(),
             "findings": [finding.to_dict() for finding in self.findings],

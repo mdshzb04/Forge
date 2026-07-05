@@ -166,9 +166,7 @@ class GraphifyClient:
             cwd=str(root),
         )
         try:
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=self._timeout
-            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
         except TimeoutError as exc:
             proc.kill()
             raise GraphifyInvocationError(
@@ -224,9 +222,7 @@ class GraphifyClient:
             cwd=str(root),
         )
         try:
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=self._timeout
-            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
         except TimeoutError as exc:
             proc.kill()
             raise GraphifyInvocationError(
@@ -308,13 +304,10 @@ class GraphifyClient:
             )
         except TimeoutError as exc:
             proc.kill()
-            raise GraphifyInvocationError(
-                f"graphify {' '.join(args[:1])} timed out"
-            ) from exc
+            raise GraphifyInvocationError(f"graphify {' '.join(args[:1])} timed out") from exc
         if proc.returncode != 0:
             raise GraphifyInvocationError(
-                f"graphify exited with {proc.returncode}: "
-                f"{stderr.decode(errors='replace').strip()}"
+                f"graphify exited with {proc.returncode}: {stderr.decode(errors='replace').strip()}"
             )
         return stdout.decode(errors="replace")
 

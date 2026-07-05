@@ -196,6 +196,7 @@ def _is_newer(latest: str, current: str) -> bool:
     those are advisory at best and "newer" is what the user usually
     wants to see.
     """
+
     def _parts(version: str) -> tuple[int, ...]:
         out: list[int] = []
         for chunk in version.split("."):

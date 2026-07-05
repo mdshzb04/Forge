@@ -70,9 +70,7 @@ class MemoryStore:
             )
             """
         )
-        row = self.conn.execute(
-            "SELECT value FROM schema_meta WHERE key = 'version'"
-        ).fetchone()
+        row = self.conn.execute("SELECT value FROM schema_meta WHERE key = 'version'").fetchone()
         if row is None:
             self.conn.execute(
                 "INSERT INTO schema_meta (key, value) VALUES ('version', ?)",

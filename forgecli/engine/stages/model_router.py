@@ -53,8 +53,7 @@ class ModelRouterStage:
                 "cost_out": decision.cost_out,
             },
             notes=(
-                f"route: {decision.provider_name}/{decision.model} "
-                f"(mode={decision.mode.value})",
+                f"route: {decision.provider_name}/{decision.model} (mode={decision.mode.value})",
             ),
         )
 

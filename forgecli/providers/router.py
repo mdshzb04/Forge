@@ -63,10 +63,10 @@ DEFAULT_PRICING: dict[tuple[str, str], tuple[float, float]] = {
 class SelectionMode(str, Enum):
     """How the router picks a model."""
 
-    EXPLICIT = "explicit"   # caller named provider + model
-    ALIAS = "alias"         # caller named a provider alias
-    CHEAPEST = "cheapest"   # "auto" — pick the cheapest compatible model
-    FALLBACK = "fallback"   # an explicit selection failed; another matched
+    EXPLICIT = "explicit"  # caller named provider + model
+    ALIAS = "alias"  # caller named a provider alias
+    CHEAPEST = "cheapest"  # "auto" — pick the cheapest compatible model
+    FALLBACK = "fallback"  # an explicit selection failed; another matched
 
 
 @dataclass(frozen=True)
@@ -173,18 +173,14 @@ class ModelRouter:
         so the CLI never hard-errors.
         """
         if provider is not None:
-            return self._select_cheapest(
-                capabilities or ModelCapabilities(), provider=provider
-            )
+            return self._select_cheapest(capabilities or ModelCapabilities(), provider=provider)
         return self._select_cheapest(capabilities or ModelCapabilities())
 
     # ------------------------------------------------------------------
     # Internal selectors
     # ------------------------------------------------------------------
 
-    def _select_explicit(
-        self, choice: str, caps: ModelCapabilities
-    ) -> RouteDecision:
+    def _select_explicit(self, choice: str, caps: ModelCapabilities) -> RouteDecision:
         provider_name = self.resolve_alias(choice)
         if not self.registry.has(provider_name):
             return RouteDecision(
@@ -193,9 +189,7 @@ class ModelRouter:
                 mode=SelectionMode.ALIAS,
             )
         model = self.default_model_for(provider_name)
-        cost_in, cost_out = self.pricing.get(
-            (provider_name, model), (0.0, 0.0)
-        )
+        cost_in, cost_out = self.pricing.get((provider_name, model), (0.0, 0.0))
         return RouteDecision(
             provider_name=provider_name,
             model=model,
@@ -322,6 +316,7 @@ def _provider_has_credentials(name: str) -> bool:
     if any(os.environ.get(env_var) for env_var in _PROVIDER_ENV_VARS.get(name, ())):
         return True
     from forgecli.core.credentials import get_api_key
+
     return bool(get_api_key(name))
 
 

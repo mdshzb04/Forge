@@ -70,9 +70,7 @@ class CavemanPromptOptimizer(ABC):
     name: str = "abstract-caveman"
 
     @abstractmethod
-    async def optimize_chat(
-        self, request: ChatRequest
-    ) -> OptimizedRequest:
+    async def optimize_chat(self, request: ChatRequest) -> OptimizedRequest:
         """Return an optimized copy of ``request``."""
 
     async def is_available(self) -> bool:
@@ -151,9 +149,7 @@ def _ensure_user_message(messages: Sequence[ChatMessage]) -> bool:
     return any(m.role.value == "user" for m in messages)
 
 
-def _clone_request(
-    request: ChatRequest, messages: Sequence[ChatMessage]
-) -> ChatRequest:
+def _clone_request(request: ChatRequest, messages: Sequence[ChatMessage]) -> ChatRequest:
     """Return a copy of ``request`` with ``messages`` replaced."""
     return request.model_copy(update={"messages": list(messages)})
 

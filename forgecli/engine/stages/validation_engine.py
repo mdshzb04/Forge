@@ -36,9 +36,7 @@ class ValidationEngineStage:
         if context.engine.retrieval is not None:
             build_ctx.retrieval = context.engine.retrieval.context_text
 
-        test_command = (
-            self._test_command or context.engine.extras.get("test_command")
-        )
+        test_command = self._test_command or context.engine.extras.get("test_command")
         if test_command:
             build_ctx.extras["test_command"] = test_command
         test_timeout = context.engine.extras.get("test_timeout")

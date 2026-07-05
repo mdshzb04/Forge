@@ -20,7 +20,9 @@ from forgecli.graph.repository import (
 )
 
 
-def _write_graph(tmp_path: Path, *, nodes: list[dict[str, Any]], links: list[dict[str, Any]]) -> Path:
+def _write_graph(
+    tmp_path: Path, *, nodes: list[dict[str, Any]], links: list[dict[str, Any]]
+) -> Path:
     out = tmp_path / "graphify-out"
     out.mkdir(exist_ok=True)
     graph_json = out / "graph.json"
@@ -55,7 +57,13 @@ def test_load_snapshot_from_payload(tmp_path: Path) -> None:
         ],
         links=[
             {"source": "a", "target": "a_foo", "relation": "contains", "confidence": "EXTRACTED"},
-            {"source": "b", "target": "a_foo", "relation": "calls", "confidence": "INFERRED", "confidence_score": 0.7},
+            {
+                "source": "b",
+                "target": "a_foo",
+                "relation": "calls",
+                "confidence": "INFERRED",
+                "confidence_score": 0.7,
+            },
         ],
     )
     backend = GraphifyRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))

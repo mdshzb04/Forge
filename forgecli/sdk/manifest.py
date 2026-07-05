@@ -177,9 +177,7 @@ class PluginManifest:
             Requirement.parse(str(name), str(spec))
             for name, spec in (plugin.get("dependencies") or {}).items()
         )
-        permissions = tuple(
-            Permission(p) for p in _as_str_list(plugin.get("permissions"))
-        )
+        permissions = tuple(Permission(p) for p in _as_str_list(plugin.get("permissions")))
         entry_points = tuple(_parse_entry_points(plugin.get("entry_points") or {}))
 
         comp_data = plugin.get("compatibility") or {}

@@ -193,9 +193,7 @@ class PipelineBuilder:
         self.stages.append(stage)
         return self
 
-    def stages_from(
-        self, names: Iterable[str], registry: StageRegistry
-    ) -> PipelineBuilder:
+    def stages_from(self, names: Iterable[str], registry: StageRegistry) -> PipelineBuilder:
         for name in names:
             stage = registry.get(name)
             self.stages.append(stage)
@@ -364,9 +362,7 @@ class ExecutionEngine:
     # Internals
     # ------------------------------------------------------------------
 
-    async def _run_stage(
-        self, stage: Stage, context: EngineContext
-    ) -> StageResult:
+    async def _run_stage(self, stage: Stage, context: EngineContext) -> StageResult:
         stage_context = StageContext(
             engine=context,
             bus=self.bus,
@@ -481,9 +477,7 @@ class ExecutionEngine:
             error=log.error,
         )
 
-    async def _invoke(
-        self, stage: Stage, stage_context: StageContext
-    ) -> StageResult:
+    async def _invoke(self, stage: Stage, stage_context: StageContext) -> StageResult:
         """Run a single stage invocation.
 
         Handles both async callables and sync callables. Surfaces
@@ -498,8 +492,7 @@ class ExecutionEngine:
             # Stage returned synchronously: that's a programmer error
             # (every engine stage is async). Surface it cleanly.
             raise TypeError(
-                f"Stage {stage.name!r} did not return an awaitable; "
-                "engine stages must be async."
+                f"Stage {stage.name!r} did not return an awaitable; engine stages must be async."
             )
         except Exception:
             self.bus.publish(

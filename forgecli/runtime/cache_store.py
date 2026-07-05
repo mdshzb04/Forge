@@ -37,9 +37,7 @@ def repo_fingerprint(root: Path) -> str:
 
     layout_sig = "0"
     try:
-        names = sorted(
-            p.name for p in root.iterdir() if not p.name.startswith(".")
-        )[:48]
+        names = sorted(p.name for p in root.iterdir() if not p.name.startswith("."))[:48]
         layout_sig = ",".join(names)
     except OSError:
         pass

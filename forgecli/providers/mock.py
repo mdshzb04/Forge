@@ -50,14 +50,12 @@ class MockProvider(Provider[MockProviderConfig]):
         text = last_user.content if last_user else ""
 
         has_diff_request = any(
-            m.role is Role.SYSTEM and "unified diff" in m.content.lower()
-            for m in request.messages
+            m.role is Role.SYSTEM and "unified diff" in m.content.lower() for m in request.messages
         )
 
-        has_commit_request = any(
-            "commit" in m.content.lower()
-            for m in request.messages
-        ) or "commit" in text.lower()
+        has_commit_request = (
+            any("commit" in m.content.lower() for m in request.messages) or "commit" in text.lower()
+        )
 
         if has_commit_request:
             content = (

@@ -71,10 +71,10 @@ def test_extract_diff_preserves_hunk_body_and_context() -> None:
         "--- a/greet.py\n+++ b/greet.py\n"
         "@@ -1,2 +1,5 @@\n"
         " def greet(name):\n"
-        "-    return f\"Hi, {name}!\"\n"
+        '-    return f"Hi, {name}!"\n'
         "+    if not name:\n"
-        "+        return \"Hello, stranger!\"\n"
-        "+    return f\"Hi, {name}!\"\n"
+        '+        return "Hello, stranger!"\n'
+        '+    return f"Hi, {name}!"\n'
         "+\n"
         "+def is_anonymous(name):\n"
         "+    return not name\n"
@@ -107,12 +107,7 @@ def test_extract_diff_strips_markdown_code_fence() -> None:
 
 
 def test_extract_diff_strips_plain_fence_without_language() -> None:
-    text = (
-        "```\n"
-        "diff --git a/x.py b/x.py\n"
-        "--- a/x.py\n+++ b/x.py\n@@\n-old\n+new\n"
-        "```"
-    )
+    text = "```\ndiff --git a/x.py b/x.py\n--- a/x.py\n+++ b/x.py\n@@\n-old\n+new\n```"
     diff = extract_diff(text)
     assert diff.startswith("diff --git")
 
@@ -140,18 +135,13 @@ def test_parse_unified_diff_single_file(tmp_path: Path) -> None:
 
 
 def test_parse_unified_diff_multiple_files() -> None:
-    diff = (
-        "--- a/a.py\n+++ b/a.py\n@@\n-x\n+X\n"
-        "--- a/b.py\n+++ b/b.py\n@@\n-y\n+Y\n"
-    )
+    diff = "--- a/a.py\n+++ b/a.py\n@@\n-x\n+X\n--- a/b.py\n+++ b/b.py\n@@\n-y\n+Y\n"
     parsed = parse_unified_diff(diff)
     assert [p.path for p in parsed] == ["a.py", "b.py"]
 
 
 def test_apply_unified_diff_with_parser(tmp_path: Path) -> None:
-    diff = (
-        "--- a/greet.py\n+++ b/greet.py\n@@\n-print('hi')\n+print('hello')\n"
-    )
+    diff = "--- a/greet.py\n+++ b/greet.py\n@@\n-print('hi')\n+print('hello')\n"
     touched = apply_unified_diff(diff, tmp_path)
     assert len(touched) == 1
     assert touched[0].name == "greet.py"
@@ -225,9 +215,7 @@ def test_graphify_retrieval_uses_snapshot(tmp_path: Path) -> None:
             GraphNode(id="a", label="auth.py", source_file="auth.py"),
             GraphNode(id="b", label="boring.py", source_file="boring.py"),
         ),
-        edges=(
-            GraphEdge(source="a", target="b", relation="imports"),
-        ),
+        edges=(GraphEdge(source="a", target="b", relation="imports"),),
     )
     graph._cached = snapshot  # type: ignore[attr-defined]
 

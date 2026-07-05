@@ -209,9 +209,7 @@ def test_engine_runs_all_stages_in_order() -> None:
     bus = EventBus()
     a, b, c = _EchoStage("a"), _EchoStage("b"), _EchoStage("c")
     engine = ExecutionEngine(stages=[a, b, c], bus=bus)
-    result = asyncio.run(
-        engine.run(EngineContext(prompt="p", cwd="/tmp"))
-    )
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
     assert result.success
     assert len(result.stage_results) == 3
     assert [a.calls, b.calls, c.calls] == [1, 1, 1]
@@ -221,9 +219,7 @@ def test_engine_short_circuits_on_failure() -> None:
     bus = EventBus()
     a, boom, c = _EchoStage(), _BoomStage(), _EchoStage()
     engine = ExecutionEngine(stages=[a, boom, c], bus=bus)
-    result = asyncio.run(
-        engine.run(EngineContext(prompt="p", cwd="/tmp"))
-    )
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
     assert not result.success
     assert result.failed_stage == "boom"
     assert a.calls == 1
@@ -239,9 +235,7 @@ def test_engine_retries_then_succeeds() -> None:
         max_attempts_per_stage=3,
         retry_backoff_seconds=0.0,
     )
-    result = asyncio.run(
-        engine.run(EngineContext(prompt="p", cwd="/tmp"))
-    )
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
     assert result.success
     assert flaky.calls == 3
     # Stage events: running, retrying, retrying, succeeded.
@@ -259,9 +253,7 @@ def test_engine_gives_up_after_max_attempts() -> None:
         max_attempts_per_stage=3,
         retry_backoff_seconds=0.0,
     )
-    result = asyncio.run(
-        engine.run(EngineContext(prompt="p", cwd="/tmp"))
-    )
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
     assert not result.success
     assert flaky.calls == 3
     assert result.error is not None
@@ -271,9 +263,7 @@ def test_engine_emits_cancelled_when_token_set_before_stage() -> None:
     bus = EventBus()
     bus.cancel()
     engine = ExecutionEngine(stages=[_EchoStage("cancel-pre")], bus=bus)
-    result = asyncio.run(
-        engine.run(EngineContext(prompt="p", cwd="/tmp"))
-    )
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
     assert not result.success
     assert result.cancelled is True
 
@@ -284,9 +274,7 @@ def test_engine_emits_cancelled_when_stage_cancels_midway() -> None:
     cancel = _CancelStage()
     c = _EchoStage("cancel-mid-c")
     engine = ExecutionEngine(stages=[a, cancel, c], bus=bus)
-    result = asyncio.run(
-        engine.run(EngineContext(prompt="p", cwd="/tmp"))
-    )
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
     assert not result.success
     assert result.cancelled is True
     assert a.calls == 1
@@ -327,9 +315,7 @@ def test_engine_rejects_sync_stage() -> None:
     sync_stage.name = "sync-stage"  # type: ignore[attr-defined]
     bus = EventBus()
     engine = ExecutionEngine(stages=[sync_stage], bus=bus)  # type: ignore[list-item]
-    result = asyncio.run(
-        engine.run(EngineContext(prompt="p", cwd="/tmp"))
-    )
+    result = asyncio.run(engine.run(EngineContext(prompt="p", cwd="/tmp")))
     assert not result.success
     assert "did not return an awaitable" in (result.error or "")
 
@@ -342,12 +328,7 @@ def test_engine_rejects_sync_stage() -> None:
 def test_pipeline_builder_assembles_engine() -> None:
     a, b = _EchoStage("a"), _EchoStage("b")
     engine = (
-        PipelineBuilder()
-        .stage(a)
-        .stage(b)
-        .with_max_attempts(5)
-        .with_retry_backoff(0.1)
-        .build()
+        PipelineBuilder().stage(a).stage(b).with_max_attempts(5).with_retry_backoff(0.1).build()
     )
     assert engine.stages == [a, b]
     assert engine._max_attempts == 5
@@ -385,11 +366,13 @@ def test_hooks_fire_in_registration_order() -> None:
     async def make_before(name: str):
         async def hook() -> None:
             calls.append(f"before:{name}")
+
         return hook
 
     async def make_after(name: str):
         async def hook() -> None:
             calls.append(f"after:{name}")
+
         return hook
 
     async def main() -> None:
@@ -406,8 +389,10 @@ def test_hooks_fire_in_registration_order() -> None:
 
     asyncio.run(main())
     assert calls == [
-        "before:b1", "before:b2",
-        "after:a1", "after:a2",
+        "before:b1",
+        "before:b2",
+        "after:a1",
+        "after:a2",
     ]
 
 
@@ -415,7 +400,9 @@ def test_hook_failure_does_not_abort_engine() -> None:
     bus = EventBus()
     context = EngineContext(prompt="p", cwd="/tmp")
     manager = HookManager()
-    manager.add_before(PluginHook(name="bad", callback=lambda: (_ for _ in ()).throw(RuntimeError("boom"))))
+    manager.add_before(
+        PluginHook(name="bad", callback=lambda: (_ for _ in ()).throw(RuntimeError("boom")))
+    )
     asyncio.run(manager.fire_before(context, bus))
     # The engine bus got a warn-level log line for the failure.
     warns = [e for e in bus.history if isinstance(e, TextLogEvent) and e.level is LogLevel.WARN]

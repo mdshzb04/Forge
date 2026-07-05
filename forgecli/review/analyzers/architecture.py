@@ -171,10 +171,7 @@ class ArchitectureAnalyzer(Analyzer):
                                 ),
                                 path=str(file.path),
                                 line=getattr(node, "lineno", 1),
-                                suggestion=(
-                                    "Use the public API exposed by the "
-                                    "intended module."
-                                ),
+                                suggestion=("Use the public API exposed by the intended module."),
                             )
                         )
         return out

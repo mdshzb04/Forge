@@ -168,7 +168,12 @@ def test_build_orchestrator_wires_defaults() -> None:
     orch = build_orchestrator(registry, provider=provider)
     # All six default workflows are registered.
     assert {w.name for w in orch.registry.workflows} >= {
-        "build", "plan", "ask", "docs", "review", "explain"
+        "build",
+        "plan",
+        "ask",
+        "docs",
+        "review",
+        "explain",
     }
 
 

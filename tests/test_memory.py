@@ -26,7 +26,9 @@ def test_schema_meta_initialized(store: MemoryStore) -> None:
 
 def test_history_record_and_list(store: MemoryStore) -> None:
     history = HistoryRepository(store, history_limit=10)
-    id_ = history.record(command="plan run hello", provider="mock", model="mock-model", success=True)
+    id_ = history.record(
+        command="plan run hello", provider="mock", model="mock-model", success=True
+    )
     assert id_ > 0
     entries = history.list_recent(limit=5)
     assert len(entries) == 1

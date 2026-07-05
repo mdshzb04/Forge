@@ -78,10 +78,41 @@ def launch_wrapper(
     cwd = (path or Path.cwd()).resolve()
     repo_root = resolve_repo_root(cwd)
 
-    # 2. Optimize context, prompts, and tokens (aggressively reusing cache)
+    # 2. Ensure the daemon is running
+    import time
+
+    import httpx
+
+    from forgecli.cli.daemon import is_daemon_running, start_daemon_background
+
+    if not is_daemon_running():
+        info("Forge Runtime daemon is not running. Starting it in the background...")
+        start_daemon_background()
+        # Wait a moment for it to spin up
+        for _ in range(20):
+            if is_daemon_running():
+                break
+            time.sleep(0.2)
+
+    # 3. Optimize context, prompts, and tokens (aggressively reusing cache)
     prepared = prepare_runtime_sync(repo_root, force=force_prepare, quiet=False)
     if prepared.from_cache:
         info("Reusing cached Forge context.")
+
+    # 4. Notify daemon to refresh/ensure context is registered
+    try:
+        with httpx.Client(timeout=2.0) as client:
+            client.get(f"http://127.0.0.1:16868/context?path={repo_root}")
+    except Exception:
+        pass
+
+    # 5. Automatically configure MCP server for launched CLIs
+    try:
+        from forgecli.runtime.mcp_config import configure_mcp_for_all
+
+        configure_mcp_for_all(repo_root)
+    except Exception:
+        pass
 
     env = os.environ.copy()
     env["FORGE_CONTEXT"] = prepared.context_summary

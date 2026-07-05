@@ -37,9 +37,7 @@ class CavemanCLIOptimizer(CavemanPromptOptimizer):
     async def is_available(self) -> bool:
         """Return True when the ``caveman`` binary is on ``PATH``."""
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(
-            None, lambda: shutil.which(self._executable) is not None
-        )
+        return await loop.run_in_executor(None, lambda: shutil.which(self._executable) is not None)
 
     async def optimize_chat(self, request: ChatRequest) -> OptimizedRequest:
         """Run the external caveman binary and return the optimized request.

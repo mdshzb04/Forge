@@ -123,10 +123,7 @@ def test_load_dotenv_overrides(monkeypatch, tmp_path: Path) -> None:
 def test_load_dotenv_handles_comments_and_blanks(tmp_path: Path) -> None:
     env_file = tmp_path / ".env"
     env_file.write_text(
-        "# this is a comment\n"
-        "\n"
-        "FORGECLI_TEST_VAR=value\n"
-        'FORGECLI_QUOTED="with spaces"\n',
+        '# this is a comment\n\nFORGECLI_TEST_VAR=value\nFORGECLI_QUOTED="with spaces"\n',
         encoding="utf-8",
     )
     for k in ("FORGECLI_TEST_VAR", "FORGECLI_QUOTED"):
@@ -294,13 +291,16 @@ def test_check_for_update_graceful_offline_fallback(monkeypatch, tmp_path: Path)
     import time
 
     from forgecli.platform.update import _cache_path
+
     _cache_path().parent.mkdir(parents=True, exist_ok=True)
     _cache_path().write_text(
-        json.dumps({
-            "checked_at": time.time() - 100,
-            "latest": "9.9.9",
-        }),
-        encoding="utf-8"
+        json.dumps(
+            {
+                "checked_at": time.time() - 100,
+                "latest": "9.9.9",
+            }
+        ),
+        encoding="utf-8",
     )
     monkeypatch.setenv("FORGECLI_UPDATE_CACHE_TTL", "10")
 
@@ -316,7 +316,9 @@ def test_check_for_update_graceful_offline_fallback(monkeypatch, tmp_path: Path)
 def test_check_for_update_uses_cache(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path))
     _write_cache("9.9.9")
-    info = check_for_update(client_factory=lambda: (_ for _ in ()).throw(AssertionError("should not hit network")))
+    info = check_for_update(
+        client_factory=lambda: (_ for _ in ()).throw(AssertionError("should not hit network"))
+    )
     assert info.latest == "9.9.9"
 
 
@@ -327,13 +329,22 @@ def test_check_for_update_force_refreshes(monkeypatch, tmp_path: Path) -> None:
 
     class _Client:
         def __init__(self) -> None: ...
-        def __enter__(self): return self
-        def __exit__(self, *a): return None
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return None
+
         def get(self, url):
             calls.append(url)
+
             class _Resp:
-                def raise_for_status(self): pass
-                def json(self): return {"info": {"version": "2.0.0"}}
+                def raise_for_status(self):
+                    pass
+
+                def json(self):
+                    return {"info": {"version": "2.0.0"}}
+
             return _Resp()
 
     info = check_for_update(force=True, client_factory=_Client)

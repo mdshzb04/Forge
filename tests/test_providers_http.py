@@ -88,9 +88,7 @@ async def test_openai_chat_raises_on_http_error() -> None:
             return_value=httpx.Response(500, text="boom")
         )
         with pytest.raises(ProviderError, match="500"):
-            await provider.chat(
-                ChatRequest(messages=[ChatMessage(role=Role.USER, content="hi")])
-            )
+            await provider.chat(ChatRequest(messages=[ChatMessage(role=Role.USER, content="hi")]))
 
 
 @pytest.mark.asyncio
@@ -240,9 +238,7 @@ async def test_gemini_chat_uses_per_model_url() -> None:
     # The system prompt was promoted to systemInstruction.
     assert "systemInstruction" in captured["body"]
     # The remaining contents include a user turn only (system was lifted).
-    assert captured["body"]["contents"] == [
-        {"role": "user", "parts": [{"text": "hi"}]}
-    ]
+    assert captured["body"]["contents"] == [{"role": "user", "parts": [{"text": "hi"}]}]
 
 
 @pytest.mark.asyncio

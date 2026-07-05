@@ -95,9 +95,7 @@ class AnthropicProvider(HTTPChatProvider):
         if system_parts:
             body["system"] = "\n\n".join(system_parts)
         body["temperature"] = (
-            request.temperature
-            if request.temperature is not None
-            else self.config.temperature
+            request.temperature if request.temperature is not None else self.config.temperature
         )
         if request.top_p is not None:
             body["top_p"] = request.top_p
@@ -120,14 +118,14 @@ class AnthropicProvider(HTTPChatProvider):
             prompt_tokens=int(usage.get("input_tokens", 0) or 0),
             completion_tokens=int(usage.get("output_tokens", 0) or 0),
             total_tokens=int(
-                (usage.get("input_tokens", 0) or 0)
-                + (usage.get("output_tokens", 0) or 0)
+                (usage.get("input_tokens", 0) or 0) + (usage.get("output_tokens", 0) or 0)
             ),
             raw=payload,
         )
 
     async def stream(self, request: ChatRequest) -> AsyncIterator[StreamChunk]:
         from forgecli.core.errors import ProviderError
+
         if not self._api_key:
             self.validate()
         body = self._format_request(request)
@@ -144,6 +142,7 @@ class AnthropicProvider(HTTPChatProvider):
             )
 
         import json
+
         try:
             event_name = None
             async for line in response.aiter_lines():
@@ -165,7 +164,9 @@ class AnthropicProvider(HTTPChatProvider):
                             delta = payload.get("delta", {})
                             finish_reason = delta.get("stop_reason")
                             if finish_reason:
-                                yield StreamChunk(delta="", finish_reason=finish_reason, raw=payload)
+                                yield StreamChunk(
+                                    delta="", finish_reason=finish_reason, raw=payload
+                                )
                     except Exception:
                         pass
         finally:
@@ -176,9 +177,7 @@ class AnthropicProvider(HTTPChatProvider):
     async def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:  # type: ignore[override]
         from forgecli.core.errors import ProviderError
 
-        raise ProviderError(
-            f"{self.name} does not provide embeddings in this build"
-        )
+        raise ProviderError(f"{self.name} does not provide embeddings in this build")
 
     def _format_embeddings(self, request: EmbeddingRequest) -> dict[str, Any]:  # pragma: no cover
         raise NotImplementedError
@@ -191,15 +190,17 @@ class AnthropicProvider(HTTPChatProvider):
 
     def _known_models(self) -> list[ModelInfo]:
         from forgecli.core.models import MODEL_CATALOG
+
         return [
             ModelInfo(
                 id=m.id,
                 name=m.display_name,
                 context_window=200_000,
                 supports_tools=True,
-                supports_vision="haiku" not in m.id
+                supports_vision="haiku" not in m.id,
             )
-            for m in MODEL_CATALOG if m.provider == "anthropic"
+            for m in MODEL_CATALOG
+            if m.provider == "anthropic"
         ]
 
 

@@ -34,6 +34,7 @@ def bootstrap_context(
     if isinstance(cwd, str):
         cwd = Path(cwd)
     import click
+
     try:
         click_ctx = click.get_current_context(silent=True)
     except Exception:
@@ -196,9 +197,7 @@ def _build_container(
         lambda c: ModelRouter(registry=c.resolve(ProviderRegistry)),
     )
     container.register(PromptRenderer, lambda _c: PromptRenderer())
-    container.register(
-        PromptLoader, lambda _c: PromptLoader(paths.prompts_dir)
-    )
+    container.register(PromptLoader, lambda _c: PromptLoader(paths.prompts_dir))
     container.register(PromptRegistry, lambda _c: PromptRegistry())
     container.register(TemplateEngine, lambda c: TemplateEngine(renderer=c.resolve(PromptRenderer)))
     container.register(TemplateRegistry, lambda _c: TemplateRegistry())
@@ -260,6 +259,7 @@ def resolve_provider_and_decision(
 
     if decision.provider_name == "mock" or not _provider_has_credentials(decision.provider_name):
         from forgecli.cli.ui import error
+
         error(
             "No AI provider configured.\n\n"
             "Run:\n"
@@ -272,6 +272,7 @@ def resolve_provider_and_decision(
     registry = app_context.container.resolve(ProviderRegistry)
     if not registry.has(decision.provider_name):
         from forgecli.cli.ui import error
+
         error(f"Unknown provider '{decision.provider_name}'.")
         raise typer.Exit(code=1)
 
