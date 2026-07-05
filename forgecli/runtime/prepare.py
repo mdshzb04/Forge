@@ -170,6 +170,10 @@ def prepare_runtime_sync(
     prompt_optimized = _optimize_prompt(raw_context)
     token_optimized = _optimize_tokens(prompt_optimized)
 
+    # Optimization pipeline check: never allow optimized context to be larger than raw context
+    if len(token_optimized) > len(raw_context):
+        token_optimized = raw_context
+
     cache_dir = ProjectPaths.from_env().cache_dir / "runtime" / "context"
     cache_dir.mkdir(parents=True, exist_ok=True)
     context_file = cache_dir / f"{fingerprint}.md"

@@ -91,6 +91,72 @@ def mcp_cmd() -> None:
     run_mcp_stdio()
 
 
+@app.command("stats", help="Display the prompt and token optimization statistics from the latest wrapper runs.")
+def stats_cmd() -> None:
+    """Display the prompt and token optimization statistics from the latest wrapper runs."""
+    from forgecli.utils.stats import get_stats_history
+    from forgecli.cli.ui import get_console
+
+    history = get_stats_history()
+    if not history:
+        get_console().print("No optimization statistics available yet.")
+        return
+
+    console = get_console()
+    console.print()
+
+    for idx, run in enumerate(history):
+        run_title = "[bold cyan]Forge Optimization Report"
+        if len(history) > 1:
+            run_title += f" (Run #{idx+1}"
+            if idx == 0:
+                run_title += " - Latest"
+            run_title += ")"
+        run_title += "[/bold cyan]"
+
+        console.print(run_title)
+        
+        # Capitalize the CLI used (e.g. claude -> Claude, antigravity -> Antigravity)
+        cli_raw = run.get("cli_used", "N/A")
+        cli_display = cli_raw.capitalize() if isinstance(cli_raw, str) else str(cli_raw)
+
+        console.print(f"Timestamp            : [muted]{run.get('timestamp', 'N/A')}[/muted]")
+        console.print(f"Repository           : [white]{run.get('repo_name', 'N/A')}[/white]")
+        console.print(f"AI CLI               : [white]{cli_display}[/white]")
+        console.print()
+
+        # Tokens section
+        console.print("[bold]Estimated Tokens[/bold]")
+        console.print("[dim]────────────────────────[/dim]")
+
+        red_abs = run.get("reduction_tokens", 0)
+        red_pct = run.get("reduction_pct", 0.0)
+
+        if red_abs <= 0:
+            console.print("[yellow]No meaningful token reduction for this repository.[/yellow]")
+        else:
+            console.print(f"Original             : [white]{run.get('original_tokens', 0):,}[/white]")
+            console.print(f"Optimized            : [white]{run.get('optimized_tokens', 0):,}[/white]")
+            console.print(f"Saved                : [green]{red_abs:,}[/green]")
+            console.print(f"Reduction            : [green]{red_pct:.1f}%[/green]")
+        console.print()
+
+        # Optimization section
+        console.print("[bold]Optimization[/bold]")
+        console.print("[dim]────────────────────────[/dim]")
+        console.print(f"Files Scanned        : [white]{run.get('files_scanned', 0)}[/white]")
+        console.print(f"Relevant Files       : [white]{run.get('files_count', 0)}[/white]")
+        console.print(f"Excluded Files       : [white]{run.get('excluded_files', 0)}[/white]")
+        console.print(f"Preparation Time     : [white]{run.get('prep_time', 0.0):.2f} s[/white]")
+        console.print(f"Prompt Optimization  : [white]{run.get('prompt_opt_status', 'N/A')}[/white]")
+        console.print(f"Token Optimization   : [white]{run.get('token_opt_status', 'N/A')}[/white]")
+
+        if idx < len(history) - 1:
+            console.print()
+            console.print("[dim]==================================================[/dim]")
+            console.print()
+
+
 def _version_callback(value: bool) -> None:
     if value:
         get_console().print(f"{__app_name__} [muted]v{__version__}[/muted]")
@@ -137,6 +203,7 @@ def main(
         "    [cyan]forge antigravity[/cyan]  Launch Antigravity CLI with optimized context\n"
         "    [cyan]forge start[/cyan]        Start the background context optimization daemon\n"
         "    [cyan]forge mcp[/cyan]          Start the stdio Model Context Protocol (MCP) server\n"
+        "    [cyan]forge stats[/cyan]        Display optimization statistics\n"
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"
         "    [cyan]forge --help[/cyan]       Show all options\n"
     )
