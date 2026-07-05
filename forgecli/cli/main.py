@@ -54,6 +54,11 @@ app.command(
     help="Launch CommandCode CLI with Forge prompt + token optimization.",
     context_settings=commands_wrappers._WRAPPER_SETTINGS,
 )(commands_wrappers.commandcode_cmd)
+app.command(
+    "antigravity",
+    help="Launch Antigravity CLI with Forge prompt + token optimization.",
+    context_settings=commands_wrappers._WRAPPER_SETTINGS,
+)(commands_wrappers.antigravity_cmd)
 
 
 @app.command("start", help="Start the long-running Forge Context Runtime daemon.")
@@ -129,6 +134,7 @@ def main(
         "    [cyan]forge cursor[/cyan]       Launch Cursor CLI with optimized context\n"
         "    [cyan]forge opencode[/cyan]     Launch OpenCode CLI with optimized context\n"
         "    [cyan]forge commandcode[/cyan]  Launch CommandCode CLI with optimized context\n"
+        "    [cyan]forge antigravity[/cyan]  Launch Antigravity CLI with optimized context\n"
         "    [cyan]forge start[/cyan]        Start the background context optimization daemon\n"
         "    [cyan]forge mcp[/cyan]          Start the stdio Model Context Protocol (MCP) server\n"
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"

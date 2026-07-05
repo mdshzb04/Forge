@@ -47,6 +47,11 @@ WRAPPERS: dict[str, WrapperSpec] = {
         binary="commandcode",
         install_hint="Install CommandCode CLI: https://commandcode.ai/",
     ),
+    "antigravity": WrapperSpec(
+        name="Antigravity CLI",
+        binary="antigravity",
+        install_hint="Install Antigravity CLI",
+    ),
 }
 
 

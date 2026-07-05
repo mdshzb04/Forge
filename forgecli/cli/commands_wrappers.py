@@ -60,8 +60,18 @@ def commandcode_cmd(
     launch_wrapper("commandcode", list(ctx.args), path=Path(path), force_prepare=refresh)
 
 
+def antigravity_cmd(
+    ctx: typer.Context,
+    path: str = typer.Option(".", "--path", "-p", help="Project root."),
+    refresh: bool = typer.Option(False, "--refresh", help="Bypass cached Forge context."),
+) -> None:
+    """Launch Antigravity CLI with Forge prompt + token optimization."""
+    launch_wrapper("antigravity", list(ctx.args), path=Path(path), force_prepare=refresh)
+
+
 __all__ = [
     "_WRAPPER_SETTINGS",
+    "antigravity_cmd",
     "claude_cmd",
     "codex_cmd",
     "commandcode_cmd",

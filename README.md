@@ -31,6 +31,7 @@ Forge provides two primary interfaces to connect with your AI coding tools:
 | `forge cursor` | Wrapper | Launch Cursor CLI with optimized context and auto-registered MCP |
 | `forge opencode` | Wrapper | Launch OpenCode CLI with optimized context and auto-registered MCP |
 | `forge commandcode` | Wrapper | Launch CommandCode CLI with optimized context and auto-registered MCP |
+| `forge antigravity` | Wrapper | Launch Antigravity CLI with optimized context and auto-registered MCP |
 | `forge mcp` | Core Runtime | Start the stdio Model Context Protocol (MCP) server |
 | `forge start` | Daemon | Start the background context optimization daemon |
 | `forge graph build` | Tool | Build a full knowledge graph via Graphify (optional) |
