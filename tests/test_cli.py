@@ -123,5 +123,46 @@ def test_graph_build_no_api_key(tmp_path: Path, monkeypatch) -> None:
     runner = CliRunner()
     result = runner.invoke(app, ["graph", "build", "-p", str(tmp_path)])
     assert result.exit_code == 1
-    assert "No API key configured" in result.output
+    assert "❌ An API key is required to build the Forge knowledge graph." in result.output
+
+
+def test_wrapper_launches_without_api_key_even_if_graphify_available(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
+
+    # Ensure no API keys are set
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+    # Create dummy source file to satisfy has_supported_source_files
+    (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
+
+    import subprocess
+    original_run = subprocess.run
+    launched = {}
+
+    def _fake_run(argv, *args, **kwargs):
+        if argv and ("/usr/bin/claude" in argv[0] or argv[0] == "claude"):
+            launched["argv"] = argv
+            class _Result:
+                returncode = 0
+            return _Result()
+        return original_run(argv, *args, **kwargs)
+
+    with (
+        patch("forgecli.runtime.wrappers.which", return_value="/usr/bin/claude"),
+        patch("forgecli.runtime.wrappers.subprocess.run", side_effect=_fake_run),
+        patch("forgecli.graph.backend_graphify.GraphifyRepositoryGraph.is_available", return_value=True),
+        patch("forgecli.graph.backend_graphify.GraphifyRepositoryGraph.build") as mock_build,
+    ):
+        runner = CliRunner()
+        result = runner.invoke(app, ["claude", "-p", str(tmp_path)], catch_exceptions=False)
+
+    assert result.exit_code == 0
+    assert launched.get("argv") in (["/usr/bin/claude"], ["claude"])
+    mock_build.assert_not_called()
+
 

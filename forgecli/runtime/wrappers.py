@@ -100,36 +100,30 @@ def launch_wrapper(
     backend = GraphifyRepositoryGraph(root=repo_root)
     if asyncio.run(backend.is_available()) and has_supported_source_files(repo_root):
         active_provider = setup_graphify_credentials(repo_root)
-        if not active_provider:
-            error(
-                "No API key configured. Run 'forge auth login' or export "
-                "OPENAI_API_KEY / ANTHROPIC_API_KEY / GEMINI_API_KEY before running 'forge graph build'."
-            )
-            raise typer.Exit(code=1)
+        if active_provider:
+            graph_json = backend.artifacts.graph_json
+            needs_build = not graph_json.exists()
+            needs_update = False
 
-        graph_json = backend.artifacts.graph_json
-        needs_build = not graph_json.exists()
-        needs_update = False
-
-        if graph_json.exists() and not force_prepare:
-            graph_mtime = graph_json.stat().st_mtime
-            for p in repo_root.rglob('*'):
-                try:
-                    parts = p.relative_to(repo_root).parts
-                    if any(part.startswith('.') or part in _SKIP_DIRS for part in parts[:-1]):
+            if graph_json.exists() and not force_prepare:
+                graph_mtime = graph_json.stat().st_mtime
+                for p in repo_root.rglob('*'):
+                    try:
+                        parts = p.relative_to(repo_root).parts
+                        if any(part.startswith('.') or part in _SKIP_DIRS for part in parts[:-1]):
+                            continue
+                        if p.is_file() and not p.name.startswith('.') and p.stat().st_mtime > graph_mtime:
+                            needs_update = True
+                            break
+                    except ValueError:
                         continue
-                    if p.is_file() and not p.name.startswith('.') and p.stat().st_mtime > graph_mtime:
-                        needs_update = True
-                        break
-                except ValueError:
-                    continue
 
-            if force_prepare or needs_build:
-                info("Building repository knowledge graph...")
-                asyncio.run(backend.build(force=force_prepare))
-            elif needs_update:
-                info("Updating repository knowledge graph...")
-                asyncio.run(backend.update_graph())
+                if force_prepare or needs_build:
+                    info("Building repository knowledge graph...")
+                    asyncio.run(backend.build(force=force_prepare))
+                elif needs_update:
+                    info("Updating repository knowledge graph...")
+                    asyncio.run(backend.update_graph())
 
     # 3-6. Optimize context, prompts, and tokens (aggressively reusing cache)
     prepared = prepare_runtime_sync(repo_root, force=force_prepare, quiet=False)

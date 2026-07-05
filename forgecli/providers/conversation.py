@@ -69,8 +69,7 @@ def greeting_reply(text: str) -> str:
 def offline_build_notice() -> str:
     """Message returned when a build is requested without a configured provider."""
     return (
-        "No AI provider is configured. Set OPENAI_API_KEY, ANTHROPIC_API_KEY, "
-        "or GOOGLE_API_KEY (or run `forge auth login`) and retry, "
+        "No AI provider is configured. Configure a provider and retry, "
         "or pass `--mock` for offline mode."
     )
 

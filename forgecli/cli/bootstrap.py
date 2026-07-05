@@ -263,7 +263,6 @@ def resolve_provider_and_decision(
         error(
             "No AI provider configured.\n\n"
             "Run:\n"
-            "  forge auth login\n"
             "  forge provider use <provider>\n"
             "  forge model use <model>\n\n"
             "Then retry."

@@ -95,9 +95,9 @@ def build_cmd(
     # 2. Check credentials first. Never continue without a valid provider configuration.
     active_provider = setup_graphify_credentials(path_obj)
     if not active_provider:
-        error(
-            "No API key configured. Run 'forge auth login' or export "
-            "OPENAI_API_KEY / ANTHROPIC_API_KEY / GEMINI_API_KEY before running 'forge graph build'."
+        get_console().print(
+            "❌ An API key is required to build the Forge knowledge graph.\n\n"
+            "Configure an API key in your Forge configuration and try again."
         )
         raise typer.Exit(code=1)
 
