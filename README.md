@@ -4,6 +4,12 @@ Forge is an AI optimization runtime. It prepares your repository context at ligh
 
 Install:
 
+**Development:**
+```bash
+uv tool install .
+```
+
+**Release:**
 ```bash
 uv tool install forgectx
 ```

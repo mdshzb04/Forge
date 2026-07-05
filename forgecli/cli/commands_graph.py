@@ -96,8 +96,8 @@ def build_cmd(
     active_provider = setup_graphify_credentials(path_obj)
     if not active_provider:
         get_console().print(
-            "❌ An API key is required to build the Forge knowledge graph.\n\n"
-            "Configure an API key in your Forge configuration and try again."
+            "❌ API key required.\n\n"
+            "Forge Graph requires an AI provider API key before a knowledge graph can be built."
         )
         raise typer.Exit(code=1)
 
