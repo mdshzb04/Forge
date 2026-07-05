@@ -63,6 +63,10 @@ def launch_wrapper(
         error(f"Unknown wrapper: {wrapper_id}")
         raise typer.Exit(code=1)
 
+    if extra_args:
+        error("Passing prompts or extra arguments to wrapper commands is not supported. Please run the command without arguments to launch the interactive CLI.")
+        raise typer.Exit(code=1)
+
     binary_path = which(spec.binary)
     if binary_path is None and wrapper_id == "commandcode":
         # Check alternative binary names for commandcode

@@ -228,3 +228,16 @@ def test_mcp_auto_configuration(tmp_path: Path, monkeypatch) -> None:
     # Verify project-local config files
     assert (mock_repo / ".cursor" / "mcp.json").exists()
     assert (mock_repo / ".mcp.json").exists()
+
+
+def test_wrapper_rejects_prompts_and_extra_arguments(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
+
+    with patch("forgecli.runtime.wrappers.which", return_value="/usr/bin/claude"):
+        runner = CliRunner()
+        result = runner.invoke(app, ["claude", "write code for me"], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert "not supported" in result.output
+
