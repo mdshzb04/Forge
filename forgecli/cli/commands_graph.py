@@ -133,6 +133,18 @@ def build_cmd(
             for label, value in result.artifacts.items():
                 get_console().print(f"  [muted]{label}:[/muted] {to_privacy_path(value)}")
             success("Graph built.")
+
+            try:
+                from forgecli.utils.stats import record_graph_build_stats
+
+                record_graph_build_stats(
+                    repo_root=backend.root,
+                    build_time=build_duration,
+                    nodes=len(snapshot.nodes),
+                    edges=len(snapshot.edges),
+                )
+            except Exception:
+                pass
         except Exception as exc:
             error(f"Graph build failed: {exc}")
             raise typer.Exit(code=1) from exc

@@ -42,8 +42,34 @@ def count_files_in_layout(context_text: str) -> int:
 
 
 def count_total_files(root: Path) -> int:
-    """Recursively count all non-hidden, non-skipped files in the repository."""
-    skip_dirs = {
+    """Recursively count all supported source files in the repository."""
+    supported_exts = {
+        ".py",
+        ".js",
+        ".ts",
+        ".jsx",
+        ".tsx",
+        ".go",
+        ".rs",
+        ".c",
+        ".cpp",
+        ".cc",
+        ".h",
+        ".hpp",
+        ".java",
+        ".rb",
+        ".php",
+        ".cs",
+        ".html",
+        ".css",
+        ".sh",
+        ".md",
+        ".toml",
+        ".json",
+        ".yaml",
+        ".yml",
+    }
+    ignored_dirs = {
         ".git",
         ".venv",
         "__pycache__",
@@ -57,13 +83,20 @@ def count_total_files(root: Path) -> int:
         ".ruff_cache",
     }
     count = 0
+    if not root.exists() or not root.is_dir():
+        return 0
     try:
         for p in root.rglob("*"):
             try:
                 rel = p.relative_to(root)
-                if any(part.startswith(".") or part in skip_dirs for part in rel.parts[:-1]):
+                parts = rel.parts
+                if any(part.startswith(".") or part in ignored_dirs for part in parts[:-1]):
                     continue
-                if p.is_file() and not p.name.startswith("."):
+                if (
+                    p.is_file()
+                    and not p.name.startswith(".")
+                    and p.suffix.lower() in supported_exts
+                ):
                     count += 1
             except (ValueError, OSError):
                 continue
@@ -107,15 +140,34 @@ def record_wrapper_stats(
         prompt_opt_status = "Enabled" if is_reduced else "Disabled"
         token_opt_status = "Enabled" if is_reduced else "Disabled"
 
-        files_scanned = count_total_files(repo_root)
+        # Performance check: avoid expensive walk over filesystem if cached value exists in history
+        files_scanned = 0
+        if prepared.from_cache:
+            history = get_stats_history()
+            for run in history:
+                if run.get("repo_name") == repo_root.name and run.get("files_scanned"):
+                    files_scanned = run["files_scanned"]
+                    break
+
+        if files_scanned == 0:
+            files_scanned = count_total_files(repo_root)
+
         relevant_files = count_files_in_layout(optimized_context)
+        files_scanned = max(files_scanned, relevant_files)
         excluded_files = max(0, files_scanned - relevant_files)
 
         kg_cache = (
             "Cache Hit" if (repo_root / "graphify-out" / "graph.json").is_file() else "Cache Miss"
         )
-        cache_status = "Cache Hit" if prepared.from_cache else "Cache Miss"
+        cache_status = "HIT" if prepared.from_cache else "MISS"
         graph_build_time = get_graph_build_time(repo_root)
+
+        if prepared.from_cache:
+            status = "Cache Reused"
+        elif is_reduced:
+            status = "Optimized Successfully"
+        else:
+            status = "No optimization required"
 
         stats_data = {
             "cli_used": wrapper_id,
@@ -133,6 +185,7 @@ def record_wrapper_stats(
             "prompt_opt_status": prompt_opt_status,
             "token_opt_status": token_opt_status,
             "cache_status": cache_status,
+            "status": status,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
@@ -160,6 +213,63 @@ def record_wrapper_stats(
 
     except Exception:
         # Prevent any stats failure from interrupting/slowing the CLI execution
+        pass
+
+
+def record_graph_build_stats(
+    repo_root: Path,
+    build_time: float,
+    nodes: int,
+    edges: int,
+) -> None:
+    """Record statistics for a completed knowledge graph build."""
+    try:
+        files_scanned = count_total_files(repo_root)
+        files_scanned = max(files_scanned, nodes)
+
+        stats_data = {
+            "cli_used": "graph",
+            "repo_name": repo_root.name,
+            "kg_cache": "Cache Hit",
+            "prep_time": 0.0,
+            "graph_build_time": build_time,
+            "original_tokens": 0,
+            "optimized_tokens": 0,
+            "reduction_tokens": 0,
+            "reduction_pct": 0.0,
+            "files_scanned": files_scanned,
+            "files_count": nodes,
+            "excluded_files": max(0, files_scanned - nodes),
+            "prompt_opt_status": "Disabled",
+            "token_opt_status": "Disabled",
+            "cache_status": "MISS",
+            "status": "Graph Built",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+        # Save to ProjectPaths.data_dir / "stats_history.json"
+        paths = ProjectPaths.from_env()
+        paths.ensure()
+        stats_file = paths.data_dir / "stats_history.json"
+
+        history = []
+        if stats_file.exists():
+            try:
+                with open(stats_file, encoding="utf-8") as f:
+                    history = json.load(f)
+            except Exception:
+                pass
+
+        if not isinstance(history, list):
+            history = []
+
+        history.insert(0, stats_data)
+        history = history[:10]  # Maintain only the last 10 runs
+
+        with open(stats_file, "w", encoding="utf-8") as f:
+            json.dump(history, f, indent=2, ensure_ascii=False)
+
+    except Exception:
         pass
 
 

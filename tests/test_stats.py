@@ -66,7 +66,7 @@ def test_record_and_get_stats_history(tmp_path: Path, monkeypatch) -> None:
     assert history[0]["cli_used"] == "cli_11"
     assert history[0]["repo_name"] == tmp_path.name
     assert history[0]["files_count"] == 2
-    assert history[0]["cache_status"] == "Cache Miss"
+    assert history[0]["cache_status"] == "MISS"
 
 
 def test_stats_cli_no_runs(tmp_path: Path, monkeypatch) -> None:
@@ -105,11 +105,11 @@ def test_stats_cli_with_runs(tmp_path: Path, monkeypatch) -> None:
     result = runner.invoke(app, ["stats"])
     assert result.exit_code == 0
     assert "Forge Optimization Report" in result.output
-    assert "AI CLI               : Claude" in result.output
-    assert "Original             :" in result.output
-    assert "Optimized            :" in result.output
-    assert "Saved                :" in result.output
-    assert "Prompt Optimization  : Enabled" in result.output
+    assert "AI CLI              : Claude" in result.output
+    assert "Estimated Original Tokens  :" in result.output
+    assert "Estimated Optimized Tokens :" in result.output
+    assert "Estimated Tokens Saved     :" in result.output
+    assert "Prompt Optimization : Enabled" in result.output
 
 
 def test_stats_shrinking_repo(tmp_path: Path, monkeypatch) -> None:
@@ -166,7 +166,7 @@ def test_stats_same_size_repo(tmp_path: Path, monkeypatch) -> None:
     runner = CliRunner()
     result = runner.invoke(app, ["stats"])
     assert result.exit_code == 0
-    assert "No meaningful token reduction for this repository." in result.output
+    assert "Repository already fits within the optimization budget." in result.output
 
 
 def test_stats_growing_repo_falls_back(tmp_path: Path, monkeypatch) -> None:
@@ -187,3 +187,30 @@ def test_stats_growing_repo_falls_back(tmp_path: Path, monkeypatch) -> None:
 
     # Should fall back to the short context
     assert prepared.context_summary == "short context"
+
+
+def test_record_graph_build_stats(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
+
+    from forgecli.utils.stats import record_graph_build_stats
+
+    record_graph_build_stats(
+        repo_root=tmp_path,
+        build_time=1.4567,
+        nodes=20,
+        edges=35,
+    )
+
+    history = get_stats_history()
+    assert len(history) == 1
+    assert history[0]["cli_used"] == "graph"
+    assert history[0]["status"] == "Graph Built"
+    assert history[0]["graph_build_time"] == 1.4567
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["stats"])
+    assert result.exit_code == 0
+    assert "Status              : ✓ Graph Built" in result.output
+    assert "Graph Build Time    : 1.457 s" in result.output

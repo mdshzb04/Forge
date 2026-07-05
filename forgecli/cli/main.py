@@ -6,6 +6,7 @@ import contextlib
 import signal
 import warnings
 from pathlib import Path
+from typing import Any
 
 import typer
 
@@ -108,6 +109,15 @@ def stats_cmd() -> None:
     console = get_console()
     console.print()
 
+    def format_precision_time(val: Any) -> str:
+        try:
+            seconds = float(val)
+            if seconds < 0.001:
+                return "<0.001 s"
+            return f"{seconds:.3f} s"
+        except (ValueError, TypeError):
+            return "N/A"
+
     for idx, run in enumerate(history):
         run_title = "[bold cyan]Forge Optimization Report"
         if len(history) > 1:
@@ -119,46 +129,88 @@ def stats_cmd() -> None:
 
         console.print(run_title)
 
-        # Capitalize the CLI used (e.g. claude -> Claude, antigravity -> Antigravity)
+        status_raw = run.get("status")
+        if not status_raw:
+            if run.get("cli_used") == "graph":
+                status_raw = "Graph Built"
+            elif "hit" in str(run.get("cache_status", "")).lower():
+                status_raw = "Cache Reused"
+            elif run.get("reduction_tokens", 0) > 0:
+                status_raw = "Optimized Successfully"
+            else:
+                status_raw = "No optimization required"
+
+        if status_raw == "Optimized Successfully":
+            status_display = "[green]✓ Optimized Successfully[/green]"
+        elif status_raw == "Cache Reused":
+            status_display = "[green]✓ Cache Reused[/green]"
+        elif status_raw == "Graph Built":
+            status_display = "[green]✓ Graph Built[/green]"
+        else:
+            status_display = "[yellow]⚠ No optimization required[/yellow]"
+
         cli_raw = run.get("cli_used", "N/A")
         cli_display = cli_raw.capitalize() if isinstance(cli_raw, str) else str(cli_raw)
 
-        console.print(f"Timestamp            : [muted]{run.get('timestamp', 'N/A')}[/muted]")
-        console.print(f"Repository           : [white]{run.get('repo_name', 'N/A')}[/white]")
-        console.print(f"AI CLI               : [white]{cli_display}[/white]")
+        console.print(f"Status              : {status_display}")
+        console.print(f"Repository          : [white]{run.get('repo_name', 'N/A')}[/white]")
+        console.print(f"AI CLI              : [white]{cli_display}[/white]")
         console.print()
 
-        # Tokens section
-        console.print("[bold]Estimated Tokens[/bold]")
+        # Estimated Context section
+        console.print("[bold]Estimated Context[/bold]")
         console.print("[dim]────────────────────────[/dim]")
 
         red_abs = run.get("reduction_tokens", 0)
         red_pct = run.get("reduction_pct", 0.0)
 
         if red_abs <= 0:
-            console.print("[yellow]No meaningful token reduction for this repository.[/yellow]")
+            console.print(
+                "[yellow]Repository already fits within the optimization budget.[/yellow]"
+            )
         else:
             console.print(
-                f"Original             : [white]{run.get('original_tokens', 0):,}[/white]"
+                f"Estimated Original Tokens  : [white]{run.get('original_tokens', 0):,}[/white]"
             )
             console.print(
-                f"Optimized            : [white]{run.get('optimized_tokens', 0):,}[/white]"
+                f"Estimated Optimized Tokens : [white]{run.get('optimized_tokens', 0):,}[/white]"
             )
-            console.print(f"Saved                : [green]{red_abs:,}[/green]")
-            console.print(f"Reduction            : [green]{red_pct:.1f}%[/green]")
+            console.print(f"Estimated Tokens Saved     : [green]{red_abs:,}[/green]")
+            console.print(f"Estimated Reduction        : [green]{red_pct:.1f}%[/green]")
         console.print()
 
         # Optimization section
         console.print("[bold]Optimization[/bold]")
         console.print("[dim]────────────────────────[/dim]")
-        console.print(f"Files Scanned        : [white]{run.get('files_scanned', 0)}[/white]")
-        console.print(f"Relevant Files       : [white]{run.get('files_count', 0)}[/white]")
-        console.print(f"Excluded Files       : [white]{run.get('excluded_files', 0)}[/white]")
-        console.print(f"Preparation Time     : [white]{run.get('prep_time', 0.0):.2f} s[/white]")
+
+        prompt_opt_raw = run.get("prompt_opt_status", "Disabled")
+        prompt_opt_display = "Enabled" if "enable" in str(prompt_opt_raw).lower() else "Disabled"
+
+        token_opt_raw = run.get("token_opt_status", "Disabled")
+        token_opt_display = "Enabled" if "enable" in str(token_opt_raw).lower() else "Disabled"
+
+        cache_status_raw = run.get("cache_status", "MISS")
+        cache_status_display = "HIT" if "hit" in str(cache_status_raw).lower() else "MISS"
+
+        console.print(f"Files Scanned       : [white]{run.get('files_scanned', 0)}[/white]")
+        console.print(f"Relevant Files      : [white]{run.get('files_count', 0)}[/white]")
+        console.print(f"Excluded Files      : [white]{run.get('excluded_files', 0)}[/white]")
+        console.print(f"Knowledge Graph     : [white]{run.get('kg_cache', 'Cache Miss')}[/white]")
         console.print(
-            f"Prompt Optimization  : [white]{run.get('prompt_opt_status', 'N/A')}[/white]"
+            f"Preparation Time    : [white]{format_precision_time(run.get('prep_time', 0.0))}[/white]"
         )
-        console.print(f"Token Optimization   : [white]{run.get('token_opt_status', 'N/A')}[/white]")
+
+        graph_build = run.get("graph_build_time")
+        if graph_build is not None:
+            console.print(
+                f"Graph Build Time    : [white]{format_precision_time(graph_build)}[/white]"
+            )
+
+        console.print("Context Budget      : [white]8,000 tokens[/white]")
+        console.print(f"Prompt Optimization : [white]{prompt_opt_display}[/white]")
+        console.print(f"Token Optimization  : [white]{token_opt_display}[/white]")
+        console.print(f"Cache Status        : [white]{cache_status_display}[/white]")
+        console.print(f"Timestamp           : [muted]{run.get('timestamp', 'N/A')}[/muted]")
 
         if idx < len(history) - 1:
             console.print()
