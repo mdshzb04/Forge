@@ -21,8 +21,8 @@ import httpx
 import uvicorn
 from fastapi import FastAPI
 
-from forgecli.cli.commands_graph import setup_graphify_credentials
-from forgecli.graph.backend_graphify import GraphifyRepositoryGraph
+from forgecli.cli.commands_graph import setup_forgegraph_credentials
+from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
 from forgecli.optimizer.chunker import Chunker
 from forgecli.runtime.prepare import prepare_runtime_sync, resolve_repo_root
 
@@ -44,7 +44,7 @@ def get_recursive_fingerprint(root: Path) -> str:
         "dist",
         "build",
         ".forge",
-        "graphify-out",
+        "forgegraph-out",
         ".mypy_cache",
         ".pytest_cache",
         ".ruff_cache",
@@ -68,7 +68,7 @@ def get_recursive_fingerprint(root: Path) -> str:
 
 
 def extract_symbols_fallback(root: Path) -> list[dict[str, Any]]:
-    """Fallback class and function parser for Python and JS/TS when graphify is not available."""
+    """Fallback class and function parser for Python and JS/TS when the binary is not available."""
     symbols = []
     skip_dirs = {
         ".git",
@@ -78,7 +78,7 @@ def extract_symbols_fallback(root: Path) -> list[dict[str, Any]]:
         "dist",
         "build",
         ".forge",
-        "graphify-out",
+        "forgegraph-out",
         ".mypy_cache",
         ".pytest_cache",
         ".ruff_cache",
@@ -166,7 +166,7 @@ def extract_symbols_fallback(root: Path) -> list[dict[str, Any]]:
 
 
 def extract_dependencies_fallback(root: Path) -> list[dict[str, Any]]:
-    """Fallback import statements parser for Python and JS/TS when graphify is not available."""
+    """Fallback import statements parser for Python and JS/TS when the binary is not available."""
     dependencies = []
     skip_dirs = {
         ".git",
@@ -176,7 +176,7 @@ def extract_dependencies_fallback(root: Path) -> list[dict[str, Any]]:
         "dist",
         "build",
         ".forge",
-        "graphify-out",
+        "forgegraph-out",
         ".mypy_cache",
         ".pytest_cache",
         ".ruff_cache",
@@ -282,7 +282,7 @@ class RepoWatcher(threading.Thread):
             "dist",
             "build",
             ".forge",
-            "graphify-out",
+            "forgegraph-out",
             ".mypy_cache",
             ".pytest_cache",
             ".ruff_cache",
@@ -331,14 +331,14 @@ class RepoWatcher(threading.Thread):
                 pass
 
         # 4. Graph snapshot
-        backend = GraphifyRepositoryGraph(root=self.root)
+        backend = ForgeRepositoryGraph(root=self.root)
         self.graph_snapshot = None
 
         loop = asyncio.new_event_loop()
         try:
-            is_graphify = loop.run_until_complete(backend.is_available())
-            if is_graphify:
-                active_provider = setup_graphify_credentials(self.root)
+            is_forgegraph = loop.run_until_complete(backend.is_available())
+            if is_forgegraph:
+                active_provider = setup_forgegraph_credentials(self.root)
                 if active_provider:
                     loop.run_until_complete(backend.update_graph())
                     self.graph_snapshot = loop.run_until_complete(backend.load())

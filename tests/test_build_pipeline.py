@@ -199,16 +199,16 @@ def test_ponytail_stage_works_without_optimizer() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Graphify retrieval stage
+# ForgeGraph retrieval stage
 # ---------------------------------------------------------------------------
 
 
-def test_graphify_retrieval_uses_snapshot(tmp_path: Path) -> None:
-    from forgecli.build.retrieval import graphify_retrieval
-    from forgecli.graph.backend_graphify import GraphifyRepositoryGraph
+def test_forgegraph_retrieval_uses_snapshot(tmp_path: Path) -> None:
+    from forgecli.build.retrieval import forgegraph_retrieval
+    from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
     from forgecli.graph.repository import GraphEdge, GraphNode, GraphSnapshot
 
-    graph = GraphifyRepositoryGraph(root=tmp_path)
+    graph = ForgeRepositoryGraph(root=tmp_path)
     snapshot = GraphSnapshot(
         root=str(tmp_path),
         nodes=(
@@ -228,16 +228,16 @@ def test_graphify_retrieval_uses_snapshot(tmp_path: Path) -> None:
 
     context = BuildContext(prompt="how does auth.py work?", root=tmp_path)
     context.extras["graph"] = _GraphProxy()
-    out = asyncio.run(graphify_retrieval(context))
+    out = asyncio.run(forgegraph_retrieval(context))
     assert "auth.py" in out.retrieval
     assert "boring.py" not in out.retrieval
 
 
-def test_graphify_retrieval_handles_missing_graph(tmp_path: Path) -> None:
-    from forgecli.build.retrieval import graphify_retrieval
+def test_forgegraph_retrieval_handles_missing_graph(tmp_path: Path) -> None:
+    from forgecli.build.retrieval import forgegraph_retrieval
 
     context = BuildContext(prompt="anything", root=tmp_path)
-    out = asyncio.run(graphify_retrieval(context))
+    out = asyncio.run(forgegraph_retrieval(context))
     assert out.retrieval == ""
 
 

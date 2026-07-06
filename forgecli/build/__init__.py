@@ -1,4 +1,4 @@
-"""Build pipeline: Graphify retrieval -> Ponytail -> LLM -> diff -> apply -> test -> summary.
+"""Build pipeline: ForgeGraph retrieval -> Ponytail -> LLM -> diff -> apply -> test -> summary.
 
 Each stage is a small async function that takes a :class:`BuildContext` and
 mutates it, returning the same context. The :class:`BuildPipeline` runs the

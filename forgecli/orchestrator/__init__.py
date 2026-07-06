@@ -24,7 +24,7 @@ from typing import Any
 from forgecli.build.apply import apply_diff
 from forgecli.build.diff_extract import diff_extraction
 from forgecli.build.llm import llm_call
-from forgecli.build.retrieval import graphify_retrieval, needs_repository_context
+from forgecli.build.retrieval import forgegraph_retrieval, needs_repository_context
 from forgecli.build.summarize import summarize
 from forgecli.core.context import AppContext
 from forgecli.plugins import (
@@ -151,14 +151,14 @@ class BuildWorkflow(Workflow):
         self,
         *,
         provider: Provider,
-        graphify=None,
+        forgegraph=None,
         optimizer=None,
         test_command: str | None = None,
         auto_fix: bool = True,
         max_fix_attempts: int = 2,
     ) -> None:
         self._provider = provider
-        self._graphify = graphify
+        self._forgegraph = forgegraph
         self._optimizer = optimizer
         self._test_command = test_command
         self._auto_fix = auto_fix
@@ -174,9 +174,9 @@ class BuildWorkflow(Workflow):
         build_context = BuildContext(prompt=context.prompt, root=target, decision=decision)
         build_context.extras.update(context.extras.get("build_extras", {}))
         build_context.extras["provider"] = self._provider
-        use_graphify = self._graphify is not None and needs_repository_context(context.prompt)
-        if use_graphify:
-            build_context.extras["graph"] = self._graphify
+        use_forgegraph = self._forgegraph is not None and needs_repository_context(context.prompt)
+        if use_forgegraph:
+            build_context.extras["graph"] = self._forgegraph
         if self._optimizer is not None:
             build_context.extras["optimizer"] = self._optimizer
         if self._test_command is not None:
@@ -189,8 +189,8 @@ class BuildWorkflow(Workflow):
             ("run-tests", _run_tests),
             ("summarize", summarize),
         ]
-        if use_graphify:
-            stages.insert(0, ("graphify-retrieval", graphify_retrieval))
+        if use_forgegraph:
+            stages.insert(0, ("forgegraph-retrieval", forgegraph_retrieval))
         pipeline = BuildPipeline(stages)
         result = await pipeline.run(build_context)
 
@@ -427,7 +427,7 @@ class AskWorkflow(Workflow):
     async def run(self, context: PluginContext) -> dict[str, Any]:
         from forgecli.build import BuildContext, BuildPipeline
         from forgecli.build.llm import llm_call
-        from forgecli.build.retrieval import graphify_retrieval
+        from forgecli.build.retrieval import forgegraph_retrieval
         from forgecli.build.summarize import summarize
         from forgecli.providers.conversation import is_greeting
 
@@ -440,7 +440,7 @@ class AskWorkflow(Workflow):
             stages.extend([("llm", llm_call), ("summarize", summarize)])
         else:
             if _asks_for_repo_context(context.prompt):
-                stages.append(("graphify-retrieval", graphify_retrieval))
+                stages.append(("forgegraph-retrieval", forgegraph_retrieval))
             stages.extend(
                 [
                     ("llm", llm_call),
@@ -614,7 +614,7 @@ class ExplainWorkflow(Workflow):
     async def run(self, context: PluginContext) -> dict[str, Any]:
         from forgecli.build import BuildContext, BuildPipeline
         from forgecli.build.llm import llm_call
-        from forgecli.build.retrieval import graphify_retrieval
+        from forgecli.build.retrieval import forgegraph_retrieval
         from forgecli.build.summarize import summarize
 
         prompt = f"Explain the node, file, or symbol: {context.prompt}"
@@ -624,7 +624,7 @@ class ExplainWorkflow(Workflow):
 
         pipeline = BuildPipeline(
             [
-                ("graphify-retrieval", graphify_retrieval),
+                ("forgegraph-retrieval", forgegraph_retrieval),
                 ("llm", llm_call),
                 ("summarize", summarize),
             ]

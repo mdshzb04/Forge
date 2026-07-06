@@ -143,7 +143,7 @@ class Spec:
         return f"{self.op}{self.version}"
 
 
-# A spec string like ``"^1.0 ; extras: graphify"`` is a comma-separated
+# A spec string like ``"^1.0 ; extras: forgegraph"`` is a comma-separated
 # set of Spec clauses plus an optional ``;extras:...`` annotation.
 _SPEC_SEP = ";"
 

@@ -1,10 +1,10 @@
-"""Adapter that exposes a :class:`RepositoryGraph` backed by Graphify.
+"""Adapter that exposes a :class:`RepositoryGraph` backed by ForgeGraph.
 
-This module owns the translation from Graphify's on-disk ``graph.json``
+This module owns the translation from ForgeGraph's on-disk ``graph.json``
 into the typed :class:`GraphSnapshot` returned by
 :class:`forgecli.graph.repository.RepositoryGraph`. It also routes the
 high-level operations (``query``, ``explain``, ``shortest_path``,
-``affected``) to the corresponding Graphify CLI subcommands.
+``affected``) to the corresponding ForgeGraph CLI subcommands.
 """
 
 from __future__ import annotations
@@ -15,10 +15,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from forgecli.core.errors import ConfigError
-from forgecli.graph.graphify import (
-    GraphifyArtifacts,
-    GraphifyClient,
-    GraphifyNotFoundError,
+from forgecli.graph.forgegraph import (
+    ForgeGraphArtifacts,
+    ForgeGraphClient,
+    ForgeGraphNotFoundError,
 )
 from forgecli.graph.repository import (
     BuildResult,
@@ -38,21 +38,21 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 _CITED_NODE_RE = re.compile(r"\b([A-Za-z0-9_./-]+(?:\.[A-Za-z0-9_./-]+)*)")
 
 
-class GraphifyRepositoryGraph(RepositoryGraph):
-    """A :class:`RepositoryGraph` powered by the Graphify CLI."""
+class ForgeRepositoryGraph(RepositoryGraph):
+    """A :class:`RepositoryGraph` powered by the ForgeGraph CLI."""
 
-    name = "graphify"
+    name = "forgegraph"
 
     def __init__(
         self,
         root: Path,
         *,
-        client: GraphifyClient | None = None,
-        artifacts: GraphifyArtifacts | None = None,
+        client: ForgeGraphClient | None = None,
+        artifacts: ForgeGraphArtifacts | None = None,
     ) -> None:
         self._root = Path(root).resolve()
-        self._client = client or GraphifyClient()
-        self._artifacts = artifacts or GraphifyArtifacts.for_root(self._root)
+        self._client = client or ForgeGraphClient()
+        self._artifacts = artifacts or ForgeGraphArtifacts.for_root(self._root)
         self._cached: GraphSnapshot | None = None
 
     @property
@@ -60,11 +60,11 @@ class GraphifyRepositoryGraph(RepositoryGraph):
         return self._root
 
     @property
-    def client(self) -> GraphifyClient:
+    def client(self) -> ForgeGraphClient:
         return self._client
 
     @property
-    def artifacts(self) -> GraphifyArtifacts:
+    def artifacts(self) -> ForgeGraphArtifacts:
         return self._artifacts
 
     # ------------------------------------------------------------------
@@ -76,7 +76,7 @@ class GraphifyRepositoryGraph(RepositoryGraph):
 
     async def install_hint(self) -> str:
         return (
-            "Graphify is not installed.\n"
+            "ForgeGraph binary is not installed.\n"
             "Install it with:  uv tool install graphifyy\n"
             "Docs:            https://graphifylabs.ai/"
         )
@@ -183,13 +183,7 @@ class GraphifyRepositoryGraph(RepositoryGraph):
         )
 
     async def shortest_path(self, a: str, b: str) -> list[GraphEdge]:
-        """Return the shortest edge path between ``a`` and ``b``.
-
-        Implementation: the Graphify CLI emits a human-readable path; we
-        reconstruct the edge list from the in-memory snapshot by BFS
-        over node labels, then optionally cross-check against the CLI
-        output for confirmation.
-        """
+        """Return the shortest edge path between ``a`` and ``b``."""
         snapshot = await self._ensure_loaded()
         ids_a = _resolve_label(a, snapshot)
         ids_b = _resolve_label(b, snapshot)
@@ -197,7 +191,7 @@ class GraphifyRepositoryGraph(RepositoryGraph):
             return []
         edges = _bfs_shortest_path(snapshot, ids_a[0], ids_b[0])
         if not edges:
-            # Fall back to invoking the Graphify CLI for confirmation.
+            # Fall back to invoking the CLI for confirmation.
             await self._client.path(self._root, a, b, graph_path=self._artifacts.graph_json)
         return edges
 
@@ -212,7 +206,7 @@ class GraphifyRepositoryGraph(RepositoryGraph):
         ids = _resolve_label(target, snapshot)
         if not ids:
             return []
-        # Always call Graphify for the authoritative traversal text.
+        # Always call CLI for the authoritative traversal text.
         await self._client.affected(
             self._root,
             target,
@@ -445,4 +439,4 @@ def _extract_cited_nodes(answer: str, snapshot: GraphSnapshot) -> list[str]:
     return cited
 
 
-__all__ = ["GraphifyNotFoundError", "GraphifyRepositoryGraph"]
+__all__ = ["ForgeGraphNotFoundError", "ForgeRepositoryGraph"]

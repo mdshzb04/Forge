@@ -58,7 +58,7 @@ def test_wrapper_prepares_context_and_launches(tmp_path: Path, monkeypatch) -> N
     monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
     monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
-    monkeypatch.setenv("FORGECLI_GRAPHIFY_BIN", "nonexistent-graphify")
+    monkeypatch.setenv("FORGECLI_FORGEGRAPH_BIN", "nonexistent-forgegraph")
 
     import subprocess
     from typing import Any

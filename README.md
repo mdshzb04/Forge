@@ -9,9 +9,12 @@ The primary purpose of Forge is to construct an optimized representation of a co
 Forge prepares repository-aware context for AI coding assistants using knowledge graph generation, intelligent context selection, prompt optimization, token optimization, and aggressive caching. 
 
 Forge is powered internally by three integrated optimization engines:
-1. **Graphify** (Knowledge graph and symbol index generator)
+1. **ForgeGraph** (Knowledge graph and symbol index generator)
 2. **Ponytail** (Intelligent YAGNI context selector and prompt optimizer)
 3. **Caveman** (Token-efficient communication and brevity optimizer)
+
+### Design Philosophy & Inspiration
+Forge combines original runtime infrastructure with ideas inspired by the broader open-source AI tooling ecosystem. While some optimization concepts draw inspiration from existing projects, Forge's architecture, background caching daemon, editor wrappers, and local code parser are independently developed. For details, see [CREDITS.md](CREDITS.md).
 
 ---
 

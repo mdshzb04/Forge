@@ -1,6 +1,6 @@
-"""Auto-generate project documentation from the Graphify knowledge graph.
+"""Auto-generate project documentation from the ForgeGraph knowledge graph.
 
-The generator walks the project, asks Graphify for a snapshot, and
+The generator walks the project, asks ForgeGraph for a snapshot, and
 emits a Markdown report at ``docs/OVERVIEW.md`` with:
 
 * a module-by-module summary derived from the graph nodes;
@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 from forgecli.core.context import AppContext
-from forgecli.graph.backend_graphify import GraphifyRepositoryGraph
+from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
 from forgecli.utils.fs import ensure_dir
 
 _INTRO_TEMPLATE = """\
@@ -26,7 +26,7 @@ _INTRO_TEMPLATE = """\
 _Generated on {today} by `forge docs`._
 
 This document is a starting point: it summarises the module layout
-and lists every symbol the Graphify knowledge graph knows about.
+and lists every symbol the ForgeGraph knowledge graph knows about.
 For deeper documentation, run `forge plan`, `forge build`, or
 `forge explain` on individual modules.
 
@@ -39,7 +39,7 @@ def generate_docs(context: AppContext, *, output: Path | None = None) -> Path:
     target = output or (root / "docs" / "OVERVIEW.md")
     ensure_dir(target.parent)
 
-    graph = GraphifyRepositoryGraph(root=root)
+    graph = ForgeRepositoryGraph(root=root)
     snapshot = graph._cached  # may be None; load() if needed.
 
     # Build a tiny ad-hoc snapshot by re-walking the project.
@@ -66,9 +66,9 @@ def generate_docs(context: AppContext, *, output: Path | None = None) -> Path:
 def _walk_nodes(root: Path) -> list[dict[str, object]]:
     """Build a small node list from the project tree.
 
-    This is a *fallback* when Graphify hasn't been run. The docs
+    This is a *fallback* when ForgeGraph hasn't been run. The docs
     generator is meant to be cheap and offline; it doesn't shell out
-    to the Graphify CLI.
+    to the ForgeGraph CLI.
     """
     nodes: list[dict[str, object]] = []
     for path in sorted(root.rglob("*.py")):

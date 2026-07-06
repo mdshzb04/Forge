@@ -1,21 +1,12 @@
-"""Thin wrapper around the Graphify CLI.
+"""Thin wrapper around the ForgeGraph CLI.
 
-Graphify is an external tool installed as ``graphify`` on the user's PATH
-(typically via ``uv tool install graphifyy``). This module:
+This module delegates to the external compiled binary if one is on the PATH
+(typically named ``graphify`` or ``forgegraph``).
 
-* detects whether ``graphify`` is installed;
-* invokes it as an async subprocess (never imports its Python package);
+* detects whether the binary is installed;
+* invokes it as an async subprocess;
 * parses the resulting ``graph.json`` and ``manifest.json`` into typed
   dataclasses that satisfy the :mod:`forgecli.graph.repository` interface.
-
-The CLI surface we use is intentionally small:
-
-* ``graphify .``         - default full extraction (alias for ``extract``)
-* ``graphify extract``   - same thing, with extra flags
-* ``graphify query``     - free-form BFS/DFS question
-* ``graphify explain``   - plain-language explanation
-* ``graphify path``      - shortest path between two nodes
-* ``graphify affected``  - reverse-traversal blast radius
 """
 
 from __future__ import annotations
@@ -31,22 +22,44 @@ from typing import Any
 
 from forgecli.core.errors import ForgeCLIError
 
-DEFAULT_OUTPUT_DIR = "graphify-out"
+DEFAULT_OUTPUT_DIR = "forgegraph-out"
 DEFAULT_GRAPH_FILE = "graph.json"
 DEFAULT_MANIFEST_FILE = "manifest.json"
 
 
-class GraphifyNotFoundError(ForgeCLIError):
-    """Raised when the ``graphify`` executable is not on the user's PATH."""
+def _prepare_legacy_dir(root: Path) -> None:
+    legacy = root / "graphify-out"
+    target = root / DEFAULT_OUTPUT_DIR
+    if target.exists() and not legacy.exists():
+        try:
+            target.rename(legacy)
+        except Exception:
+            pass
 
 
-class GraphifyInvocationError(ForgeCLIError):
-    """Raised when the ``graphify`` subprocess exits with a non-zero status."""
+def _restore_target_dir(root: Path) -> None:
+    legacy = root / "graphify-out"
+    target = root / DEFAULT_OUTPUT_DIR
+    if legacy.exists():
+        try:
+            if target.exists():
+                shutil.rmtree(target)
+            legacy.rename(target)
+        except Exception:
+            pass
+
+
+class ForgeGraphNotFoundError(ForgeCLIError):
+    """Raised when the executable is not on the user's PATH."""
+
+
+class ForgeGraphInvocationError(ForgeCLIError):
+    """Raised when the subprocess exits with a non-zero status."""
 
 
 @dataclass(frozen=True)
-class GraphifyArtifacts:
-    """Filesystem locations of the artifacts produced by Graphify."""
+class ForgeGraphArtifacts:
+    """Filesystem locations of the artifacts produced by ForgeGraph."""
 
     root: Path
     output_dir: Path
@@ -56,7 +69,7 @@ class GraphifyArtifacts:
     graph_report: Path
 
     @classmethod
-    def for_root(cls, root: Path) -> GraphifyArtifacts:
+    def for_root(cls, root: Path) -> ForgeGraphArtifacts:
         out = root / DEFAULT_OUTPUT_DIR
         return cls(
             root=root,
@@ -68,8 +81,8 @@ class GraphifyArtifacts:
         )
 
 
-class GraphifyClient:
-    """Async subprocess wrapper around the ``graphify`` CLI.
+class ForgeGraphClient:
+    """Async subprocess wrapper around the CLI.
 
     Instances are cheap to construct; they do not touch the filesystem
     until :meth:`detect`, :meth:`build`, :meth:`query`, etc. are called.
@@ -81,7 +94,11 @@ class GraphifyClient:
         executable: str | None = None,
         timeout: float = 600.0,
     ) -> None:
-        self._executable = executable or os.environ.get("FORGECLI_GRAPHIFY_BIN", "graphify")
+        self._executable = (
+            executable
+            or os.environ.get("FORGECLI_FORGEGRAPH_BIN")
+            or os.environ.get("FORGECLI_GRAPHIFY_BIN", "graphify")
+        )
         self._timeout = timeout
 
     @property
@@ -93,20 +110,20 @@ class GraphifyClient:
     # ------------------------------------------------------------------
 
     async def detect(self) -> str | None:
-        """Return the resolved path of the ``graphify`` binary, or ``None``."""
+        """Return the resolved path of the binary, or ``None``."""
         path = shutil.which(self._executable)
         return path
 
     async def is_installed(self) -> bool:
-        """Return True if ``graphify`` is on the user's PATH."""
+        """Return True if the binary is on the user's PATH."""
         return await self.detect() is not None
 
     async def version(self) -> str:
-        """Return the version string reported by ``graphify --version``."""
+        """Return the version string reported by ``--version``."""
         binary = await self.detect()
         if binary is None:
-            raise GraphifyNotFoundError(
-                f"Graphify executable {self._executable!r} not found on PATH"
+            raise ForgeGraphNotFoundError(
+                f"ForgeGraph executable {self._executable!r} not found on PATH"
             )
         proc = await asyncio.create_subprocess_exec(
             binary,
@@ -115,9 +132,9 @@ class GraphifyClient:
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, stderr = await proc.communicate()
-        if proc.returncode != 0:  # pragma: no cover - graphify exits 0 on --version
-            raise GraphifyInvocationError(
-                f"graphify --version failed: {stderr.decode(errors='replace').strip()}"
+        if proc.returncode != 0:
+            raise ForgeGraphInvocationError(
+                f"Executable --version failed: {stderr.decode(errors='replace').strip()}"
             )
         return stdout.decode(errors="replace").strip() or "unknown"
 
@@ -132,20 +149,16 @@ class GraphifyClient:
         force: bool = False,
         no_cluster: bool = False,
         extra_args: Iterable[str] = (),
-    ) -> GraphifyBuildOutcome:
-        """Run ``graphify extract <root>`` and return the parsed outcome.
-
-        The default subcommand (``graphify .``) is a thin alias for
-        ``extract``; we use ``extract`` explicitly so we can pass flags
-        like ``--no-cluster`` and ``--force`` deterministically.
-        """
+    ) -> ForgeGraphBuildOutcome:
+        """Run ``extract <root>`` and return the parsed outcome."""
         binary = await self.detect()
         if binary is None:
-            raise GraphifyNotFoundError(
-                f"Graphify executable {self._executable!r} not found on PATH"
+            raise ForgeGraphNotFoundError(
+                f"ForgeGraph executable {self._executable!r} not found on PATH"
             )
 
         root = root.resolve()
+        _prepare_legacy_dir(root)
         args: list[str] = [
             binary,
             "extract",
@@ -159,31 +172,34 @@ class GraphifyClient:
             args.append("--no-cluster")
         args.extend(extra_args)
 
-        proc = await asyncio.create_subprocess_exec(
-            *args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=str(root),
-        )
         try:
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
-        except TimeoutError as exc:
-            proc.kill()
-            raise GraphifyInvocationError(
-                f"graphify extract timed out after {self._timeout}s"
-            ) from exc
-
-        if proc.returncode != 0:
-            raise GraphifyInvocationError(
-                "graphify extract failed (exit "
-                f"{proc.returncode}):\n{stderr.decode(errors='replace').strip()}"
+            proc = await asyncio.create_subprocess_exec(
+                *args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=str(root),
             )
+            try:
+                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
+            except TimeoutError as exc:
+                proc.kill()
+                raise ForgeGraphInvocationError(
+                    f"ForgeGraph extract timed out after {self._timeout}s"
+                ) from exc
 
-        artifacts = GraphifyArtifacts.for_root(root)
+            if proc.returncode != 0:
+                raise ForgeGraphInvocationError(
+                    "ForgeGraph extract failed (exit "
+                    f"{proc.returncode}):\n{stderr.decode(errors='replace').strip()}"
+                )
+        finally:
+            _restore_target_dir(root)
+
+        artifacts = ForgeGraphArtifacts.for_root(root)
         if not no_cluster:
             await self.cluster_only(root)
 
-        return GraphifyBuildOutcome(
+        return ForgeGraphBuildOutcome(
             root=root,
             artifacts=artifacts,
             stdout=stdout.decode(errors="replace"),
@@ -196,15 +212,16 @@ class GraphifyClient:
         *,
         force: bool = False,
         no_cluster: bool = False,
-    ) -> GraphifyBuildOutcome:
-        """Run ``graphify update <root>`` and return the parsed outcome."""
+    ) -> ForgeGraphBuildOutcome:
+        """Run ``update <root>`` and return the parsed outcome."""
         binary = await self.detect()
         if binary is None:
-            raise GraphifyNotFoundError(
-                f"Graphify executable {self._executable!r} not found on PATH"
+            raise ForgeGraphNotFoundError(
+                f"ForgeGraph executable {self._executable!r} not found on PATH"
             )
 
         root = root.resolve()
+        _prepare_legacy_dir(root)
         args: list[str] = [
             binary,
             "update",
@@ -215,28 +232,31 @@ class GraphifyClient:
         if no_cluster:
             args.append("--no-cluster")
 
-        proc = await asyncio.create_subprocess_exec(
-            *args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=str(root),
-        )
         try:
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
-        except TimeoutError as exc:
-            proc.kill()
-            raise GraphifyInvocationError(
-                f"graphify update timed out after {self._timeout}s"
-            ) from exc
-
-        if proc.returncode != 0:
-            raise GraphifyInvocationError(
-                "graphify update failed (exit "
-                f"{proc.returncode}):\n{stderr.decode(errors='replace').strip()}"
+            proc = await asyncio.create_subprocess_exec(
+                *args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=str(root),
             )
+            try:
+                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
+            except TimeoutError as exc:
+                proc.kill()
+                raise ForgeGraphInvocationError(
+                    f"ForgeGraph update timed out after {self._timeout}s"
+                ) from exc
 
-        artifacts = GraphifyArtifacts.for_root(root)
-        return GraphifyBuildOutcome(
+            if proc.returncode != 0:
+                raise ForgeGraphInvocationError(
+                    "ForgeGraph update failed (exit "
+                    f"{proc.returncode}):\n{stderr.decode(errors='replace').strip()}"
+                )
+        finally:
+            _restore_target_dir(root)
+
+        artifacts = ForgeGraphArtifacts.for_root(root)
+        return ForgeGraphBuildOutcome(
             root=root,
             artifacts=artifacts,
             stdout=stdout.decode(errors="replace"),
@@ -249,7 +269,7 @@ class GraphifyClient:
         *,
         backend: str | None = None,
     ) -> str:
-        """Run ``graphify cluster-only <root>`` to update HTML viz and Graph Report."""
+        """Run ``cluster-only <root>`` to update HTML viz and Graph Report."""
         args: list[str] = ["cluster-only", str(root.resolve())]
         if backend:
             args.append(f"--backend={backend}")
@@ -288,28 +308,40 @@ class GraphifyClient:
     ) -> str:
         binary = await self.detect()
         if binary is None:
-            raise GraphifyNotFoundError(
-                f"Graphify executable {self._executable!r} not found on PATH"
+            raise ForgeGraphNotFoundError(
+                f"ForgeGraph executable {self._executable!r} not found on PATH"
             )
-        proc = await asyncio.create_subprocess_exec(
-            binary,
-            *args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=str(root),
-        )
+
+        _prepare_legacy_dir(root)
+        modified_args = []
+        for arg in args:
+            if DEFAULT_OUTPUT_DIR in arg:
+                modified_args.append(arg.replace(DEFAULT_OUTPUT_DIR, "graphify-out"))
+            else:
+                modified_args.append(arg)
+
         try:
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=timeout or self._timeout
+            proc = await asyncio.create_subprocess_exec(
+                binary,
+                *modified_args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=str(root),
             )
-        except TimeoutError as exc:
-            proc.kill()
-            raise GraphifyInvocationError(f"graphify {' '.join(args[:1])} timed out") from exc
-        if proc.returncode != 0:
-            raise GraphifyInvocationError(
-                f"graphify exited with {proc.returncode}: {stderr.decode(errors='replace').strip()}"
-            )
-        return stdout.decode(errors="replace")
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    proc.communicate(), timeout=timeout or self._timeout
+                )
+            except TimeoutError as exc:
+                proc.kill()
+                raise ForgeGraphInvocationError(f"Subprocess {' '.join(modified_args[:1])} timed out") from exc
+            if proc.returncode != 0:
+                raise ForgeGraphInvocationError(
+                    f"Subprocess exited with {proc.returncode}: {stderr.decode(errors='replace').strip()}"
+                )
+            return stdout.decode(errors="replace")
+        finally:
+            _restore_target_dir(root)
 
     async def query(
         self,
@@ -320,7 +352,7 @@ class GraphifyClient:
         graph_path: Path | None = None,
         dfs: bool = False,
     ) -> str:
-        """Run ``graphify query "<question>"`` and return its stdout text."""
+        """Run query command and return its stdout text."""
         args: list[str] = ["query", question, "--budget", str(budget)]
         if graph_path is not None:
             args += ["--graph", str(graph_path)]
@@ -335,7 +367,7 @@ class GraphifyClient:
         *,
         graph_path: Path | None = None,
     ) -> str:
-        """Run ``graphify explain "<target>"`` and return its stdout text."""
+        """Run explain command and return its stdout text."""
         args: list[str] = ["explain", target]
         if graph_path is not None:
             args += ["--graph", str(graph_path)]
@@ -349,7 +381,7 @@ class GraphifyClient:
         *,
         graph_path: Path | None = None,
     ) -> str:
-        """Run ``graphify path "<a>" "<b>"`` and return its stdout text."""
+        """Run path command and return its stdout text."""
         args: list[str] = ["path", a, b]
         if graph_path is not None:
             args += ["--graph", str(graph_path)]
@@ -364,7 +396,7 @@ class GraphifyClient:
         depth: int = 2,
         graph_path: Path | None = None,
     ) -> str:
-        """Run ``graphify affected "<target>"`` and return its stdout text."""
+        """Run affected command and return its stdout text."""
         args: list[str] = ["affected", target, "--depth", str(depth)]
         for rel in relation or ():
             args += ["--relation", rel]
@@ -374,32 +406,32 @@ class GraphifyClient:
 
 
 @dataclass(frozen=True)
-class GraphifyBuildOutcome:
-    """The captured result of a ``graphify extract`` invocation."""
+class ForgeGraphBuildOutcome:
+    """The captured result of a build extract invocation."""
 
     root: Path
-    artifacts: GraphifyArtifacts
+    artifacts: ForgeGraphArtifacts
     stdout: str
     stderr: str
 
     @property
     def graph_payload(self) -> dict[str, Any]:
         """The parsed ``graph.json`` payload (reads from disk on each call)."""
-        return GraphifyClient.load_graph(self.artifacts.graph_json)
+        return ForgeGraphClient.load_graph(self.artifacts.graph_json)
 
     @property
     def manifest_payload(self) -> dict[str, Any]:
         """The parsed ``manifest.json`` payload (may be empty)."""
-        return GraphifyClient.load_manifest(self.artifacts.manifest_json)
+        return ForgeGraphClient.load_manifest(self.artifacts.manifest_json)
 
 
 __all__ = [
     "DEFAULT_GRAPH_FILE",
     "DEFAULT_MANIFEST_FILE",
     "DEFAULT_OUTPUT_DIR",
-    "GraphifyArtifacts",
-    "GraphifyBuildOutcome",
-    "GraphifyClient",
-    "GraphifyInvocationError",
-    "GraphifyNotFoundError",
+    "ForgeGraphArtifacts",
+    "ForgeGraphBuildOutcome",
+    "ForgeGraphClient",
+    "ForgeGraphInvocationError",
+    "ForgeGraphNotFoundError",
 ]

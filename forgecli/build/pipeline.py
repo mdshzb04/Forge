@@ -14,7 +14,7 @@ from forgecli.build.apply import apply_diff
 from forgecli.build.diff_extract import diff_extraction
 from forgecli.build.llm import llm_call
 from forgecli.build.optimize import ponytail_optimization
-from forgecli.build.retrieval import graphify_retrieval
+from forgecli.build.retrieval import forgegraph_retrieval
 from forgecli.build.summarize import summarize
 from forgecli.build.test_run import run_tests
 from forgecli.optimizer.ponytail import PromptOptimizer
@@ -34,7 +34,7 @@ def default_pipeline(
 ) -> BuildPipeline:
     """Construct the canonical pipeline."""
     stages: list[tuple[str, PipelineStage]] = [
-        ("graphify-retrieval", _stage_with(graphify_retrieval, graph=graph)),
+        ("forgegraph-retrieval", _stage_with(forgegraph_retrieval, graph=graph)),
         ("ponytail-optimize", _stage_with(ponytail_optimization, optimizer=optimizer)),
         ("llm", _stage_with(llm_call, provider=provider)),
         ("diff-extract", diff_extraction),

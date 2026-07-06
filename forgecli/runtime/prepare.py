@@ -23,7 +23,7 @@ _SKIP_DIRS = {
     "dist",
     "build",
     ".forge",
-    "graphify-out",
+    "forgegraph-out",
     ".mypy_cache",
     ".pytest_cache",
     ".ruff_cache",
@@ -100,11 +100,11 @@ def _scan_repo_light(root: Path) -> str:
     if layout:
         lines.extend(["", "Project layout (shallow scan):", *layout[:72]])
 
-    graph_marker = root / "graphify-out" / "graph.json"
+    graph_marker = root / "forgegraph-out" / "graph.json"
     if graph_marker.is_file():
         lines.append("")
         lines.append(
-            "Knowledge graph already on disk at graphify-out/. "
+            "Knowledge graph already on disk at forgegraph-out/. "
             "Run `forge graph build` separately when you want a full refresh."
         )
 

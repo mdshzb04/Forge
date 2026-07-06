@@ -8,7 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 build/
-graphify-out/
+forgegraph-out/
 dist/
 *.egg-info/
 *.egg

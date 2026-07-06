@@ -1,7 +1,7 @@
 """Abstract interface for a repository knowledge graph.
 
 This module is the boundary between ForgeCLI's graph-aware features and any
-concrete back-end (Graphify today; custom AST-based backends tomorrow). The
+concrete back-end (ForgeGraph today; custom AST-based backends tomorrow). The
 interface is intentionally small: build, query, explain, path, affected.
 """
 

@@ -75,7 +75,7 @@ def test_ruleset_full_includes_rules() -> None:
     result = asyncio.run(optimizer.optimize_chat(request))
     system = result.request.messages[0].content
     assert "CAVEMAN (full)" in system
-    assert "[thing] [action] [reason]" in system
+    assert "[subject] [action] [reason]" in system
     assert "fragments" in system
     assert any("caveman full mode" in n for n in result.notes)
 
@@ -86,7 +86,7 @@ def test_ruleset_ultra_compresses() -> None:
     result = asyncio.run(optimizer.optimize_chat(request))
     system = result.request.messages[0].content
     assert "CAVEMAN (ultra)" in system
-    assert "maximum compression" in system
+    assert "communication compression" in system
     assert any("caveman ultra" in n for n in result.notes)
 
 

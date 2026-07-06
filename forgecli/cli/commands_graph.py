@@ -1,7 +1,7 @@
 """``forge graph`` subcommand group: build.
 
-These commands integrate the external Graphify CLI behind the
-:mod:`forgecli.graph.repository` abstraction. When Graphify is not
+These commands integrate the external ForgeGraph CLI behind the
+:mod:`forgecli.graph.repository` abstraction. When the binary is not
 installed the commands print an installation hint instead of failing.
 """
 
@@ -18,7 +18,7 @@ from forgecli.cli.ui import (
     info,
     success,
 )
-from forgecli.graph.backend_graphify import GraphifyRepositoryGraph
+from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
 from forgecli.utils.fs import has_supported_source_files
 from forgecli.utils.paths import to_privacy_path
 
@@ -29,16 +29,16 @@ app = typer.Typer(
 )
 
 
-def _build_backend(path: Path) -> GraphifyRepositoryGraph:
-    return GraphifyRepositoryGraph(root=path)
+def _build_backend(path: Path) -> ForgeRepositoryGraph:
+    return ForgeRepositoryGraph(root=path)
 
 
-async def _require_graphify(backend: GraphifyRepositoryGraph) -> None:
+async def _require_forgegraph(backend: ForgeRepositoryGraph) -> None:
     if not await backend.is_available():
         raise typer.Exit(code=1) from None
 
 
-def setup_graphify_credentials(path: Path) -> str | None:
+def setup_forgegraph_credentials(path: Path) -> str | None:
     """Read the active provider, load its API key, set env vars, and return provider name if configured."""
     from forgecli.cli.bootstrap import bootstrap_context
     from forgecli.core.credentials import get_api_key
@@ -91,7 +91,7 @@ def build_cmd(
         raise typer.Exit(code=0)
 
     # 2. Check credentials first. Never continue without a valid provider configuration.
-    active_provider = setup_graphify_credentials(path_obj)
+    active_provider = setup_forgegraph_credentials(path_obj)
     if not active_provider:
         get_console().print(
             "❌ API key required.\n\n"
@@ -117,7 +117,7 @@ def build_cmd(
             build_duration = time.perf_counter() - start_time
 
             try:
-                build_time_file = backend.root / "graphify-out" / "build_time.json"
+                build_time_file = backend.root / "forgegraph-out" / "build_time.json"
                 build_time_file.parent.mkdir(parents=True, exist_ok=True)
                 with open(build_time_file, "w", encoding="utf-8") as f:
                     json.dump({"build_time": build_duration}, f)

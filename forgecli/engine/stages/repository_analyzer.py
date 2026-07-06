@@ -1,7 +1,7 @@
 """Stage 2 — Repository Analyzer.
 
 Queries the configured :class:`RepositoryGraph` for nodes relevant to
-the user prompt. Wraps :func:`forgecli.build.retrieval.graphify_retrieval`.
+the user prompt. Wraps :func:`forgecli.build.retrieval.forgegraph_retrieval`.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 from forgecli.build import BuildContext
-from forgecli.build.retrieval import graphify_retrieval as _build_retrieval
+from forgecli.build.retrieval import forgegraph_retrieval as _build_retrieval
 from forgecli.engine.context import RetrievalResult
 from forgecli.engine.execution import StageContext, StageResult, StageStatus
 from forgecli.graph.repository import RepositoryGraph

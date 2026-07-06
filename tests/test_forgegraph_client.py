@@ -1,4 +1,4 @@
-"""Tests for the Graphify CLI wrapper."""
+"""Tests for the ForgeGraph CLI wrapper."""
 
 from __future__ import annotations
 
@@ -9,81 +9,83 @@ from unittest.mock import patch
 import pytest
 
 from forgecli.core.errors import ForgeCLIError
-from forgecli.graph.graphify import (
-    GraphifyArtifacts,
-    GraphifyClient,
-    GraphifyInvocationError,
-    GraphifyNotFoundError,
+from forgecli.graph.forgegraph import (
+    ForgeGraphArtifacts,
+    ForgeGraphClient,
+    ForgeGraphInvocationError,
+    ForgeGraphNotFoundError,
 )
 
 
 def test_detect_returns_path_when_installed() -> None:
     import asyncio
 
-    client = GraphifyClient(executable="graphify")
-    with patch("shutil.which", return_value="/usr/bin/graphify"):
+    client = ForgeGraphClient(executable="forgegraph")
+    with patch("shutil.which", return_value="/usr/bin/forgegraph"):
         path = asyncio.run(client.detect())
-    assert path == "/usr/bin/graphify"
+    assert path == "/usr/bin/forgegraph"
 
 
 def test_is_installed_true_and_false() -> None:
-    client = GraphifyClient()
+    client = ForgeGraphClient()
     import asyncio
 
     with patch("shutil.which", return_value="/usr/bin/graphify"):
+        assert asyncio.run(client.is_installed()) is True
+    with patch("shutil.which", return_value="/usr/bin/forgegraph"):
         assert asyncio.run(client.is_installed()) is True
     with patch("shutil.which", return_value=None):
         assert asyncio.run(client.is_installed()) is False
 
 
 def test_version_raises_when_missing(tmp_path: Path) -> None:
-    client = GraphifyClient()
+    client = ForgeGraphClient()
     import asyncio
 
     with patch("shutil.which", return_value=None):
-        with pytest.raises(GraphifyNotFoundError):
+        with pytest.raises(ForgeGraphNotFoundError):
             asyncio.run(client.version())
 
 
 def test_artifacts_paths(tmp_path: Path) -> None:
-    art = GraphifyArtifacts.for_root(tmp_path)
-    assert art.output_dir == tmp_path / "graphify-out"
-    assert art.graph_json == tmp_path / "graphify-out" / "graph.json"
-    assert art.manifest_json == tmp_path / "graphify-out" / "manifest.json"
-    assert art.graph_html == tmp_path / "graphify-out" / "graph.html"
-    assert art.graph_report == tmp_path / "graphify-out" / "GRAPH_REPORT.md"
+    art = ForgeGraphArtifacts.for_root(tmp_path)
+    assert art.output_dir == tmp_path / "forgegraph-out"
+    assert art.graph_json == tmp_path / "forgegraph-out" / "graph.json"
+    assert art.manifest_json == tmp_path / "forgegraph-out" / "manifest.json"
+    assert art.graph_html == tmp_path / "forgegraph-out" / "graph.html"
+    assert art.graph_report == tmp_path / "forgegraph-out" / "GRAPH_REPORT.md"
 
 
 def test_load_graph_missing_file(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
-        GraphifyClient.load_graph(tmp_path / "graph.json")
+        ForgeGraphClient.load_graph(tmp_path / "graph.json")
 
 
 def test_load_graph_round_trip(tmp_path: Path) -> None:
     payload = {"nodes": [{"id": "a"}], "links": [], "directed": False}
     path = tmp_path / "g.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
-    assert GraphifyClient.load_graph(path) == payload
+    assert ForgeGraphClient.load_graph(path) == payload
 
 
 def test_load_manifest_missing_returns_empty(tmp_path: Path) -> None:
-    assert GraphifyClient.load_manifest(tmp_path / "missing.json") == {}
+    assert ForgeGraphClient.load_manifest(tmp_path / "missing.json") == {}
 
 
 def test_build_raises_when_binary_missing(tmp_path: Path) -> None:
     import asyncio
 
-    client = GraphifyClient()
+    client = ForgeGraphClient()
     with patch("shutil.which", return_value=None):
-        with pytest.raises(GraphifyNotFoundError):
+        with pytest.raises(ForgeGraphNotFoundError):
             asyncio.run(client.build(tmp_path))
 
 
 def test_build_invokes_subprocess(tmp_path: Path) -> None:
     import asyncio
 
-    # Pretend graphify extracted an output dir.
-    out = tmp_path / "graphify-out"
+    # Pretend forgegraph extracted an output dir.
+    out = tmp_path / "forgegraph-out"
     out.mkdir()
     (out / "graph.json").write_text(
         json.dumps({"nodes": [], "links": [], "directed": False}),
@@ -96,9 +98,9 @@ def test_build_invokes_subprocess(tmp_path: Path) -> None:
     async def fake_exec(*args, **kwargs):
         return fake_proc
 
-    client = GraphifyClient(executable="/usr/bin/graphify")
+    client = ForgeGraphClient(executable="/usr/bin/forgegraph")
     with (
-        patch("shutil.which", return_value="/usr/bin/graphify"),
+        patch("shutil.which", return_value="/usr/bin/forgegraph"),
         patch(
             "asyncio.create_subprocess_exec",
             side_effect=fake_exec,
@@ -117,12 +119,12 @@ def test_build_raises_on_nonzero_exit(tmp_path: Path) -> None:
     async def fake_exec(*args, **kwargs):
         return fake_proc
 
-    client = GraphifyClient(executable="/usr/bin/graphify")
+    client = ForgeGraphClient(executable="/usr/bin/forgegraph")
     with (
-        patch("shutil.which", return_value="/usr/bin/graphify"),
+        patch("shutil.which", return_value="/usr/bin/forgegraph"),
         patch("asyncio.create_subprocess_exec", side_effect=fake_exec),
     ):
-        with pytest.raises(GraphifyInvocationError):
+        with pytest.raises(ForgeGraphInvocationError):
             asyncio.run(client.build(tmp_path))
 
 
@@ -143,9 +145,9 @@ def test_query_routes_to_subcommand(tmp_path: Path) -> None:
         captured["args"] = list(args)
         return _Proc()
 
-    client = GraphifyClient(executable="/usr/bin/graphify")
+    client = ForgeGraphClient(executable="/usr/bin/forgegraph")
     with (
-        patch("shutil.which", return_value="/usr/bin/graphify"),
+        patch("shutil.which", return_value="/usr/bin/forgegraph"),
         patch("asyncio.create_subprocess_exec", side_effect=fake_exec),
     ):
         result = asyncio.run(client.query(tmp_path, "what?", budget=500))

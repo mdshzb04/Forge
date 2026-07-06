@@ -143,7 +143,7 @@ def _build_container(
 ):
     """Register default services in the DI container."""
     from forgecli.core.container import Container
-    from forgecli.graph.backend_graphify import GraphifyRepositoryGraph
+    from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
     from forgecli.graph.graph import CodeGraph
     from forgecli.graph.indexer import Indexer
     from forgecli.graph.repository import RepositoryGraph
@@ -186,7 +186,7 @@ def _build_container(
     )
     container.register(
         RepositoryGraph,  # type: ignore[type-abstract]
-        lambda _c: GraphifyRepositoryGraph(root=paths.cwd),
+        lambda _c: ForgeRepositoryGraph(root=paths.cwd),
     )
     container.register(
         PromptOptimizer,  # type: ignore[type-abstract]

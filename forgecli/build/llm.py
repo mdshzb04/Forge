@@ -1,6 +1,6 @@
 """Stage 3 — LLM call.
 
-Graphify retrieval as context) and dispatches it through the active
+ForgeGraph retrieval as context) and dispatches it through the active
 provider. The selected provider is the one chosen by the router (see
 :mod:`forgecli.providers.router`).
 

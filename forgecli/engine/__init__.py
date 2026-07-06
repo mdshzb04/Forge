@@ -4,7 +4,7 @@ This package defines the *contract* for every orchestration stage
 in ForgeCLI. The pipeline is a fixed sequence of eight stages:
 
     1. Intent Analyzer        — turn the prompt into an Intent
-    2. Repository Analyzer   — query Graphify for relevant context
+    2. Repository Analyzer   — query ForgeGraph for relevant context
     3. Context Optimizer     — apply Ponytail to the prompt + context
     4. Planning Engine       — produce a SoftwarePlan
     5. Model Router          — pick (provider, model) for the call

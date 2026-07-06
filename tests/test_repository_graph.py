@@ -1,4 +1,4 @@
-"""Tests for the Graphify-backed :class:`RepositoryGraph` adapter."""
+"""Tests for the ForgeGraph-backed :class:`RepositoryGraph` adapter."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from unittest.mock import AsyncMock
 import pytest
 
 from forgecli.core.errors import ConfigError
-from forgecli.graph.backend_graphify import GraphifyRepositoryGraph
-from forgecli.graph.graphify import GraphifyArtifacts, GraphifyClient
+from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
+from forgecli.graph.forgegraph import ForgeGraphArtifacts, ForgeGraphClient
 from forgecli.graph.repository import (
     ExplainResult,
     GraphSnapshot,
@@ -23,7 +23,7 @@ from forgecli.graph.repository import (
 def _write_graph(
     tmp_path: Path, *, nodes: list[dict[str, Any]], links: list[dict[str, Any]]
 ) -> Path:
-    out = tmp_path / "graphify-out"
+    out = tmp_path / "forgegraph-out"
     out.mkdir(exist_ok=True)
     graph_json = out / "graph.json"
     graph_json.write_text(
@@ -43,8 +43,8 @@ def _write_graph(
     return graph_json
 
 
-def _client_with_files(tmp_path: Path) -> GraphifyClient:
-    return GraphifyClient(executable="/usr/bin/graphify")
+def _client_with_files(tmp_path: Path) -> ForgeGraphClient:
+    return ForgeGraphClient(executable="/usr/bin/forgegraph")
 
 
 def test_load_snapshot_from_payload(tmp_path: Path) -> None:
@@ -66,7 +66,7 @@ def test_load_snapshot_from_payload(tmp_path: Path) -> None:
             },
         ],
     )
-    backend = GraphifyRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
+    backend = ForgeRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
     snap = asyncio.run(backend.load())
     assert isinstance(snap, GraphSnapshot)
     assert len(snap.nodes) == 3
@@ -85,7 +85,7 @@ def test_load_snapshot_from_payload(tmp_path: Path) -> None:
 
 
 def test_load_raises_when_graph_missing(tmp_path: Path) -> None:
-    backend = GraphifyRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
+    backend = ForgeRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
     with pytest.raises(ConfigError):
         asyncio.run(backend.load())
 
@@ -100,7 +100,7 @@ def test_query_extracts_cited_nodes(tmp_path: Path) -> None:
         links=[],
     )
     client = _client_with_files(tmp_path)
-    backend = GraphifyRepositoryGraph(root=tmp_path, client=client)
+    backend = ForgeRepositoryGraph(root=tmp_path, client=client)
 
     async def fake_query(*args, **kwargs):
         return "auth lives in a.py and b.py (L1)"
@@ -127,7 +127,7 @@ def test_explain_returns_related_nodes(tmp_path: Path) -> None:
         ],
     )
     client = _client_with_files(tmp_path)
-    backend = GraphifyRepositoryGraph(root=tmp_path, client=client)
+    backend = ForgeRepositoryGraph(root=tmp_path, client=client)
 
     async def fake_explain(*args, **kwargs):
         return "a.py is a Python module containing foo()."
@@ -154,7 +154,7 @@ def test_shortest_path_finds_two_hop(tmp_path: Path) -> None:
             {"source": "b", "target": "c", "relation": "imports"},
         ],
     )
-    backend = GraphifyRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
+    backend = ForgeRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
     edges = asyncio.run(backend.shortest_path("a.py", "c.py"))
     assert len(edges) == 2
     assert edges[0].source == "a" and edges[0].target == "b"
@@ -167,7 +167,7 @@ def test_shortest_path_no_match_returns_empty(tmp_path: Path) -> None:
         nodes=[{"id": "a", "label": "a.py"}],
         links=[],
     )
-    backend = GraphifyRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
+    backend = ForgeRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
     assert asyncio.run(backend.shortest_path("a.py", "missing.py")) == []
 
 
@@ -201,7 +201,7 @@ def test_affected_filters_by_relation(tmp_path: Path) -> None:
         ],
     )
     client = _client_with_files(tmp_path)
-    backend = GraphifyRepositoryGraph(root=tmp_path, client=client)
+    backend = ForgeRepositoryGraph(root=tmp_path, client=client)
     client.affected = AsyncMock(return_value="")  # type: ignore[method-assign]
     edges = asyncio.run(backend.affected("a.py", relation=["imports"], depth=2))
     sources = {(e.source, e.relation) for e in edges}
@@ -211,7 +211,7 @@ def test_affected_filters_by_relation(tmp_path: Path) -> None:
 
 def test_is_available_uses_client(tmp_path: Path) -> None:
     client = _client_with_files(tmp_path)
-    backend = GraphifyRepositoryGraph(root=tmp_path, client=client)
+    backend = ForgeRepositoryGraph(root=tmp_path, client=client)
     client.is_installed = AsyncMock(return_value=True)  # type: ignore[method-assign]
     assert asyncio.run(backend.is_available()) is True
     client.is_installed = AsyncMock(return_value=False)  # type: ignore[method-assign]
@@ -219,7 +219,7 @@ def test_is_available_uses_client(tmp_path: Path) -> None:
 
 
 def test_install_hint_contains_install_command() -> None:
-    backend = GraphifyRepositoryGraph(root=Path("."))
+    backend = ForgeRepositoryGraph(root=Path("."))
     assert "uv tool install graphifyy" in asyncio.run(backend.install_hint())
 
 
@@ -230,14 +230,14 @@ def test_build_uses_client_and_caches_snapshot(tmp_path: Path) -> None:
         links=[],
     )
     client = _client_with_files(tmp_path)
-    backend = GraphifyRepositoryGraph(root=tmp_path, client=client)
+    backend = ForgeRepositoryGraph(root=tmp_path, client=client)
 
-    from forgecli.graph.graphify import GraphifyBuildOutcome
+    from forgecli.graph.forgegraph import ForgeGraphBuildOutcome
     from forgecli.graph.repository import BuildResult
 
-    outcome = GraphifyBuildOutcome(
+    outcome = ForgeGraphBuildOutcome(
         root=tmp_path,
-        artifacts=GraphifyArtifacts.for_root(tmp_path),
+        artifacts=ForgeGraphArtifacts.for_root(tmp_path),
         stdout="ok",
         stderr="",
     )

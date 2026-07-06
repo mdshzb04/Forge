@@ -11,7 +11,7 @@ languages = ["python", "typescript"]
 [prompt_optimizer]
 backend = "ruleset"
 enabled = true
-intensity = "lite"
+intensity = "full"
 
 [providers]
 allowed = ["mock"]

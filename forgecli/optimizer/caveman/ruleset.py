@@ -30,38 +30,39 @@ from forgecli.providers.base import ChatMessage, ChatRequest, Role
 _CAVEMAN_GUIDANCE: dict[CavemanIntensity, str] = {
     CavemanIntensity.OFF: "",
     CavemanIntensity.LITE: (
-        "CAVEMAN (lite): communicate concisely. "
-        "Drop filler words (just, really, basically, actually). "
-        "Drop pleasantries (sure, certainly, happy to, I think). "
-        "Use short sentences. Keep technical terms exact."
+        "CAVEMAN (lite): keep responses brief. "
+        "Omit filler words such as 'basically', 'actually', or 'really'. "
+        "Avoid polite padding like 'sure', 'certainly', or 'happy to help'. "
+        "Focus on short statements and preserve technical keywords."
     ),
     CavemanIntensity.FULL: (
-        "CAVEMAN (full): talk like caveman. Brain still big, mouth small.\n\n"
-        "Rules:\n"
-        "- Drop filler words, pleasantries, transition phrases\n"
-        "- Use sentence fragments where meaning is clear\n"
-        "- Keep technical terms exact \u2014 never simplify them\n"
-        "- Follow [thing] [action] [reason] pattern\n"
-        "- No summaries, no disclaimers, no meta-commentary\n"
-        "- Code blocks and error messages stay unmodified"
+        "CAVEMAN (full): adopt a direct, fragment-based speech pattern. "
+        "Limit sentence structures to bare essentials.\n\n"
+        "Guidelines:\n"
+        "- Exclude conversational greetings, filler verbs, and transitions.\n"
+        "- Frame responses around sentence fragments where possible.\n"
+        "- Maintain precise technical vocabulary and proper names.\n"
+        "- Deliver logic using the [subject] [action] [reason] structure.\n"
+        "- Strip out summaries, disclaimers, and self-referential notes.\n"
+        "- Ensure code blocks are kept exactly as-is."
     ),
     CavemanIntensity.ULTRA: (
-        "CAVEMAN (ultra): maximum compression.\n\n"
-        "- One sentence max per idea\n"
-        "- No articles (a, an, the) unless essential\n"
-        "- No polite prefixes \u2014 get straight to the point\n"
-        "- [action] [thing] directly\n"
-        "- Grunt-level communication preferred\n"
-        "- Code unchanged. Technical terms unchanged."
+        "CAVEMAN (ultra): apply maximum communication compression.\n\n"
+        "- Express each core concept in a single sentence or fragment.\n"
+        "- Remove non-essential articles (the, a, an).\n"
+        "- Eliminate polite prefixes and greeting wrappers.\n"
+        "- State [action] [object] directly without padding.\n"
+        "- Favor ultra-concise, raw fragments.\n"
+        "- Keep all code snippets and key parameters fully intact."
     ),
     CavemanIntensity.WENYAN: (
-        "CAVEMAN (wenyan): respond in Classical Chinese literary style "
+        "CAVEMAN (wenyan): format the response in Classical Chinese style "
         "(\u6587\u8a00 / wenyanwen).\n\n"
-        "- Maximum semantic density per character\n"
-        "- Use classical parallel structure where appropriate\n"
-        "- Eliminate all modern conversational padding\n"
-        "- \u4e00\u8a00\u4ee5\u84cb\u4e4b: express essence in minimum characters\n"
-        "- Code blocks, technical terms, and proper nouns stay in original form"
+        "- Maximize meaning using the fewest possible characters.\n"
+        "- Apply classical parallel structures and concise patterns.\n"
+        "- Purge modern chat structures and modern conversational padding.\n"
+        "- Convey core findings directly and efficiently.\n"
+        "- Retain code segments and proper nouns without translation."
     ),
 }
 

@@ -117,8 +117,12 @@ def has_python() -> bool:
     return True
 
 
+def has_forgegraph() -> bool:
+    return find_executable("forgegraph") is not None or find_executable("graphify") is not None
+
+
 def has_graphify() -> bool:
-    return find_executable("graphify") is not None
+    return has_forgegraph()
 
 
 def has_ponytail() -> bool:
@@ -198,9 +202,9 @@ def check_dependencies() -> DependencyReport:
     )
     deps.append(
         _probe_optional(
-            "graphify",
-            has_graphify,
-            _version_for("graphify"),
+            "forgegraph",
+            has_forgegraph,
+            lambda: _run_version("forgegraph") or _run_version("graphify"),
             note="Optional. Install with: uv tool install graphifyy",
         )
     )
@@ -281,6 +285,23 @@ def _probe_optional(
 
 
 _HINTS: Final[dict[str, dict[OS, tuple[str, ...]]]] = {
+    "forgegraph": {
+        OS.LINUX: (
+            "uv tool install graphifyy",
+            "or:  pipx install graphifyy",
+            "or:  pip install --user graphifyy",
+        ),
+        OS.MACOS: (
+            "brew install graphifyy",
+            "or:  uv tool install graphifyy",
+        ),
+        OS.WINDOWS: (
+            "winget install graphifyy",
+            "or:  scoop install graphifyy",
+            "or:  uv tool install graphifyy",
+        ),
+        OS.OTHER: ("uv tool install graphifyy",),
+    },
     "graphify": {
         OS.LINUX: (
             "uv tool install graphifyy",
@@ -344,6 +365,7 @@ __all__ = [
     "DependencyStatus",
     "check_dependencies",
     "find_executable",
+    "has_forgegraph",
     "has_git",
     "has_graphify",
     "has_homebrew",

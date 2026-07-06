@@ -1,4 +1,4 @@
-"""Stage 1 — Graphify retrieval.
+"""Stage 1 — ForgeGraph retrieval.
 
 Asks the configured :class:`RepositoryGraph` to find nodes relevant to
 the user prompt. The output is a compact text block listing the
@@ -74,7 +74,7 @@ def needs_repository_context(prompt: str) -> bool:
     return "what is this" in text or "explain this" in text or "this project" in text
 
 
-async def graphify_retrieval(
+async def forgegraph_retrieval(
     context: BuildContext, *, top_k: int = 8
 ) -> BuildContext:
     """Return a context with ``context.retrieval`` populated."""
@@ -151,7 +151,7 @@ def _rank_nodes(
     return scored[:limit]
 
 
-__all__ = ["graphify_retrieval", "needs_repository_context"]
+__all__ = ["forgegraph_retrieval", "needs_repository_context"]
 
 
 _ = Any  # keep typing.Any referenced for the test-only type hints

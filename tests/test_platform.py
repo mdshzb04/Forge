@@ -20,6 +20,7 @@ from forgecli.platform import (
     data_dir,
     detect_os,
     find_executable,
+    has_forgegraph,
     has_git,
     has_graphify,
     has_node,
@@ -216,7 +217,7 @@ def test_required_dependency_marker() -> None:
 
 
 def test_install_hint_returns_a_string_for_known_tool() -> None:
-    hints = install_hint("graphify")
+    hints = install_hint("forgegraph")
     assert hints
     assert all(isinstance(line, str) for line in hints)
 
@@ -230,12 +231,16 @@ def test_have_function_booleans_are_consistent() -> None:
     # Each `has_x` should match `find_executable` for the same name.
     for fn, name in [
         (has_git, "git"),
-        (has_graphify, "graphify"),
         (has_ponytail, "ponytail"),
         (has_node, "node"),
     ]:
         expected = find_executable(name) is not None
         assert fn() == expected
+
+    # has_forgegraph (and has_graphify alias) checks for either forgegraph or graphify binary
+    expected_forge = find_executable("forgegraph") is not None or find_executable("graphify") is not None
+    assert has_forgegraph() == expected_forge
+    assert has_graphify() == expected_forge
 
 
 def test_has_python_always_true() -> None:

@@ -5,20 +5,20 @@ The package exposes two layers:
 * A small in-memory graph (:class:`CodeGraph`, :class:`Node`, :class:`Edge`)
   used by lightweight callers and tests.
 * A back-end abstraction (:class:`RepositoryGraph`) implemented by
-  :class:`GraphifyRepositoryGraph`, which delegates to the external
-  Graphify CLI.
+  :class:`ForgeRepositoryGraph`, which delegates to the external
+  ForgeGraph CLI.
 """
 
-from forgecli.graph.backend_graphify import GraphifyRepositoryGraph
+from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
 from forgecli.graph.edge import Edge, EdgeKind
-from forgecli.graph.graph import CodeGraph
-from forgecli.graph.graphify import (
-    GraphifyArtifacts,
-    GraphifyBuildOutcome,
-    GraphifyClient,
-    GraphifyInvocationError,
-    GraphifyNotFoundError,
+from forgecli.graph.forgegraph import (
+    ForgeGraphArtifacts,
+    ForgeGraphBuildOutcome,
+    ForgeGraphClient,
+    ForgeGraphInvocationError,
+    ForgeGraphNotFoundError,
 )
+from forgecli.graph.graph import CodeGraph
 from forgecli.graph.indexer import Indexer
 from forgecli.graph.node import Node, NodeKind
 from forgecli.graph.repository import (
@@ -38,16 +38,16 @@ __all__ = [
     "Edge",
     "EdgeKind",
     "ExplainResult",
+    "ForgeGraphArtifacts",
+    "ForgeGraphBuildOutcome",
+    "ForgeGraphClient",
+    "ForgeGraphInvocationError",
+    "ForgeGraphNotFoundError",
+    "ForgeRepositoryGraph",
     "GraphCommunity",
     "GraphEdge",
     "GraphNode",
     "GraphSnapshot",
-    "GraphifyArtifacts",
-    "GraphifyBuildOutcome",
-    "GraphifyClient",
-    "GraphifyInvocationError",
-    "GraphifyNotFoundError",
-    "GraphifyRepositoryGraph",
     "Indexer",
     "Node",
     "NodeKind",

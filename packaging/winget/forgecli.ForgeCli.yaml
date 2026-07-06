@@ -15,15 +15,15 @@ PackageVersion: 0.1.0
 PackageLocale: en-US
 PackageName: ForgeCLI
 Publisher: forgecli
-ShortDescription: AI-first developer operating system — Ponytail built-in, Graphify optional, any LLM.
+ShortDescription: AI-first developer operating system — Ponytail built-in, ForgeGraph optional, any LLM.
 Description: |
   ForgeCLI is an AI Development Operating System. Install with
   `uv tool install forgecli`, then run `forge init` — that's it.
 
-  Ponytail prompt optimization is built-in. Graphify repo intelligence is
+  Ponytail prompt optimization is built-in. ForgeGraph repo intelligence is
   an optional enhancement (uv tool install graphifyy).
 
-  Pipeline: Graphify retrieval -> Ponytail optimization -> LLM call ->
+  Pipeline: ForgeGraph retrieval -> Ponytail optimization -> LLM call ->
   diff -> apply -> test -> summary.
 License: MIT
 Tags:

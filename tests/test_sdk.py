@@ -89,8 +89,8 @@ def test_requirement_tilde_operator() -> None:
 
 
 def test_requirement_extras() -> None:
-    req = Requirement.parse("foo", "; extras: graphify,ponytail")
-    assert req.extras == ("graphify", "ponytail")
+    req = Requirement.parse("foo", "; extras: forgegraph,ponytail")
+    assert req.extras == ("forgegraph", "ponytail")
     assert req.specs == ()
 
 
@@ -225,7 +225,7 @@ def test_simple_toml_dump_renders_dict() -> None:
 
 
 def test_is_valid_plugin_name() -> None:
-    assert is_valid_plugin_name("graphify") is True
+    assert is_valid_plugin_name("forgegraph") is True
     assert is_valid_plugin_name("my-plugin") is True
     assert is_valid_plugin_name("MyPlugin") is False
     assert is_valid_plugin_name("123-starting-digit") is False

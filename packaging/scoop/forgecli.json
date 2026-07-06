@@ -1,10 +1,10 @@
 {
     "version": "0.1.0",
-    "description": "AI-first developer operating system —  built-in, Graphify optional.",
+    "description": "AI-first developer operating system — Ponytail built-in, ForgeGraph optional.",
     "homepage": "https://github.com/forgecli/forgecli",
     "license": "MIT",
     "depends": "python",
-    "notes": "Run `forge init` after installation to complete setup.  is built-in. For Graphify, run: uv tool install graphifyy",
+    "notes": "Run `forge init` after installation to complete setup. Ponytail is built-in. For ForgeGraph, run: uv tool install graphifyy",
     "url": "https://files.pythonhosted.org/packages/source/f/forgecli/forgecli-0.1.0.tar.gz#download",
     "hash": "REPLACE_WITH_REAL_SHA256",
     "bin": "forge.exe",

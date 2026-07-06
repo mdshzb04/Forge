@@ -102,7 +102,7 @@ def has_supported_source_files(path: Path) -> bool:
         "dist",
         "build",
         ".forge",
-        "graphify-out",
+        "forgegraph-out",
         ".mypy_cache",
         ".pytest_cache",
         ".ruff_cache",
