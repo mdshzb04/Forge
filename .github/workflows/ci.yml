@@ -127,8 +127,6 @@ jobs:
           forge claude --help
           forge codex --help
           forge cursor --help
-          forge opencode --help
-          forge commandcode --help
 
 
   publish-testpypi:
