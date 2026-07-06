@@ -51,6 +51,8 @@ def update_config(
     default_model: str | None = None,
     clear_provider: bool = False,
     clear_model: bool = False,
+    ponytail: str | None = None,
+    caveman: str | None = None,
 ) -> Path:
     """Update defaults in the active forgecli.toml configuration file."""
     from forgecli.config.loader import ConfigLoader
@@ -85,6 +87,19 @@ def update_config(
     elif default_model is not None:
         data["providers"]["default_model"] = default_model
 
+    if ponytail is not None:
+        if "prompt_optimizer" not in data:
+            data["prompt_optimizer"] = {}
+        data["prompt_optimizer"]["intensity"] = ponytail
+        data["prompt_optimizer"]["enabled"] = (ponytail != "off")
+
+    if caveman is not None:
+        if "caveman" not in data:
+            data["caveman"] = {}
+        data["caveman"]["intensity"] = caveman
+        data["caveman"]["enabled"] = (caveman != "off")
+
     content = dump_toml(data)
     target_path.write_text(content, encoding="utf-8")
+    loader.invalidate()
     return target_path

@@ -91,6 +91,71 @@ def mcp_cmd() -> None:
     run_mcp_stdio()
 
 
+@app.command("config", help="Configure Forge settings, including optimization profiles.")
+def config_cmd(
+    ponytail: str = typer.Option(
+        None,
+        "--ponytail",
+        "-p",
+        help="Configure Ponytail optimization profile (off | lite | full | ultra).",
+    ),
+    caveman: str = typer.Option(
+        None,
+        "--caveman",
+        "-c",
+        help="Configure Caveman optimization profile (off | lite | full | ultra).",
+    ),
+) -> None:
+    """Configure Forge settings, including optimization profiles."""
+    from forgecli.cli.ui import get_console, info, success
+    from forgecli.config.loader import ConfigLoader
+    from forgecli.config.writer import update_config
+
+    loader = ConfigLoader()
+    try:
+        settings = loader.load()
+    except Exception:
+        from forgecli.config.settings import ForgeSettings
+        settings = ForgeSettings()
+
+    if ponytail is None and caveman is None:
+        p_val = settings.prompt_optimizer.intensity
+        if not settings.prompt_optimizer.enabled or p_val not in {"off", "lite", "full", "ultra"}:
+            p_val = "off" if not settings.prompt_optimizer.enabled else "lite"
+
+        c_val = settings.caveman.intensity
+        if not settings.caveman.enabled or c_val not in {"off", "lite", "full", "ultra"}:
+            c_val = "off" if not settings.caveman.enabled else "lite"
+
+        console = get_console()
+        console.print()
+        console.print("  [bold cyan]Forge Configuration[/bold cyan]")
+        console.print(f"  Ponytail Profile : [white]{p_val}[/white]")
+        console.print(f"  Caveman Profile  : [white]{c_val}[/white]")
+        console.print()
+        return
+
+    # Normalize and validate options
+    if ponytail is not None:
+        val = ponytail.lower().strip()
+        if val not in {"off", "lite", "full", "ultra"}:
+            info(f"Invalid Ponytail mode '{ponytail}'. Falling back to 'lite'.")
+            ponytail = "lite"
+        else:
+            ponytail = val
+
+    if caveman is not None:
+        val = caveman.lower().strip()
+        if val not in {"off", "lite", "full", "ultra"}:
+            info(f"Invalid Caveman mode '{caveman}'. Falling back to 'lite'.")
+            caveman = "lite"
+        else:
+            caveman = val
+
+    path = update_config(ponytail=ponytail, caveman=caveman)
+    success(f"Config updated in [white]{path}[/white]")
+
+
 def _version_callback(value: bool) -> None:
     if value:
         get_console().print(f"{__app_name__} [muted]v{__version__}[/muted]")
@@ -137,6 +202,7 @@ def main(
         "    [cyan]forge antigravity[/cyan]  Launch Antigravity CLI with optimized context\n"
         "    [cyan]forge start[/cyan]        Start the background context optimization daemon\n"
         "    [cyan]forge mcp[/cyan]          Start the stdio Model Context Protocol (MCP) server\n"
+        "    [cyan]forge config[/cyan]       Configure Ponytail and Caveman optimization profiles\n"
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"
         "    [cyan]forge --help[/cyan]       Show all options\n"
     )

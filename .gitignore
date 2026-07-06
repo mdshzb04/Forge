@@ -49,3 +49,8 @@ htmlcov/
 # Test artifacts (prevent CI failures)
 foo.py
 main.go
+
+# Forge local configurations & editor integration settings
+forgecli.toml
+.cursor/
+.mcp.json
