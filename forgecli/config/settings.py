@@ -92,6 +92,15 @@ class CavemanSection(BaseModel):
     timeout_seconds: float = 30.0
 
 
+class OutputOptimizationSection(BaseModel):
+    """Output Optimization settings."""
+
+    model_config = ConfigDict(extra="allow")
+
+    enabled: bool = True
+    intensity: str = "lite"  # off | lite | full | ultra
+
+
 class GraphSection(BaseModel):
     """Repository graph settings."""
 
@@ -181,6 +190,7 @@ class ForgeSettings(BaseSettings):
     optimizer: OptimizerSection = Field(default_factory=OptimizerSection)
     prompt_optimizer: PromptOptimizerSection = Field(default_factory=PromptOptimizerSection)
     caveman: CavemanSection = Field(default_factory=CavemanSection)
+    output_optimization: OutputOptimizationSection = Field(default_factory=OutputOptimizationSection)
     graph: GraphSection = Field(default_factory=GraphSection)
     memory: MemorySection = Field(default_factory=MemorySection)
     review: ReviewSection = Field(default_factory=ReviewSection)
@@ -197,6 +207,7 @@ class ForgeSettings(BaseSettings):
         "optimizer",
         "prompt_optimizer",
         "caveman",
+        "output_optimization",
         "graph",
         mode="before",
     )

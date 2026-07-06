@@ -53,6 +53,7 @@ def update_config(
     clear_model: bool = False,
     ponytail: str | None = None,
     caveman: str | None = None,
+    output_optimization: str | None = None,
 ) -> Path:
     """Update defaults in the active forgecli.toml configuration file."""
     from forgecli.config.loader import ConfigLoader
@@ -98,6 +99,12 @@ def update_config(
             data["caveman"] = {}
         data["caveman"]["intensity"] = caveman
         data["caveman"]["enabled"] = (caveman != "off")
+
+    if output_optimization is not None:
+        if "output_optimization" not in data:
+            data["output_optimization"] = {}
+        data["output_optimization"]["intensity"] = output_optimization
+        data["output_optimization"]["enabled"] = (output_optimization != "off")
 
     content = dump_toml(data)
     target_path.write_text(content, encoding="utf-8")

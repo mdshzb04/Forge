@@ -49,6 +49,25 @@ async def run_tests(context: BuildContext) -> BuildContext:
     context.test_stdout = stdout.decode(errors="replace")
     context.test_stderr = stderr.decode(errors="replace")
     context.test_returncode = proc.returncode
+
+    # Apply Output Optimization
+    from forgecli.config.loader import ConfigLoader
+    from forgecli.optimizer.output.optimizer import OutputOptimizer
+
+    intensity = "lite"
+    try:
+        settings = ConfigLoader().load()
+        if settings.output_optimization.enabled:
+            intensity = settings.output_optimization.intensity
+        else:
+            intensity = "off"
+    except Exception:
+        pass
+
+    optimizer = OutputOptimizer(intensity=intensity)
+    context.test_stdout = optimizer.optimize(context.test_stdout)
+    context.test_stderr = optimizer.optimize(context.test_stderr)
+
     return context
 
 

@@ -95,6 +95,12 @@ def config_cmd(
         "-c",
         help="Configure Caveman optimization profile (off | lite | full | ultra).",
     ),
+    output: str = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Configure Output optimization profile (off | lite | full | ultra).",
+    ),
 ) -> None:
     """Configure Forge settings, including optimization profiles."""
     from forgecli.cli.ui import get_console, info, success
@@ -108,7 +114,7 @@ def config_cmd(
         from forgecli.config.settings import ForgeSettings
         settings = ForgeSettings()
 
-    if ponytail is None and caveman is None:
+    if ponytail is None and caveman is None and output is None:
         p_val = settings.prompt_optimizer.intensity
         if not settings.prompt_optimizer.enabled or p_val not in {"off", "lite", "full", "ultra"}:
             p_val = "off" if not settings.prompt_optimizer.enabled else "lite"
@@ -117,11 +123,16 @@ def config_cmd(
         if not settings.caveman.enabled or c_val not in {"off", "lite", "full", "ultra"}:
             c_val = "off" if not settings.caveman.enabled else "lite"
 
+        o_val = settings.output_optimization.intensity
+        if not settings.output_optimization.enabled or o_val not in {"off", "lite", "full", "ultra"}:
+            o_val = "off" if not settings.output_optimization.enabled else "lite"
+
         console = get_console()
         console.print()
         console.print("  [bold cyan]Forge Configuration[/bold cyan]")
         console.print(f"  Ponytail Profile : [white]{p_val}[/white]")
         console.print(f"  Caveman Profile  : [white]{c_val}[/white]")
+        console.print(f"  Output Profile   : [white]{o_val}[/white]")
         console.print()
         return
 
@@ -142,7 +153,15 @@ def config_cmd(
         else:
             caveman = val
 
-    path = update_config(ponytail=ponytail, caveman=caveman)
+    if output is not None:
+        val = output.lower().strip()
+        if val not in {"off", "lite", "full", "ultra"}:
+            info(f"Invalid Output mode '{output}'. Falling back to 'lite'.")
+            output = "lite"
+        else:
+            output = val
+
+    path = update_config(ponytail=ponytail, caveman=caveman, output_optimization=output)
     success(f"Config updated in [white]{path}[/white]")
 
 
@@ -190,7 +209,7 @@ def main(
         "    [cyan]forge antigravity[/cyan]  Launch Antigravity CLI with optimized context\n"
         "    [cyan]forge start[/cyan]        Start the background context optimization daemon\n"
         "    [cyan]forge mcp[/cyan]          Start the stdio Model Context Protocol (MCP) server\n"
-        "    [cyan]forge config[/cyan]       Configure Ponytail and Caveman optimization profiles\n"
+        "    [cyan]forge config[/cyan]       Configure Ponytail, Caveman, and Output optimization profiles\n"
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"
         "    [cyan]forge --help[/cyan]       Show all options\n"
     )
