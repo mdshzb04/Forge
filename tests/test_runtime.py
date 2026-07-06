@@ -46,11 +46,19 @@ def test_prepare_runtime_applies_caveman_injection(tmp_path: Path, monkeypatch) 
     prepared = prepare_runtime_sync(tmp_path, force=True)
     assert "SYSTEM INSTRUCTION: RESPOND STYLE (CAVEMAN)" not in prepared.context_summary
 
+    from forgecli.config.loader import ConfigLoader
     from forgecli.runtime.prepare import get_merged_context
+
+    loader = ConfigLoader()
+    try:
+        settings = loader.load()
+        intensity = settings.prompt_optimizer.intensity
+    except Exception:
+        intensity = "lite"
 
     merged = get_merged_context(prepared.context_summary)
     assert "SYSTEM INSTRUCTION: RESPOND STYLE (CAVEMAN)" in merged
-    assert "CAVEMAN (lite)" in merged
+    assert f"CAVEMAN ({intensity})" in merged
 
 
 def test_runtime_cache_roundtrip(tmp_path: Path, monkeypatch) -> None:

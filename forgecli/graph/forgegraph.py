@@ -12,6 +12,7 @@ This module delegates to the external compiled binary if one is on the PATH
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
 import shutil
@@ -31,22 +32,18 @@ def _prepare_legacy_dir(root: Path) -> None:
     legacy = root / "graphify-out"
     target = root / DEFAULT_OUTPUT_DIR
     if target.exists() and not legacy.exists():
-        try:
+        with contextlib.suppress(Exception):
             target.rename(legacy)
-        except Exception:
-            pass
 
 
 def _restore_target_dir(root: Path) -> None:
     legacy = root / "graphify-out"
     target = root / DEFAULT_OUTPUT_DIR
     if legacy.exists():
-        try:
+        with contextlib.suppress(Exception):
             if target.exists():
                 shutil.rmtree(target)
             legacy.rename(target)
-        except Exception:
-            pass
 
 
 class ForgeGraphNotFoundError(ForgeCLIError):
