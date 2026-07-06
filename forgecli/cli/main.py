@@ -10,7 +10,7 @@ from pathlib import Path
 import typer
 
 from forgecli import __app_name__, __version__
-from forgecli.cli import commands_graph, commands_wrappers
+from forgecli.cli import commands_diagnostics, commands_graph, commands_wrappers
 from forgecli.cli.bootstrap import bootstrap_context
 from forgecli.cli.ui import error, get_console
 from forgecli.core.errors import ForgeCLIError
@@ -49,6 +49,14 @@ app.command(
     help="Launch Antigravity CLI with Forge prompt + token optimization.",
     context_settings=commands_wrappers._WRAPPER_SETTINGS,
 )(commands_wrappers.antigravity_cmd)
+app.command(
+    "status",
+    help="Show current repository, optimization, and daemon status.",
+)(commands_diagnostics.status_cmd)
+app.command(
+    "doctor",
+    help="Run system checks to verify Forge configuration and dependencies.",
+)(commands_diagnostics.doctor_cmd)
 
 
 @app.command("start", help="Start the long-running Forge Context Runtime daemon.")
@@ -210,6 +218,8 @@ def main(
         "    [cyan]forge start[/cyan]        Start the background context optimization daemon\n"
         "    [cyan]forge mcp[/cyan]          Start the stdio Model Context Protocol (MCP) server\n"
         "    [cyan]forge config[/cyan]       Configure Ponytail, Caveman, and Output optimization profiles\n"
+        "    [cyan]forge status[/cyan]       Show repository, daemon, and optimization status\n"
+        "    [cyan]forge doctor[/cyan]       Verify installation, dependencies, and configuration\n"
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"
         "    [cyan]forge --help[/cyan]       Show all options\n"
     )
