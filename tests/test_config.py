@@ -53,13 +53,11 @@ def test_cli_config_shows_help_and_values(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_cli_config_updates_profiles(tmp_path: Path, monkeypatch) -> None:
+    import tomllib
+
     from typer.testing import CliRunner
 
     from forgecli.cli.main import app
-    try:
-        import tomllib
-    except ModuleNotFoundError:
-        import tomli as tomllib
 
     monkeypatch.chdir(tmp_path)
     runner = CliRunner()
@@ -86,13 +84,11 @@ def test_cli_config_updates_profiles(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_cli_config_invalid_fallback(tmp_path: Path, monkeypatch) -> None:
+    import tomllib
+
     from typer.testing import CliRunner
 
     from forgecli.cli.main import app
-    try:
-        import tomllib
-    except ModuleNotFoundError:
-        import tomli as tomllib
 
     monkeypatch.chdir(tmp_path)
     runner = CliRunner()
