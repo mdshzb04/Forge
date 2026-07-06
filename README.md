@@ -9,14 +9,9 @@ The primary purpose of Forge is to construct an optimized representation of a co
 Forge prepares repository-aware context for AI coding assistants using knowledge graph generation, intelligent context selection, prompt optimization, token optimization, and aggressive caching. 
 
 Forge is powered internally by three integrated optimization engines:
-1. **Graphify** 
-2. **Ponytail**
-3. **Caveman** 
-
-### Hybrid Optimization Pipeline
-Both **Ponytail** and **Caveman** feature a hybrid architecture:
-- If standalone external binaries (`ponytail` or `caveman`) exist on your system's `PATH`, Forge will invoke them directly.
-- If no external binaries are found, Forge automatically falls back to its built-in, self-contained Python implementation with zero setup or configuration required.
+1. **Graphify** (Knowledge graph and symbol index generator)
+2. **Ponytail** (Intelligent YAGNI context selector and prompt optimizer)
+3. **Caveman** (Token-efficient communication and brevity optimizer)
 
 ---
 
@@ -56,8 +51,11 @@ Forge provides two primary interfaces to connect with your AI coding tools:
 | `forge antigravity` | Wrapper | Launch Antigravity CLI with optimized context and auto-registered MCP |
 | `forge mcp` | Core Runtime | Start the stdio Model Context Protocol (MCP) server |
 | `forge start` | Daemon | Start the background context optimization daemon |
-| `forge graph build` | Tool | Build a full knowledge graph via Graphify (optional) |
+| `forge graph build` | Tool | Build a full codebase dependency and symbol knowledge graph (optional) |
+| `forge config` | Tool | Configure optimization profile intensities |
 | `forge --version` | Tool | Show version |
+
+For detailed information on all command usages and options, refer to the [CLI Command Reference](docs/commands.md).
 
 > [!NOTE]
 > When launching convenience wrappers, prompts or extra positional arguments are not supported directly (e.g. `forge claude "some prompt"` is blocked). Run the wrapper command without arguments to launch the tool's interactive session directly. Use the `--refresh` option to bypass the cache:
