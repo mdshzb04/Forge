@@ -7,12 +7,17 @@ The primary purpose of Forge is to construct an optimized representation of a co
 ## Core Philosophy
 
 > [!IMPORTANT]
-> **Forge optimizes what it controls:**
-> * **Repository Intelligence** (Scanning, caching, and dependency graph generation)
-> * **Implementation Guidance** (Ponytail YAGNI constraints)
-> * **Response Style** (Caveman brevity configuration)
+> **Forge optimizes what it controls.**
 >
-> Forge does not modify provider billing, quota accounting, or the internal reasoning performed by remote AI models.
+> Forge focuses on three core pillars:
+>
+> - **Repository Intelligence** — Repository scanning, caching, dependency analysis, and repository graph generation.
+> - **Behavior Optimization** — Configurable implementation guidance (Ponytail) and response style optimization (Caveman).
+> - **Runtime Infrastructure** — Zero-configuration wrappers, repository context preparation, and runtime orchestration.
+>
+> Forge prepares and optimizes repository context before launching supported AI coding tools.
+>
+> Forge **does not** modify provider billing, quota accounting, model pricing, or the internal reasoning performed by remote AI models.
 
 ## Architecture & How It Works
 
