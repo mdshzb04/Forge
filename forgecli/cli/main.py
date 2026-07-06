@@ -22,7 +22,7 @@ with contextlib.suppress(AttributeError):
 
 app = typer.Typer(
     name="forge",
-    help="Forge — AI optimization runtime for Claude Code, Codex, Cursor, OpenCode, and CommandCode CLI.",
+    help="Forge — AI optimization runtime for Claude Code, Codex, Cursor, and Antigravity CLI.",
     no_args_is_help=False,
     add_completion=False,
     rich_markup_mode="rich",
@@ -44,16 +44,6 @@ app.command(
     help="Launch Cursor CLI with Forge prompt + token optimization.",
     context_settings=commands_wrappers._WRAPPER_SETTINGS,
 )(commands_wrappers.cursor_cmd)
-app.command(
-    "opencode",
-    help="Launch OpenCode CLI with Forge prompt + token optimization.",
-    context_settings=commands_wrappers._WRAPPER_SETTINGS,
-)(commands_wrappers.opencode_cmd)
-app.command(
-    "commandcode",
-    help="Launch CommandCode CLI with Forge prompt + token optimization.",
-    context_settings=commands_wrappers._WRAPPER_SETTINGS,
-)(commands_wrappers.commandcode_cmd)
 app.command(
     "antigravity",
     help="Launch Antigravity CLI with Forge prompt + token optimization.",
@@ -197,8 +187,6 @@ def main(
         "    [cyan]forge claude[/cyan]       Launch Claude Code with optimized context\n"
         "    [cyan]forge codex[/cyan]        Launch Codex CLI with optimized context\n"
         "    [cyan]forge cursor[/cyan]       Launch Cursor CLI with optimized context\n"
-        "    [cyan]forge opencode[/cyan]     Launch OpenCode CLI with optimized context\n"
-        "    [cyan]forge commandcode[/cyan]  Launch CommandCode CLI with optimized context\n"
         "    [cyan]forge antigravity[/cyan]  Launch Antigravity CLI with optimized context\n"
         "    [cyan]forge start[/cyan]        Start the background context optimization daemon\n"
         "    [cyan]forge mcp[/cyan]          Start the stdio Model Context Protocol (MCP) server\n"

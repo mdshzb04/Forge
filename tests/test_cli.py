@@ -102,7 +102,7 @@ def test_graph_help() -> None:
 
 def test_wrapper_help_new_commands() -> None:
     runner = CliRunner()
-    for cmd in ("opencode", "commandcode", "antigravity"):
+    for cmd in ("antigravity",):
         result = runner.invoke(app, [cmd, "--help"])
         assert result.exit_code == 0
         assert cmd in result.output.lower() or "Launch" in result.output
@@ -140,8 +140,6 @@ def test_graph_build_no_api_key(tmp_path: Path, monkeypatch) -> None:
         ("claude", "claude"),
         ("codex", "codex"),
         ("cursor", "cursor"),
-        ("opencode", "opencode"),
-        ("commandcode", "commandcode"),
         ("antigravity", "antigravity"),
     ],
 )

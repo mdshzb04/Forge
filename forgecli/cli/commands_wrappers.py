@@ -1,4 +1,4 @@
-"""Wrapper commands: forge claude | codex | cursor | opencode | commandcode."""
+"""Wrapper commands: forge claude | codex | cursor | antigravity."""
 
 from __future__ import annotations
 
@@ -42,24 +42,6 @@ def cursor_cmd(
     launch_wrapper("cursor", list(ctx.args), path=Path(path), force_prepare=refresh)
 
 
-def opencode_cmd(
-    ctx: typer.Context,
-    path: str = typer.Option(".", "--path", "-p", help="Project root."),
-    refresh: bool = typer.Option(False, "--refresh", help="Bypass cached Forge context."),
-) -> None:
-    """Launch OpenCode CLI with Forge prompt + token optimization."""
-    launch_wrapper("opencode", list(ctx.args), path=Path(path), force_prepare=refresh)
-
-
-def commandcode_cmd(
-    ctx: typer.Context,
-    path: str = typer.Option(".", "--path", "-p", help="Project root."),
-    refresh: bool = typer.Option(False, "--refresh", help="Bypass cached Forge context."),
-) -> None:
-    """Launch CommandCode CLI with Forge prompt + token optimization."""
-    launch_wrapper("commandcode", list(ctx.args), path=Path(path), force_prepare=refresh)
-
-
 def antigravity_cmd(
     ctx: typer.Context,
     path: str = typer.Option(".", "--path", "-p", help="Project root."),
@@ -74,7 +56,5 @@ __all__ = [
     "antigravity_cmd",
     "claude_cmd",
     "codex_cmd",
-    "commandcode_cmd",
     "cursor_cmd",
-    "opencode_cmd",
 ]

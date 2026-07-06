@@ -37,7 +37,7 @@ The CLI entrypoint is `forge`.
 ## Convenience Wrappers vs. Core MCP Runtime
 
 Forge provides two primary interfaces to connect with your AI coding tools:
-1. **Convenience Wrappers** (`forge claude`, `forge cursor`, `forge codex`, `forge opencode`, `forge commandcode`, `forge antigravity`): Commands that automatically prepare/optimize context, update local and global configurations, and launch the target AI CLI under an optimized environment.
+1. **Convenience Wrappers** (`forge claude`, `forge cursor`, `forge codex`, `forge antigravity`): Commands that automatically prepare/optimize context, update local and global configurations, and launch the target AI CLI under an optimized environment.
 2. **Core MCP Runtime** (`forge mcp`): The standard Model Context Protocol (MCP) interface that compatible AI clients communicate with over stdio.
 
 ---
@@ -49,8 +49,6 @@ Forge provides two primary interfaces to connect with your AI coding tools:
 | `forge claude` | Wrapper | Launch Claude Code with optimized context and auto-registered MCP |
 | `forge codex` | Wrapper | Launch Codex CLI with optimized context and auto-registered MCP |
 | `forge cursor` | Wrapper | Launch Cursor CLI with optimized context and auto-registered MCP |
-| `forge opencode` | Wrapper | Launch OpenCode CLI with optimized context and auto-registered MCP |
-| `forge commandcode` | Wrapper | Launch CommandCode CLI with optimized context and auto-registered MCP |
 | `forge antigravity` | Wrapper | Launch Antigravity CLI with optimized context and auto-registered MCP |
 | `forge mcp` | Core Runtime | Start the stdio Model Context Protocol (MCP) server |
 | `forge start` | Daemon | Start the background context optimization daemon |

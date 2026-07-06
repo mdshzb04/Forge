@@ -1,4 +1,4 @@
-"""Launch Claude Code, Codex, Cursor, OpenCode, and CommandCode CLI with Forge-optimized context."""
+"""Launch Claude Code, Codex, Cursor, and Antigravity CLI with Forge-optimized context."""
 
 from __future__ import annotations
 
@@ -37,16 +37,6 @@ WRAPPERS: dict[str, WrapperSpec] = {
         binary="cursor",
         install_hint="Install Cursor CLI: https://cursor.com/docs/cli/overview",
     ),
-    "opencode": WrapperSpec(
-        name="OpenCode CLI",
-        binary="opencode",
-        install_hint="Install OpenCode CLI: https://opencode.ai/",
-    ),
-    "commandcode": WrapperSpec(
-        name="CommandCode CLI",
-        binary="commandcode",
-        install_hint="Install CommandCode CLI: https://commandcode.ai/",
-    ),
     "antigravity": WrapperSpec(
         name="Antigravity CLI",
         binary="antigravity",
@@ -75,9 +65,6 @@ def launch_wrapper(
         raise typer.Exit(code=1)
 
     binary_path = which(spec.binary)
-    if binary_path is None and wrapper_id == "commandcode":
-        # Check alternative binary names for commandcode
-        binary_path = which("command-code")
 
     if binary_path is None:
         console = get_console()
