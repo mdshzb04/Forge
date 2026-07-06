@@ -4,6 +4,16 @@ Forge is a lightweight, high-performance AI optimization runtime designed to pre
 
 The primary purpose of Forge is to construct an optimized representation of a codebase so that AI coding assistants can operate with maximum correctness, lower response latency, and reduced context-budget overhead.
 
+## Core Philosophy
+
+> [!IMPORTANT]
+> **Forge optimizes what it controls:**
+> * **Repository Intelligence** (Scanning, caching, and dependency graph generation)
+> * **Implementation Guidance** (Ponytail YAGNI constraints)
+> * **Response Style** (Caveman brevity configuration)
+>
+> Forge does not modify provider billing, quota accounting, or the internal reasoning performed by remote AI models.
+
 ## Architecture & How It Works
 
 Forge prepares repository-aware context for AI coding assistants using knowledge graph generation, intelligent context selection, prompt optimization, token optimization, and aggressive caching. 
