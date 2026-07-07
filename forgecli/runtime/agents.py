@@ -1,0 +1,104 @@
+"""Single source of truth for the terminal AI agents Forge supports.
+
+Each :class:`AgentSpec` describes how to launch an agent CLI and where to
+register the Forge MCP server so the agent receives optimized context. Adding
+a new agent is a single entry here — the wrapper command, help text, and MCP
+auto-configuration are all driven off this registry.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class MCPTarget:
+    """A location + format where the Forge MCP server should be registered.
+
+    ``base`` selects the anchor directory: ``"home"`` for a per-user config
+    (e.g. ``~/.codex/config.toml``) or ``"repo"`` for a project-local file
+    (e.g. ``<repo>/.cursor/mcp.json``). ``relpath`` is joined onto that anchor.
+    """
+
+    base: str  # "home" | "repo"
+    relpath: str
+    fmt: str = "json"  # "json" | "toml"
+    table: str = "mcpServers"  # JSON key / TOML table holding server entries
+    label: str = ""  # human-facing name for success messages
+
+
+@dataclass(frozen=True)
+class AgentSpec:
+    """A terminal AI agent Forge can prepare context for and launch."""
+
+    id: str
+    name: str
+    binary: str
+    install_hint: str
+    mcp_targets: tuple[MCPTarget, ...] = field(default_factory=tuple)
+    supports_mcp: bool = True
+
+
+AGENTS: dict[str, AgentSpec] = {
+    "claude": AgentSpec(
+        id="claude",
+        name="Claude Code",
+        binary="claude",
+        install_hint="Install Claude Code: https://docs.anthropic.com/en/docs/claude-code",
+        mcp_targets=(
+            MCPTarget(base="home", relpath=".claude.json", fmt="json", label="Claude Code"),
+        ),
+    ),
+    "codex": AgentSpec(
+        id="codex",
+        name="Codex CLI",
+        binary="codex",
+        install_hint="Install OpenAI Codex CLI: https://developers.openai.com/codex/cli/",
+        mcp_targets=(
+            MCPTarget(
+                base="home",
+                relpath=".codex/config.toml",
+                fmt="toml",
+                table="mcp_servers",
+                label="Codex CLI",
+            ),
+        ),
+    ),
+    "cursor": AgentSpec(
+        id="cursor",
+        name="Cursor CLI",
+        binary="cursor",
+        install_hint="Install Cursor CLI: https://cursor.com/docs/cli/overview",
+        mcp_targets=(
+            MCPTarget(base="home", relpath=".cursor/mcp.json", fmt="json", label="Cursor (global)"),
+            MCPTarget(base="repo", relpath=".cursor/mcp.json", fmt="json", label="Cursor (project)"),
+        ),
+    ),
+    "antigravity": AgentSpec(
+        id="antigravity",
+        name="Antigravity CLI",
+        binary="antigravity",
+        install_hint="Install Antigravity CLI",
+        mcp_targets=(
+            MCPTarget(
+                base="home",
+                relpath=".antigravity/mcp_config.json",
+                fmt="json",
+                label="Antigravity CLI",
+            ),
+        ),
+    ),
+    "aider": AgentSpec(
+        id="aider",
+        name="Aider",
+        binary="aider",
+        install_hint="Install Aider: https://aider.chat/docs/install.html",
+        # Aider has no native MCP config; it relies on the FORGE_CONTEXT env
+        # vars and the project-local .mcp.json fallback.
+        mcp_targets=(),
+        supports_mcp=False,
+    ),
+}
+
+
+__all__ = ["AGENTS", "AgentSpec", "MCPTarget"]

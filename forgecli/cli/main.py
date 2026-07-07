@@ -14,6 +14,7 @@ from forgecli.cli import commands_diagnostics, commands_graph, commands_wrappers
 from forgecli.cli.bootstrap import bootstrap_context
 from forgecli.cli.ui import error, get_console
 from forgecli.core.errors import ForgeCLIError
+from forgecli.runtime.agents import AGENTS
 
 warnings.filterwarnings("ignore")
 
@@ -22,33 +23,19 @@ with contextlib.suppress(AttributeError):
 
 app = typer.Typer(
     name="forge",
-    help="Forge — AI optimization runtime for Claude Code, Codex, Cursor, and Antigravity CLI.",
+    help="Forge — AI optimization runtime for Claude, Codex, Cursor, Antigravity, and Aider.",
     no_args_is_help=False,
     add_completion=False,
     rich_markup_mode="rich",
 )
 
 app.add_typer(commands_graph.app, name="graph")
-app.command(
-    "claude",
-    help="Launch Claude Code with Forge prompt + token optimization.",
-    context_settings=commands_wrappers._WRAPPER_SETTINGS,
-)(commands_wrappers.claude_cmd)
-app.command(
-    "codex",
-    help="Launch Codex CLI with Forge prompt + token optimization.",
-    context_settings=commands_wrappers._WRAPPER_SETTINGS,
-)(commands_wrappers.codex_cmd)
-app.command(
-    "cursor",
-    help="Launch Cursor CLI with Forge prompt + token optimization.",
-    context_settings=commands_wrappers._WRAPPER_SETTINGS,
-)(commands_wrappers.cursor_cmd)
-app.command(
-    "antigravity",
-    help="Launch Antigravity CLI with Forge prompt + token optimization.",
-    context_settings=commands_wrappers._WRAPPER_SETTINGS,
-)(commands_wrappers.antigravity_cmd)
+for _agent_id, _agent in AGENTS.items():
+    app.command(
+        _agent_id,
+        help=f"Launch {_agent.name} with Forge prompt + token optimization.",
+        context_settings=commands_wrappers._WRAPPER_SETTINGS,
+    )(commands_wrappers.make_agent_cmd(_agent_id))
 app.command(
     "status",
     help="Show current repository, optimization, and daemon status.",
@@ -215,6 +202,7 @@ def main(
         "    [cyan]forge codex[/cyan]        Launch Codex CLI with optimized context\n"
         "    [cyan]forge cursor[/cyan]       Launch Cursor CLI with optimized context\n"
         "    [cyan]forge antigravity[/cyan]  Launch Antigravity CLI with optimized context\n"
+        "    [cyan]forge aider[/cyan]        Launch Aider with optimized context\n"
         "    [cyan]forge start[/cyan]        Start the background context optimization daemon\n"
         "    [cyan]forge mcp[/cyan]          Start the stdio Model Context Protocol (MCP) server\n"
         "    [cyan]forge config[/cyan]       Configure Ponytail, Caveman, and Output optimization profiles\n"

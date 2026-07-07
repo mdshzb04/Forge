@@ -1,48 +1,17 @@
-"""Launch Claude Code, Codex, Cursor, and Antigravity CLI with Forge-optimized context."""
+"""Launch supported terminal AI agents (Claude, Codex, Cursor, Antigravity, Aider) with Forge context."""
 
 from __future__ import annotations
 
 import os
 import subprocess
-from dataclasses import dataclass
 from pathlib import Path
 
 import typer
 
 from forgecli.cli.ui import error, get_console, info
 from forgecli.platform.shell import which
+from forgecli.runtime.agents import AGENTS
 from forgecli.runtime.prepare import prepare_runtime_sync, resolve_repo_root
-
-
-@dataclass(frozen=True)
-class WrapperSpec:
-    name: str
-    binary: str
-    install_hint: str
-
-
-WRAPPERS: dict[str, WrapperSpec] = {
-    "claude": WrapperSpec(
-        name="Claude Code",
-        binary="claude",
-        install_hint="Install Claude Code: https://docs.anthropic.com/en/docs/claude-code",
-    ),
-    "codex": WrapperSpec(
-        name="Codex CLI",
-        binary="codex",
-        install_hint="Install OpenAI Codex CLI: https://developers.openai.com/codex/cli/",
-    ),
-    "cursor": WrapperSpec(
-        name="Cursor CLI",
-        binary="cursor",
-        install_hint="Install Cursor CLI: https://cursor.com/docs/cli/overview",
-    ),
-    "antigravity": WrapperSpec(
-        name="Antigravity CLI",
-        binary="antigravity",
-        install_hint="Install Antigravity CLI",
-    ),
-}
 
 
 def launch_wrapper(
@@ -53,7 +22,7 @@ def launch_wrapper(
     force_prepare: bool = False,
 ) -> None:
     """Prepare lightweight context and launch the selected AI CLI."""
-    spec = WRAPPERS.get(wrapper_id)
+    spec = AGENTS.get(wrapper_id)
     if spec is None:
         error(f"Unknown wrapper: {wrapper_id}")
         raise typer.Exit(code=1)

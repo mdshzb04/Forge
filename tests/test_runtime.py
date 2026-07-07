@@ -81,3 +81,40 @@ def test_runtime_cache_roundtrip(tmp_path: Path, monkeypatch) -> None:
     loaded = load_runtime_cache(fp)
     assert loaded is not None
     assert loaded.context_summary == "hello"
+
+
+def test_prepare_runtime_empty_repo_is_valid(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
+
+    empty = tmp_path / "empty_repo"
+    empty.mkdir()
+
+    prepared = prepare_runtime_sync(empty, force=True)
+    assert prepared.context_summary.strip()  # never blank
+    assert "Empty repository" in prepared.context_summary
+
+    from forgecli.runtime.prepare import get_merged_context
+
+    merged = get_merged_context(prepared.context_summary)
+    # Behavior instructions must still apply on an empty repo.
+    assert "SYSTEM INSTRUCTION" in merged
+
+
+def test_prepare_runtime_heavy_repo_is_bounded(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
+
+    heavy = tmp_path / "heavy_repo"
+    heavy.mkdir()
+    for i in range(60):
+        pkg = heavy / f"pkg_{i}"
+        pkg.mkdir()
+        for j in range(10):
+            (pkg / f"mod_{j}.py").write_text(f"x = {i * j}\n", encoding="utf-8")
+
+    prepared = prepare_runtime_sync(heavy, force=True)
+    assert prepared.context_summary.strip()
+    assert len(prepared.context_summary) <= 12_000

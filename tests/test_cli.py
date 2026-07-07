@@ -27,6 +27,7 @@ def test_cli_help() -> None:
     assert "claude" in result.output
     assert "codex" in result.output
     assert "cursor" in result.output
+    assert "aider" in result.output
     assert "graph" in result.output
 
 
@@ -141,6 +142,7 @@ def test_graph_build_no_api_key(tmp_path: Path, monkeypatch) -> None:
         ("codex", "codex"),
         ("cursor", "cursor"),
         ("antigravity", "antigravity"),
+        ("aider", "aider"),
     ],
 )
 def test_wrapper_command_works_without_api_key(
@@ -232,6 +234,17 @@ def test_mcp_auto_configuration(tmp_path: Path, monkeypatch) -> None:
     # Verify project-local config files
     assert (mock_repo / ".cursor" / "mcp.json").exists()
     assert (mock_repo / ".mcp.json").exists()
+
+    # Verify Codex TOML got the forge server registered
+    codex_toml = mock_home / ".codex" / "config.toml"
+    assert codex_toml.exists()
+    assert "[mcp_servers.forge]" in codex_toml.read_text(encoding="utf-8")
+
+    # Verify Antigravity JSON got configured
+    antigravity_json = mock_home / ".antigravity" / "mcp_config.json"
+    assert antigravity_json.exists()
+    antigravity_config = json.loads(antigravity_json.read_text(encoding="utf-8"))
+    assert "forge" in antigravity_config.get("mcpServers", {})
 
 
 def test_wrapper_rejects_prompts_and_extra_arguments(tmp_path: Path, monkeypatch) -> None:

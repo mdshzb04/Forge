@@ -67,8 +67,46 @@ def _git_line(root: Path) -> str | None:
     return None
 
 
+def _repo_scale(root: Path) -> tuple[int, str]:
+    """Roughly size the repo and classify it as empty / normal / heavy.
+
+    Counts entries breadth-first with a hard cap so this stays O(1)-ish even on
+    huge trees. Returns ``(entry_count, tier)`` where tier is one of
+    ``"empty"``, ``"normal"``, ``"heavy"``.
+    """
+    count = 0
+    stack = [root]
+    while stack and count <= 800:
+        current = stack.pop()
+        try:
+            for entry in current.iterdir():
+                if entry.name in _SKIP_DIRS or entry.name.startswith("."):
+                    continue
+                count += 1
+                if count > 800:
+                    break
+                if entry.is_dir():
+                    stack.append(entry)
+        except OSError:
+            continue
+
+    if count == 0:
+        return count, "empty"
+    if count > 400:
+        return count, "heavy"
+    return count, "normal"
+
+
 def _scan_repo_light(root: Path) -> str:
-    """Build a small repo snapshot without indexing the full codebase."""
+    """Build a small repo snapshot without indexing the full codebase.
+
+    The scan breadth adapts to repo size: empty repos still yield a valid,
+    non-blank context (so behavior instructions always apply); heavy repos get
+    a wider-but-still-bounded snapshot and hand deeper compression to the
+    optimizer, plus a pointer to the full knowledge graph.
+    """
+    entry_count, tier = _repo_scale(root)
+
     lines = [
         f"Repository: {root.name}",
         f"Root: {root}",
@@ -77,15 +115,29 @@ def _scan_repo_light(root: Path) -> str:
     if git_info:
         lines.append(git_info)
 
+    if tier == "empty":
+        lines.extend(
+            [
+                "",
+                "Empty repository — no source files yet.",
+                "No project layout to summarize; optimization applies to prompts only.",
+            ]
+        )
+        return "\n".join(lines)
+
+    top_cap = 60 if tier == "heavy" else 36
+    child_cap = 4 if tier == "heavy" else 6
+    layout_cap = 120 if tier == "heavy" else 72
+
     layout: list[str] = []
     try:
-        for entry in sorted(root.iterdir(), key=lambda p: p.name.lower())[:36]:
+        for entry in sorted(root.iterdir(), key=lambda p: p.name.lower())[:top_cap]:
             if entry.name in _SKIP_DIRS or entry.name.startswith("."):
                 continue
             if entry.is_dir():
                 layout.append(f"{entry.name}/")
                 try:
-                    for child in sorted(entry.iterdir(), key=lambda p: p.name.lower())[:6]:
+                    for child in sorted(entry.iterdir(), key=lambda p: p.name.lower())[:child_cap]:
                         if child.name in _SKIP_DIRS or child.name.startswith("."):
                             continue
                         suffix = "/" if child.is_dir() else ""
@@ -98,7 +150,14 @@ def _scan_repo_light(root: Path) -> str:
         pass
 
     if layout:
-        lines.extend(["", "Project layout (shallow scan):", *layout[:72]])
+        lines.extend(["", "Project layout (shallow scan):", *layout[:layout_cap]])
+
+    if tier == "heavy":
+        lines.append("")
+        lines.append(
+            f"Large repository (~{entry_count}+ entries). Context is aggressively "
+            "compressed; run `forge graph build` for a full symbol index."
+        )
 
     graph_marker = root / "forgegraph-out" / "graph.json"
     if graph_marker.is_file():
@@ -112,7 +171,9 @@ def _scan_repo_light(root: Path) -> str:
 
 
 def _optimize_tokens(text: str) -> str:
-    optimizer = ContextOptimizer(max_context_tokens=8_000)
+    # Compress harder as the raw context grows so heavy repos stay bounded.
+    max_tokens = 8_000 if len(text) <= 6_000 else 4_000
+    optimizer = ContextOptimizer(max_context_tokens=max_tokens)
     result = optimizer.optimize(text)
     if not result.chunks:
         return text[:12_000]
