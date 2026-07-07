@@ -14,7 +14,7 @@ Forge provides convenience wrappers to prepare optimized context and automatical
 | `forge cursor` | Cursor CLI | Launches Cursor with global + project-specific MCP registry updates. |
 | `forge antigravity` | Antigravity CLI | Launches Antigravity with MCP registration (`~/.antigravity/mcp_config.json`) and optimized context. |
 | `forge codex` | Codex CLI | Launches Codex with MCP registration (`~/.codex/config.toml`) and context optimization. |
-| `forge aider` | Aider | Launches Aider with optimized context via `FORGE_CONTEXT` env + project `.mcp.json`. |
+| `forge aider` | Aider | Launches Aider with the optimized context injected via its `--read` flag (plus `FORGE_CONTEXT` env + project `.mcp.json`). |
 
 ### Wrapper Rules & Features
 * **Zero-Arguments Block:** To prevent command leakage, direct prompt pass-throughs (e.g., `forge claude "create a file"`) are blocked. Launch the wrappers without positional arguments to open their interactive shell environment.

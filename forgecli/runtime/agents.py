@@ -37,6 +37,13 @@ class AgentSpec:
     install_hint: str
     mcp_targets: tuple[MCPTarget, ...] = field(default_factory=tuple)
     supports_mcp: bool = True
+    context_flag: str | None = None
+    """CLI flag used to inject the optimized context file at launch.
+
+    For agents without native MCP (e.g. Aider's ``--read``), Forge passes the
+    merged context file as ``<context_flag> <file>`` so the agent still ingests
+    the optimized context. ``None`` means the agent receives context via MCP.
+    """
 
 
 AGENTS: dict[str, AgentSpec] = {
@@ -93,10 +100,12 @@ AGENTS: dict[str, AgentSpec] = {
         name="Aider",
         binary="aider",
         install_hint="Install Aider: https://aider.chat/docs/install.html",
-        # Aider has no native MCP config; it relies on the FORGE_CONTEXT env
+        # Aider has no native MCP config; it ingests the optimized context via
+        # its --read flag (read-only reference file) plus the FORGE_CONTEXT env
         # vars and the project-local .mcp.json fallback.
         mcp_targets=(),
         supports_mcp=False,
+        context_flag="--read",
     ),
 }
 

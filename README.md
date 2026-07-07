@@ -65,7 +65,7 @@ Forge provides two primary interfaces to connect with your AI coding tools:
 | `forge codex` | Wrapper | Launch Codex CLI with optimized context and auto-registered MCP (`~/.codex/config.toml`) |
 | `forge cursor` | Wrapper | Launch Cursor CLI with optimized context and auto-registered MCP |
 | `forge antigravity` | Wrapper | Launch Antigravity CLI with optimized context and auto-registered MCP |
-| `forge aider` | Wrapper | Launch Aider with optimized context (`FORGE_CONTEXT` env + project `.mcp.json`) |
+| `forge aider` | Wrapper | Launch Aider with optimized context injected via `--read` (+ `FORGE_CONTEXT` env, project `.mcp.json`) |
 | `forge mcp` | Core Runtime | Start the stdio Model Context Protocol (MCP) server |
 | `forge start` | Daemon | Start the background context optimization daemon |
 | `forge graph build` | Tool | Build a full codebase dependency and symbol knowledge graph (optional) |

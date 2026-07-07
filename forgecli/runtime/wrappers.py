@@ -94,6 +94,9 @@ def launch_wrapper(
     env["FORGE_REPO_ROOT"] = str(prepared.root)
 
     argv = [binary_path, *(extra_args or [])]
+    # Agents without native MCP (e.g. Aider) ingest context via a CLI flag.
+    if spec.context_flag:
+        argv += [spec.context_flag, str(merged_file)]
     info(f"Launching [accent]{spec.name}[/accent] ...")
 
     completed = subprocess.run(
