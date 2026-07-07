@@ -12,7 +12,7 @@ The primary purpose of Forge is to construct an optimized representation of a co
 > Forge focuses on three core pillars:
 >
 > - **Repository Intelligence** — Repository scanning, caching, dependency analysis, and repository graph generation.
-> - **Behavior Optimization** — Configurable implementation guidance (Ponytail) and response style optimization (Caveman).
+> - **Behavior Optimization** — Configurable implementation guidance (inspired by Ponytail's YAGNI rules) and response style optimization (inspired by Caveman's brevity prompts).
 > - **Runtime Infrastructure** — Zero-configuration wrappers, repository context preparation, and runtime orchestration.
 >
 > Forge prepares and optimizes repository context before launching supported AI coding tools.
@@ -23,13 +23,13 @@ The primary purpose of Forge is to construct an optimized representation of a co
 
 Forge prepares repository-aware context for AI coding assistants using knowledge graph generation, intelligent context selection, prompt optimization, token optimization, and aggressive caching. 
 
-Forge is powered internally by three integrated optimization engines:
+Forge is powered internally by three integrated optimization components:
 1. **ForgeGraph** (Knowledge graph and symbol index generator)
-2. **Ponytail** (Intelligent YAGNI context selector and prompt optimizer)
-3. **Caveman** (Token-efficient communication and brevity optimizer)
+2. **Ponytail Ruleset** (Custom Python implementation of YAGNI prompt rules, inspired by the Ponytail concept)
+3. **Caveman Ruleset** (Custom Python implementation of communication compression prompts, inspired by the Caveman concept)
 
 ### Design Philosophy & Inspiration
-Forge combines original runtime infrastructure with ideas inspired by the broader open-source AI tooling ecosystem. While some optimization concepts draw inspiration from existing projects, Forge's architecture, background caching daemon, editor wrappers, and local code parser are independently developed. For details, see [CREDITS.md](CREDITS.md).
+Forge is not a copy of existing tools; it combines original runtime infrastructure with ideas and concepts inspired by the broader open-source AI tooling ecosystem. The behavior and token optimization components are custom, built-in implementations designed for token efficiency, though Forge also provides CLI adapters to delegate to the official external tools if they are installed on your system. For details, see [CREDITS.md](CREDITS.md).
 
 ---
 
