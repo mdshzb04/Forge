@@ -276,8 +276,8 @@ def test_mcp_auto_configuration(tmp_path: Path, monkeypatch) -> None:
     assert codex_toml.exists()
     assert "[mcp_servers.forge]" in codex_toml.read_text(encoding="utf-8")
 
-    # Verify Antigravity JSON got configured
-    antigravity_json = mock_home / ".antigravity" / "mcp_config.json"
+    # Verify Antigravity JSON got configured (unified ~/.gemini path)
+    antigravity_json = mock_home / ".gemini" / "config" / "mcp_config.json"
     assert antigravity_json.exists()
     antigravity_config = json.loads(antigravity_json.read_text(encoding="utf-8"))
     assert "forge" in antigravity_config.get("mcpServers", {})

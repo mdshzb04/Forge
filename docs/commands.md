@@ -12,7 +12,7 @@ Forge provides convenience wrappers to prepare optimized context and automatical
 | :--- | :--- | :--- |
 | `forge claude` | Claude Code | Launches Claude Code with local MCP server integration and optimized context. |
 | `forge cursor` | Cursor CLI | Launches Cursor with global + project-specific MCP registry updates. |
-| `forge antigravity` | Antigravity CLI | Launches Antigravity with MCP registration (`~/.antigravity/mcp_config.json`) and optimized context. |
+| `forge antigravity` | Antigravity CLI | Launches Antigravity with MCP registration (`~/.gemini/config/mcp_config.json` + CLI/IDE/workspace variants) and optimized context. |
 | `forge codex` | Codex CLI | Launches Codex with MCP registration (`~/.codex/config.toml`) and context optimization. |
 | `forge aider` | Aider | Launches Aider with the optimized context injected via its `--read` flag (plus `FORGE_CONTEXT` env + project `.mcp.json`). |
 

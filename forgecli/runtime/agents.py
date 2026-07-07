@@ -86,12 +86,33 @@ AGENTS: dict[str, AgentSpec] = {
         name="Antigravity CLI",
         binary="antigravity",
         install_hint="Install Antigravity CLI",
+        # Antigravity's MCP config path varies by version; write to all known
+        # locations (best-effort/idempotent) so whichever the install reads is
+        # covered. Forge is a stdio server, so command/args is the right shape.
         mcp_targets=(
             MCPTarget(
                 base="home",
-                relpath=".antigravity/mcp_config.json",
+                relpath=".gemini/config/mcp_config.json",
+                fmt="json",
+                label="Antigravity (unified)",
+            ),
+            MCPTarget(
+                base="home",
+                relpath=".gemini/antigravity-cli/mcp_config.json",
                 fmt="json",
                 label="Antigravity CLI",
+            ),
+            MCPTarget(
+                base="home",
+                relpath=".gemini/antigravity/mcp_config.json",
+                fmt="json",
+                label="Antigravity IDE",
+            ),
+            MCPTarget(
+                base="repo",
+                relpath=".agents/mcp_config.json",
+                fmt="json",
+                label="Antigravity (workspace)",
             ),
         ),
     ),
