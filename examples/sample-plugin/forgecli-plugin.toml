@@ -1,0 +1,29 @@
+[plugin]
+name = "sample-plugin"
+version = "1.0.0"
+summary = "A sample ForgeCLI plugin demonstrating the plugin SDK"
+description = """
+This is an example plugin that shows how to register a custom provider,
+repository analyzer, and optimization hook with the ForgeCLI runtime.
+"""
+authors = ["ForgeCLI Contributors"]
+license = "MIT"
+
+[plugin.dependencies]
+forgecli-sdk = ">=1.0,<2.0"
+
+[plugin.permissions]
+permissions = ["filesystem", "network"]
+
+[plugin.compatibility]
+python = ">=3.12"
+os = ["linux", "macos", "windows"]
+
+[plugin.config_schema]
+max_tokens = {type = "integer", default = 4096}
+log_level = {type = "string", default = "info"}
+
+[plugin.entry_points]
+provider.sample = "sample_plugin:register_provider"
+repository-analyzer.sample = "sample_plugin:register_analyzer"
+context-optimizer.sample = "sample_plugin:register_optimizer"

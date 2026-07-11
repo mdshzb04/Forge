@@ -20,6 +20,8 @@ Downstream code must import from this package rather than from
 :mod:`sys` / :mod:`os` / :mod:`platform` directly.
 """
 
+
+
 from forgecli.platform.core import (
     OS,
     Platform,
@@ -59,35 +61,68 @@ from forgecli.platform.update import (
 )
 
 __all__ = [
+
     "OS",
+
     "DependencyReport",
+
     "DependencyStatus",
+
     "Platform",
+
     "ProjectPaths",
+
     "ShellResult",
+
     "UpdateInfo",
+
     "check_dependencies",
+
     "check_for_update",
+
     "config_dir",
+
     "current_platform",
+
     "current_version",
+
     "data_dir",
+
     "detect_os",
+
     "find_executable",
+
     "has_forgegraph",
+
     "has_git",
+
     "has_graphify",
+
     "has_node",
+
     "has_ponytail",
+
     "has_python",
+
     "install_hint",
+
     "is_linux",
+
     "is_macos",
+
     "is_windows",
+
     "load_dotenv",
+
     "python_version",
+
     "run",
+
     "shell_quote",
+
     "state_dir",
+
     "upgrade_command",
+
 ]
+

@@ -1,5 +1,7 @@
 """Tests for the plugin system, intent classifier, and orchestrator."""
 
+
+
 from __future__ import annotations
 
 import asyncio
@@ -30,289 +32,566 @@ from forgecli.plugins import (
 )
 from forgecli.providers.mock import MockProvider, MockProviderConfig
 
-# ---------------------------------------------------------------------------
-# HeuristicIntentClassifier
-# ---------------------------------------------------------------------------
-
 
 def test_heuristic_classifier_recognizes_build() -> None:
+
     classifier = HeuristicIntentClassifier()
+
     prediction = classifier.classify("Add a foo() function to the CLI")
+
     assert prediction.intent is Intent.BUILD
 
 
+
+
+
 def test_heuristic_classifier_recognizes_ask() -> None:
+
     classifier = HeuristicIntentClassifier()
+
     prediction = classifier.classify("What does this module do?")
+
     assert prediction.intent is Intent.ASK
+
+
+
 
 
 def test_heuristic_classifier_recognizes_plan() -> None:
+
     classifier = HeuristicIntentClassifier()
+
     prediction = classifier.classify("Design the architecture for a new service")
+
     assert prediction.intent is Intent.PLAN
 
 
+
+
+
 def test_heuristic_classifier_recognizes_docs() -> None:
+
     classifier = HeuristicIntentClassifier()
+
     prediction = classifier.classify("Document the API in a README")
+
     assert prediction.intent is Intent.DOCS
 
 
+
+
+
 def test_heuristic_classifier_recognizes_review() -> None:
+
     classifier = HeuristicIntentClassifier()
+
     prediction = classifier.classify("Audit the code for security issues")
+
     assert prediction.intent is Intent.REVIEW
 
 
+
+
+
 def test_heuristic_classifier_recognizes_explain() -> None:
+
     classifier = HeuristicIntentClassifier()
+
     prediction = classifier.classify("Explain this function for me")
+
     assert prediction.intent is Intent.EXPLAIN
 
 
+
+
+
 def test_heuristic_classifier_recognizes_greeting() -> None:
+
     classifier = HeuristicIntentClassifier()
+
     prediction = classifier.classify("hi")
+
     assert prediction.intent is Intent.ASK
 
 
+
+
+
 def test_heuristic_classifier_handles_empty() -> None:
+
     classifier = HeuristicIntentClassifier()
+
     prediction = classifier.classify("")
+
     assert prediction.intent is Intent.UNKNOWN
 
 
-# ---------------------------------------------------------------------------
-# Plugin registry
-# ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 
 def test_registry_starts_empty() -> None:
+
     registry = PluginRegistry()
+
     assert registry.workflows == []
+
     assert registry.providers == {}
+
     assert registry.analyzers == []
 
 
+
+
+
 def test_registry_can_register_workflows() -> None:
+
     registry = PluginRegistry()
+
     workflow = AskWorkflow()
+
     registry.register_workflow(workflow)
+
     assert registry.workflows == [workflow]
 
 
+
+
+
 def test_discover_plugins_handles_missing_entry_points() -> None:
+
     registry = PluginRegistry()
-    # Should not raise even if no plugins are installed.
+
+
+
     assert discover_plugins(registry, group="nonexistent.group") == []
 
 
-# ---------------------------------------------------------------------------
-# Orchestrator
-# ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 
 def _make_orchestrator() -> Orchestrator:
+
     provider = MockProvider(MockProviderConfig())
+
     registry = PluginRegistry()
+
     registry.register_classifier(HeuristicIntentClassifier())
+
     registry.register_workflow(BuildWorkflow(provider=provider, test_command="true"))
+
     registry.register_workflow(PlanWorkflow())
+
     registry.register_workflow(AskWorkflow())
+
     registry.register_workflow(ReviewWorkflow())
+
     registry.register_workflow(ExplainWorkflow())
+
     return Orchestrator(registry, provider=provider)
 
 
+
+
+
 def test_orchestrator_picks_ask_workflow() -> None:
+
     orchestrator = _make_orchestrator()
+
     result = asyncio.run(orchestrator.run("What does this function do?"))
+
     assert result.intent is Intent.ASK
+
     assert result.workflow == "ask"
+
     assert result.success
+
+
+
 
 
 def test_orchestrator_picks_build_workflow() -> None:
+
     orchestrator = _make_orchestrator()
+
     result = asyncio.run(orchestrator.run("Add a foo() function"))
+
     assert result.intent is Intent.BUILD
+
     assert result.workflow == "build"
+
     assert result.success
+
+
+
 
 
 def test_orchestrator_picks_plan_workflow() -> None:
+
     orchestrator = _make_orchestrator()
+
     result = asyncio.run(orchestrator.run("Design the architecture for a CRM"))
+
     assert result.intent is Intent.PLAN
+
     assert result.workflow == "plan"
+
+
+
 
 
 def test_orchestrator_picks_explain_workflow() -> None:
+
     orchestrator = _make_orchestrator()
+
     result = asyncio.run(orchestrator.run("Explain this function for me"))
+
     assert result.intent is Intent.EXPLAIN
+
     assert result.workflow == "explain"
 
 
+
+
+
 def test_orchestrator_treats_greeting_as_ask() -> None:
+
     orchestrator = _make_orchestrator()
+
     result = asyncio.run(orchestrator.run("hello world"))
+
     assert result.intent is Intent.ASK
+
     assert result.workflow == "ask"
 
 
+
+
+
 def test_build_orchestrator_wires_defaults() -> None:
+
     provider = MockProvider(MockProviderConfig())
+
     registry = PluginRegistry()
+
     orch = build_orchestrator(registry, provider=provider)
-    # All six default workflows are registered.
+
+
+
     assert {w.name for w in orch.registry.workflows} >= {
+
         "build",
+
         "plan",
+
         "ask",
+
         "docs",
+
         "review",
+
         "explain",
+
     }
 
 
+
+
+
 def test_custom_workflow_is_used_when_intent_matches() -> None:
+
     provider = MockProvider(MockProviderConfig())
+
     registry = PluginRegistry()
+
     registry.register_classifier(HeuristicIntentClassifier())
 
+
+
     class CustomAsk(Workflow):
+
         name = "custom-ask"
+
         intents = (Intent.ASK,)
 
+
+
         async def run(self, context: PluginContext) -> dict:
+
             return {"summary": "custom-ask ran", "files_touched": [], "diff": ""}
 
+
+
     registry.register_workflow(CustomAsk())
-    # Register a low-priority fallback so we know the custom one wins.
+
+
+
     registry.register_workflow(AskWorkflow())
+
     orch = Orchestrator(registry, provider=provider)
-    # "Tell me how foo() works" classifies as ASK (question word + "tell me")
+
+
+
     result = asyncio.run(orch.run("Tell me how foo() works"))
+
     assert result.workflow == "custom-ask"
 
 
-# ---------------------------------------------------------------------------
-# Plan workflow
-# ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 
 def test_plan_workflow_returns_software_plan() -> None:
+
     orchestrator = _make_orchestrator()
+
     result = asyncio.run(orchestrator.run("Design the architecture for a CRM"))
+
     assert result.workflow == "plan"
+
     assert "Plan for" in result.summary
 
 
-# ---------------------------------------------------------------------------
-# Build workflow (offline)
-# ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 
 def test_build_workflow_uses_mock_provider() -> None:
+
     provider = MockProvider(MockProviderConfig())
+
     registry = PluginRegistry()
+
     registry.register_classifier(HeuristicIntentClassifier())
+
     registry.register_workflow(BuildWorkflow(provider=provider, test_command="true"))
+
     orch = Orchestrator(registry, provider=provider)
-    # The mock provider echoes the prompt, so no diff is produced; the
-    # build still completes successfully and the summary is populated.
+
+
+
+
+
     result = asyncio.run(orch.run("Add a foo() function"))
+
     assert result.workflow == "build"
+
     assert result.success
+
     assert result.stages
-    assert not result.files_touched  # mock echo, no diff applied
+
+    assert not result.files_touched
+
+
+
 
 
 def test_build_workflow_skips_forgegraph_for_standalone_prompt() -> None:
+
     provider = MockProvider(MockProviderConfig())
+
     registry = PluginRegistry()
+
     registry.register_classifier(HeuristicIntentClassifier())
+
     registry.register_workflow(BuildWorkflow(provider=provider, test_command="true"))
+
     orch = Orchestrator(registry, provider=provider)
+
     result = asyncio.run(orch.run("10 lines of HTML"))
+
     assert result.workflow == "build"
+
     stage_names = [stage["name"] for stage in result.stages]
+
     assert "forgegraph-retrieval" not in stage_names
 
 
-# ---------------------------------------------------------------------------
-# Docs workflow
-# ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 
 @pytest.mark.slow
+
 def test_docs_workflow_writes_overview(tmp_path: Path) -> None:
+
     provider = MockProvider(MockProviderConfig())
+
     registry = PluginRegistry()
+
     registry.register_classifier(HeuristicIntentClassifier())
+
     orch = Orchestrator(registry, provider=provider)
 
+
+
     project = tmp_path / "p"
+
     package = project / "forgecli" / "x"
+
     package.mkdir(parents=True)
+
     (package / "__init__.py").write_text("")
+
     (package / "mod.py").write_text("def hello():\n    return 'hi'\n")
 
+
+
     result = asyncio.run(_run_orchestrator_in(orch, "Document the API in a README", project))
+
     assert result.workflow == "docs"
+
     overview = project / "docs" / "OVERVIEW.md"
+
     assert overview.exists()
+
     text = overview.read_text(encoding="utf-8")
-    # New DocsWorkflow uses the LLM provider to generate docs; with MockProvider
-    # the response is the offline-mode notice rather than file contents.
+
+
+
+
+
     assert len(text) > 0
 
 
+
+
+
 async def _run_orchestrator_in(orch, prompt: str, project: Path):
+
     """Run the orchestrator with the cwd set to ``project``."""
+
     import contextlib
 
+
+
     with contextlib.chdir(project):
+
         return await orch.run(prompt)
 
 
-# ---------------------------------------------------------------------------
-# Custom IntentClassifier
-# ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 
 def test_orchestrator_uses_custom_classifier_first() -> None:
+
     class _AlwaysAsk(IntentClassifier):
+
         name = "always-ask"
-        priority = 1  # checked first
+
+        priority = 1
+
+
 
         def classify(self, prompt, *, history=()):
+
             return IntentPrediction(Intent.ASK, 0.99, ("forced",))
 
+
+
     provider = MockProvider(MockProviderConfig())
+
     registry = PluginRegistry()
+
     registry.register_classifier(_AlwaysAsk())
+
     registry.register_classifier(HeuristicIntentClassifier())
+
     registry.register_workflow(AskWorkflow())
+
     orch = Orchestrator(registry, provider=provider)
+
     result = asyncio.run(orch.run("Add a foo() function"))
+
     assert result.intent is Intent.ASK
 
 
-# Silence unused-import warnings for symbols only used in some branches.
+
+
+
+
+
 _docs_workflow = DocsWorkflow
+
 _textwrap = textwrap
 
 
+
+
+
 def test_asks_for_repo_context() -> None:
+
     from forgecli.orchestrator import _asks_for_repo_context
 
+
+
     assert not _asks_for_repo_context("hello")
+
     assert not _asks_for_repo_context("hi")
+
     assert not _asks_for_repo_context("howdy")
+
     assert _asks_for_repo_context("tell me about the project")
+
     assert _asks_for_repo_context("explain the files in the directory")
+
     assert _asks_for_repo_context("what is this project?")
+
     assert _asks_for_repo_context("how does the main.py structure look?")
+

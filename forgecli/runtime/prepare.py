@@ -1,4 +1,7 @@
-"""Fast repository context for AI wrapper commands — no full codebase indexing."""
+"""Fast repository context for AI wrapper commands.
+
+Unified context preparation path used by all wrappers and the daemon.
+"""
 
 from __future__ import annotations
 
@@ -6,34 +9,23 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from forgecli.optimizer.optimizer import ContextOptimizer
 from forgecli.runtime.cache_store import (
     CachedRuntime,
     load_runtime_cache,
     repo_fingerprint,
     save_runtime_cache,
 )
+from forgecli.runtime.shared_extraction import (
+    extract_dependencies,
+    extract_files,
+    extract_symbols,
+    repo_size_tier,
+)
 from forgecli.utils.paths import ProjectPaths
-
-_SKIP_DIRS = {
-    ".git",
-    ".venv",
-    "__pycache__",
-    "node_modules",
-    "dist",
-    "build",
-    ".forge",
-    "forgegraph-out",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-}
 
 
 @dataclass(frozen=True)
 class PreparedRuntime:
-    """Optimized repository context ready for a wrapper CLI."""
-
     root: Path
     context_summary: str
     context_file: Path
@@ -50,7 +42,6 @@ class PreparedRuntime:
 
 
 def resolve_repo_root(start: Path) -> Path:
-    """Return the nearest git repository root, or ``start`` when not in a repo."""
     start = start.resolve()
     for candidate in (start, *start.parents):
         if (candidate / ".git").exists():
@@ -60,169 +51,127 @@ def resolve_repo_root(start: Path) -> Path:
 
 def _git_line(root: Path) -> str | None:
     from forgecli.platform.shell import run
-
     branch = run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=root)
     if branch.ok and branch.stdout.strip():
         return f"Branch: {branch.stdout.strip()}"
     return None
 
 
-def _repo_scale(root: Path) -> tuple[int, str]:
-    """Roughly size the repo and classify it as empty / normal / heavy.
-
-    Counts entries breadth-first with a hard cap so this stays O(1)-ish even on
-    huge trees. Returns ``(entry_count, tier)`` where tier is one of
-    ``"empty"``, ``"normal"``, ``"heavy"``.
-    """
-    count = 0
-    stack = [root]
-    while stack and count <= 800:
-        current = stack.pop()
-        try:
-            for entry in current.iterdir():
-                if entry.name in _SKIP_DIRS or entry.name.startswith("."):
-                    continue
-                count += 1
-                if count > 800:
-                    break
-                if entry.is_dir():
-                    stack.append(entry)
-        except OSError:
-            continue
-
-    if count == 0:
-        return count, "empty"
-    if count > 400:
-        return count, "heavy"
-    return count, "normal"
-
-
-def _scan_repo_light(root: Path) -> str:
-    """Build a small repo snapshot without indexing the full codebase.
-
-    The scan breadth adapts to repo size: empty repos still yield a valid,
-    non-blank context (so behavior instructions always apply); heavy repos get
-    a wider-but-still-bounded snapshot and hand deeper compression to the
-    optimizer, plus a pointer to the full knowledge graph.
-    """
-    entry_count, tier = _repo_scale(root)
-
-    lines = [
-        f"Repository: {root.name}",
-        f"Root: {root}",
-    ]
+def _scan_repo_structure(root: Path) -> str:
+    _entry_count, tier = repo_size_tier(root)
+    lines = [f"Repository: {root.name}", f"Root: {root}"]
     git_info = _git_line(root)
     if git_info:
         lines.append(git_info)
 
     if tier == "empty":
-        lines.extend(
-            [
-                "",
-                "Empty repository — no source files yet.",
-                "No project layout to summarize; optimization applies to prompts only.",
-            ]
-        )
+        lines.extend(["", "Empty repository — no source files yet."])
         return "\n".join(lines)
-
-    top_cap = 60 if tier == "heavy" else 36
-    child_cap = 4 if tier == "heavy" else 6
-    layout_cap = 120 if tier == "heavy" else 72
-
-    layout: list[str] = []
-    try:
-        for entry in sorted(root.iterdir(), key=lambda p: p.name.lower())[:top_cap]:
-            if entry.name in _SKIP_DIRS or entry.name.startswith("."):
-                continue
-            if entry.is_dir():
-                layout.append(f"{entry.name}/")
-                try:
-                    for child in sorted(entry.iterdir(), key=lambda p: p.name.lower())[:child_cap]:
-                        if child.name in _SKIP_DIRS or child.name.startswith("."):
-                            continue
-                        suffix = "/" if child.is_dir() else ""
-                        layout.append(f"  {child.name}{suffix}")
-                except OSError:
-                    pass
-            else:
-                layout.append(entry.name)
-    except OSError:
-        pass
-
-    if layout:
-        lines.extend(["", "Project layout (shallow scan):", *layout[:layout_cap]])
-
-    if tier == "heavy":
-        lines.append("")
-        lines.append(
-            f"Large repository (~{entry_count}+ entries). Context is aggressively "
-            "compressed; run `forge graph build` for a full symbol index."
-        )
 
     graph_marker = root / "forgegraph-out" / "graph.json"
     if graph_marker.is_file():
         lines.append("")
-        lines.append(
-            "Knowledge graph already on disk at forgegraph-out/. "
-            "Run `forge graph build` separately when you want a full refresh."
-        )
+        lines.append("Knowledge graph available at forgegraph-out/.")
 
     return "\n".join(lines)
 
 
-def _optimize_tokens(text: str) -> str:
-    # Compress harder as the raw context grows so heavy repos stay bounded.
-    max_tokens = 8_000 if len(text) <= 6_000 else 4_000
-    optimizer = ContextOptimizer(max_context_tokens=max_tokens)
-    result = optimizer.optimize(text)
-    if not result.chunks:
-        return text[:12_000]
-    merged = "\n".join(chunk.text for chunk in result.chunks[:24])
-    return merged[:12_000]
+def _build_enriched_context(root: Path) -> str:
+    """Build context using AST extraction, semantic ranking, and compression."""
+    files = extract_files(root)
+    symbols = extract_symbols(root)
+    dependencies = extract_dependencies(root)
+
+    file_paths = [root / f["path"] for f in files if (root / f["path"]).exists()]
+
+    from forgecli.optimizer.compression import ContextCompressionEngine
+    compressor = ContextCompressionEngine()
+
+    from forgecli.optimizer.cost_estimator import TokenCostEstimator
+    estimator = TokenCostEstimator()
+
+    target_tokens = 8_000
+
+    from forgecli.optimizer.semantic_ranking import SemanticRanker
+    ranker = SemanticRanker(root)
+    ranked = ranker.rank_files(query="", files=file_paths, dependencies=dependencies, top_n=25)
+
+    from forgecli.optimizer.ast_extractor import ASTExtractor
+    from forgecli.optimizer.git_context import GitContextManager
+    from forgecli.optimizer.quality_validation import QualityValidator
+    git_manager = GitContextManager(root)
+
+    blocks: list[str] = []
+    current_tokens = 0
+
+    structure = _scan_repo_structure(root)
+    blocks.append(structure)
+    current_tokens += estimator.estimate_tokens(structure)
+
+    git_summary = git_manager.get_git_summary()
+    if git_summary:
+        git_tokens = estimator.estimate_tokens(git_summary)
+        if current_tokens + git_tokens < target_tokens:
+            blocks.append(git_summary)
+            current_tokens += git_tokens
+
+    for path, _score in ranked:
+        if current_tokens >= target_tokens:
+            break
+        rel_path = str(path.relative_to(root))
+        try:
+            keep_names = {s["name"] for s in symbols if s["file"] == rel_path}
+            pruned = ASTExtractor.prune_file(path, keep_names) if keep_names else path.read_text(encoding="utf-8", errors="replace")
+            if (path.suffix == ".py" and not QualityValidator.validate_python_syntax(pruned)) or (path.suffix in (".js", ".ts", ".jsx", ".tsx", ".go", ".rs") and not QualityValidator.validate_braces_balance(pruned)):
+                pruned = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            pruned = path.read_text(encoding="utf-8", errors="replace")
+
+        block = f"### File: {rel_path}\n```\n{pruned}\n```"
+        block_tokens = estimator.estimate_tokens(block)
+        if current_tokens + block_tokens > target_tokens:
+            break
+        blocks.append(block)
+        current_tokens += block_tokens
+
+    raw = "\n\n".join(blocks)
+    return compressor.compress_all(raw)
 
 
 def get_ponytail_instructions(settings) -> str:
     from forgecli.optimizer.ponytail import Intensity
     from forgecli.optimizer.ponytail.ruleset import _INTENSITY_GUIDANCE
-
     enabled = settings.prompt_optimizer.enabled
     intensity_str = settings.prompt_optimizer.intensity
     if not enabled or intensity_str == "off":
         return ""
-
     try:
         intensity = Intensity.parse(intensity_str)
     except ValueError:
         intensity = Intensity.LITE
-
     return _INTENSITY_GUIDANCE.get(intensity, "")
 
 
 def get_caveman_instructions(settings) -> str:
     from forgecli.optimizer.caveman import CavemanIntensity
     from forgecli.optimizer.caveman.ruleset import _CAVEMAN_GUIDANCE
-
     enabled = settings.caveman.enabled
     intensity_str = settings.caveman.intensity
     if not enabled or intensity_str == "off":
         return ""
-
     try:
         intensity = CavemanIntensity.parse(intensity_str)
     except ValueError:
         intensity = CavemanIntensity.LITE
-
     return _CAVEMAN_GUIDANCE.get(intensity, "")
 
 
-def build_behavior_instructions() -> str:
+def build_merged_context(repo_context: str, repo_root: Path | None = None) -> str:
     from forgecli.config.loader import ConfigLoader
-
     try:
         settings = ConfigLoader().load()
     except Exception:
         from forgecli.config.settings import ForgeSettings
-
         settings = ForgeSettings()
 
     ponytail_guidance = get_ponytail_instructions(settings)
@@ -241,13 +190,8 @@ def build_behavior_instructions() -> str:
             f"{caveman_guidance}\n"
             "==================================================="
         )
-    if blocks:
-        return "\n\n".join(blocks) + "\n\n"
-    return ""
 
-
-def get_merged_context(repo_context: str) -> str:
-    instructions = build_behavior_instructions()
+    instructions = "\n\n".join(blocks) + "\n\n" if blocks else ""
     return instructions + repo_context
 
 
@@ -257,7 +201,6 @@ def prepare_runtime_sync(
     force: bool = False,
     quiet: bool = False,
 ) -> PreparedRuntime:
-    """Prepare lightweight optimized context — no full graph build."""
     root = resolve_repo_root(start)
     fingerprint = repo_fingerprint(root)
 
@@ -266,23 +209,17 @@ def prepare_runtime_sync(
         if cached is not None:
             return PreparedRuntime.from_cached(root, cached)
 
-    raw_context = _scan_repo_light(root)
-    # Repository context is strictly limited to summaries, relevant files, layout, dependency info etc.
-    token_optimized = _optimize_tokens(raw_context)
-
-    # Optimization pipeline check: never allow optimized context to be larger than raw context
-    if len(token_optimized) > len(raw_context):
-        token_optimized = raw_context
+    enriched = _build_enriched_context(root)
 
     cache_dir = ProjectPaths.from_env().cache_dir / "runtime" / "context"
     cache_dir.mkdir(parents=True, exist_ok=True)
     context_file = cache_dir / f"{fingerprint}.md"
-    context_file.write_text(token_optimized, encoding="utf-8")
+    context_file.write_text(enriched, encoding="utf-8")
 
     save_runtime_cache(
         fingerprint,
         CachedRuntime(
-            context_summary=token_optimized,
+            context_summary=enriched,
             context_file=str(context_file),
             node_count=0,
             edge_count=0,
@@ -292,12 +229,21 @@ def prepare_runtime_sync(
 
     if not quiet:
         from forgecli.cli.ui import info
-
         info(f"Optimized context for [accent]{root.name}[/accent] (cached for reuse)")
 
     return PreparedRuntime(
         root=root,
-        context_summary=token_optimized,
+        context_summary=enriched,
         context_file=context_file,
         from_cache=False,
     )
+
+
+def build_behavior_instructions() -> str:
+    """Return behavior instructions block only (no repo context)."""
+    return build_merged_context(repo_context="")
+
+
+def get_merged_context(repo_context: str) -> str:
+    """[deprecated] Use build_merged_context instead."""
+    return build_merged_context(repo_context=repo_context)

@@ -1,46 +1,56 @@
 # Forge
 
-Forge is a lightweight, high-performance AI optimization runtime designed to prepare repository-aware context before launching supported AI coding tools. 
+<p align="center">
+  <a href="https://github.com/mdshzb04/Forge/actions/workflows/ci.yml">
+    <img src="https://github.com/mdshzb04/Forge/actions/workflows/ci.yml/badge.svg" alt="CI Status">
+  </a>
+  <a href="https://pypi.org/project/forgectx/">
+    <img src="https://img.shields.io/pypi/v/forgectx.svg" alt="PyPI Version">
+  </a>
+  <a href="https://pypi.org/project/forgectx/">
+    <img src="https://img.shields.io/pypi/pyversions/forgectx.svg" alt="Supported Python Versions">
+  </a>
+  <a href="https://github.com/mdshzb04/Forge/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/mdshzb04/Forge.svg" alt="License: MIT">
+  </a>
+  <a href="https://github.com/astral-sh/ruff">
+    <img src="https://img.shields.io/badge/code%20style-ruff-000000.svg" alt="Code Style: Ruff">
+  </a>
+</p>
 
-The primary purpose of Forge is to construct an optimized representation of a codebase so that AI coding assistants can operate with maximum correctness, lower response latency, and reduced context-budget overhead.
+Forge is a pre-launch context preparation tool for AI coding assistants. Before you run `claude`, `codex`, or `cursor`, Forge scans your repository, extracts symbols and dependencies, builds a structured summary, injects configurable behavior instructions, and passes the optimized context to the AI tool through environment variables and MCP tools.
 
 ## Core Philosophy
 
 > [!IMPORTANT]
 > **Forge optimizes what it controls.**
 >
-> Forge focuses on three core pillars:
+> Forge focuses on three areas:
 >
-> - **Repository Intelligence** — Repository scanning, caching, dependency analysis, and repository graph generation.
-> - **Behavior Optimization** — Configurable implementation guidance (inspired by Ponytail's YAGNI rules) and response style optimization (inspired by Caveman's brevity prompts).
-> - **Runtime Infrastructure** — Zero-configuration wrappers, repository context preparation, and runtime orchestration.
+> - **Repository Intelligence** — Symbol extraction, dependency analysis, file scanning, and native graph generation.
+> - **Behavior Optimization** — Configurable implementation guidance (Ponytail YAGNI rules) and response style optimization (Caveman conciseness rules).
+> - **Runtime Infrastructure** — Zero-configuration wrappers, context caching, background daemon, and MCP server.
 >
-> Forge prepares and optimizes repository context before launching supported AI coding tools.
->
-> Forge **does not** modify provider billing, quota accounting, model pricing, or the internal reasoning performed by remote AI models.
+> Forge prepares context before the AI session begins. It does **not** modify provider billing, quota accounting, model pricing, model inference, or the AI client's internal tool selection logic.
 
-## Architecture & How It Works
+## Architecture
 
-Forge prepares repository-aware context for AI coding assistants using knowledge graph generation, intelligent context selection, prompt optimization, token optimization, and aggressive caching. 
+Forge has a single unified context preparation path used by all wrappers:
 
-Forge is powered internally by three integrated optimization components:
-1. **ForgeGraph** (Knowledge graph and symbol index generator)
-2. **Ponytail Ruleset** (Custom Python implementation of YAGNI prompt rules, inspired by the Ponytail concept)
-3. **Caveman Ruleset** (Custom Python implementation of communication compression prompts, inspired by the Caveman concept)
+1. **Repository scan** — Extracts files, symbols (classes/functions), and dependencies (imports/requires) using parallel regex-based parsers for Python, JS, TS, JSX, and TSX.
+2. **Semantic ranking** — Ranks files by TF-IDF query relevance with dependency centrality scoring.
+3. **AST pruning** — Uses tree-sitter to prune files to only relevant symbols, keeping context lean.
+4. **Behavior injection** — Prepends intensity-gated Ponytail (YAGNI) and Caveman (conciseness) instructions.
+5. **Compression** — Collapses whitespace, strips boilerplate, and removes redundant content.
+6. **Caching** — Fingerprints repositories and caches context between launches.
+7. **Launch** — Sets `FORGE_CONTEXT` env var and starts the AI CLI.
 
-### Design Philosophy & Inspiration
-Forge is not a copy of existing tools; it combines original runtime infrastructure with ideas and concepts inspired by the broader open-source AI tooling ecosystem. The behavior and token optimization components are custom, built-in implementations designed for token efficiency, though Forge also provides CLI adapters to delegate to the official external tools if they are installed on your system. For details, see [CREDITS.md](CREDITS.md).
+### Native Graph Builder
 
----
+Forge includes a native Python graph builder (`forgecli/graph/native_builder.py`) that generates `forgegraph-out/graph.json` without external binaries. When the external `graphify` binary is available, it takes priority for advanced features (Leiden clustering, LLM-powered analysis). The native builder always works as a fallback.
 
 ## Installation
 
-### Development
-```bash
-uv tool install .
-```
-
-### Release
 ```bash
 uv tool install forgectx
 ```
@@ -49,65 +59,66 @@ The CLI entrypoint is `forge`.
 
 ---
 
-## Convenience Wrappers vs. Core MCP Runtime
+## Interfaces
 
-Forge provides two primary interfaces to connect with your AI coding tools:
-1. **Convenience Wrappers** (`forge claude`, `forge cursor`, `forge codex`, `forge antigravity`, `forge aider`): Commands that automatically prepare/optimize context, update local and global configurations, and launch the target AI CLI under an optimized environment.
-2. **Core MCP Runtime** (`forge mcp`): The standard Model Context Protocol (MCP) interface that compatible AI clients communicate with over stdio.
+Forge provides two ways to connect with your AI coding tools:
+
+1. **Convenience Wrappers** (`forge claude`, `forge cursor`, `forge codex`, `forge antigravity`, `forge gemini`) — Automatically prepare context, configure MCP, and launch the target AI CLI.
+2. **MCP Server** (`forge mcp`) — Standard stdio JSON-RPC interface exposing 6 tools that AI clients can call during sessions.
 
 ---
 
 ## Command Reference
 
-| Command | Type | Description |
-| -------- | ---- | ----------- |
-| `forge claude` | Wrapper | Launch Claude Code with optimized context and auto-registered MCP |
-| `forge codex` | Wrapper | Launch Codex CLI with optimized context and auto-registered MCP (`~/.codex/config.toml`) |
-| `forge cursor` | Wrapper | Launch Cursor CLI with optimized context and auto-registered MCP |
-| `forge antigravity` | Wrapper | Launch Antigravity CLI with optimized context and auto-registered MCP |
-| `forge aider` | Wrapper | Launch Aider with optimized context injected via `--read` (+ `FORGE_CONTEXT` env, project `.mcp.json`) |
-| `forge mcp` | Core Runtime | Start the stdio Model Context Protocol (MCP) server |
-| `forge start` | Daemon | Start the background context optimization daemon |
-| `forge graph build` | Tool | Build a full codebase dependency and symbol knowledge graph (optional) |
-| `forge config` | Tool | Configure optimization profile intensities |
-| `forge --version` | Tool | Show version |
+| Command | Description |
+| -------- | ----------- |
+| `forge claude` | Launch Claude Code with optimized context |
+| `forge codex` | Launch Codex CLI with optimized context |
+| `forge cursor` | Launch Cursor CLI with optimized context |
+| `forge antigravity` | Launch Antigravity CLI with optimized context |
+| `forge gemini` | Launch Gemini CLI with optimized context |
+| `forge mcp` | Start the stdio MCP server |
+| `forge start` | Start the background daemon |
+| `forge graph build` | Build a codebase graph (native or external) |
+| `forge config` | Configure optimization profiles |
+| `forge status` | Show repository, daemon, and optimization status |
+| `forge doctor` | Verify installation and dependencies |
+| `forge inspect` | Display active pipeline and optimization stages |
+| `forge stats` | Show cache metrics and pipeline performance |
+| `forge profile` | View or set optimization profiles |
+| `forge explain` | Explain pipeline stages, concepts, or topics |
+| `forge plugin list` | List installed plugins |
+| `forge --version` | Show version |
 
-For detailed information on all command usages and options, refer to the [CLI Command Reference](docs/commands.md).
-
-> [!NOTE]
-> When launching convenience wrappers, prompts or extra positional arguments are not supported directly (e.g. `forge claude "some prompt"` is blocked). Run the wrapper command without arguments to launch the tool's interactive session directly. Use the `--refresh` option to bypass the cache:
-> ```bash
-> forge claude --refresh
-> ```
+Use `--refresh` to bypass the cache on any wrapper command:
+```bash
+forge claude --refresh
+```
 
 ---
 
-## Model Context Protocol (MCP) Integration
+## MCP Tools
 
-Forge automatically registers its MCP server globally and project-locally for launched clients (updating `~/.claude.json`, `~/.cursor/mcp.json`, and project `.mcp.json` files).
+Forge exposes 6 tools over MCP:
 
-### Exposed Tools
-Forge exposes the following schema tools over MCP:
-* `get_optimized_context` — Retrieve the fully optimized and token-compressed repository context.
-* `get_summary` — Retrieve a summary of the repository layout, size, and file list.
-* `get_dependency_graph` — Retrieve module/file import relationships.
-* `file_lookup` — Query individual file contents.
-* `symbol_lookup` — Find definition locations of symbols (classes/functions).
-* `semantic_search` — Keyword/phrase search across codebase chunks.
+* `get_optimized_context` — Full optimized repository context with optional query filtering
+* `get_summary` — Repository layout, file count, and size summary
+* `get_dependency_graph` — Module/file import relationships
+* `file_lookup` — File contents by relative path
+* `symbol_lookup` — Class/function definitions and locations
+* `semantic_search` — Keyword search across codebase chunks
 
 > [!IMPORTANT]
-> **Client Behavior Notice:** While Forge exposes these tools to the MCP client, whether and when they are invoked depends entirely on the AI client's internal orchestration logic. Forge makes these capabilities available, but the client decides which tool to call.
+> Forge exposes these tools, but whether they are called depends on the AI client's internal orchestration. Forge does not control tool selection.
 
 ---
 
 ## Environment Variables
 
-Wrappers export:
-
 | Variable | Purpose |
 | -------- | -------- |
-| `FORGE_CONTEXT` | Optimized text context |
-| `FORGE_CONTEXT_FILE` | Path to the optimized context file |
+| `FORGE_CONTEXT` | Optimized pre-launch context text |
+| `FORGE_CONTEXT_FILE` | Path to the cached context file |
 | `FORGE_REPO_ROOT` | Detected repository root |
 
 ---

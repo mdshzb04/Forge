@@ -7,6 +7,8 @@ variable; the base URL can be overridden in the ForgeCLI config to
 point at OpenAI-compatible servers (vLLM, LM Studio, llama.cpp).
 """
 
+
+
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
@@ -29,178 +31,354 @@ from forgecli.providers.http_base import HTTPChatProvider, messages_to_openai
 
 
 @dataclass
+
 class OpenAIConfig:
+
     """Configuration for the OpenAI provider."""
 
+
+
     api_key_env: str = "OPENAI_API_KEY"
+
     base_url: str = "https://api.openai.com/v1"
+
     default_model: str = "gpt-4o-mini"
+
     max_tokens: int = 4096
+
     temperature: float = 0.2
+
     embeddings_model: str = "text-embedding-3-small"
 
 
+
+
+
 class OpenAIProvider(HTTPChatProvider):
+
     """OpenAI Chat Completions + Embeddings."""
+
+
 
     name = "openai"
 
+
+
     def __init__(
+
         self,
+
         config: OpenAIConfig | None = None,
+
         *,
+
         api_key: str | None = None,
+
         base_url: str | None = None,
+
         client: httpx.AsyncClient | None = None,
+
     ) -> None:
+
         super().__init__(
+
             config or OpenAIConfig(),
+
             api_key=api_key,
+
             base_url=base_url,
+
             client=client,
+
         )
+
+
 
     def _default_base_url(self) -> str:
+
         return "https://api.openai.com/v1"
 
+
+
     def _chat_url(self) -> str:
+
         return f"{self._base_url}/chat/completions"
 
+
+
     def _embeddings_url(self) -> str:
+
         return f"{self._base_url}/embeddings"
 
+
+
     def _default_embedding_model(self) -> str:
+
         return self.config.embeddings_model
 
+
+
     def _format_request(self, request: ChatRequest) -> dict[str, Any]:
+
         body: dict[str, Any] = {
+
             "model": request.model or self.config.default_model,
+
             "messages": messages_to_openai(request.messages),
+
         }
+
         model_lower = (request.model or self.config.default_model).lower()
+
         is_reasoning_or_gpt5 = (
+
             model_lower.startswith("o1") or model_lower.startswith("o3") or "gpt-5" in model_lower
+
         )
+
         is_pure_reasoning = (
+
             model_lower.startswith("o1") or model_lower.startswith("o3") or "gpt-5" in model_lower
+
         )
+
+
 
         if not is_pure_reasoning:
+
             if request.temperature is not None:
+
                 body["temperature"] = request.temperature
+
             else:
+
                 body["temperature"] = self.config.temperature
 
+
+
         max_tokens_val = (
+
             request.max_tokens if request.max_tokens is not None else self.config.max_tokens
+
         )
+
         if is_reasoning_or_gpt5:
+
             body["max_completion_tokens"] = max_tokens_val
+
         else:
+
             body["max_tokens"] = max_tokens_val
 
+
+
         if request.top_p is not None:
+
             body["top_p"] = request.top_p
+
         if request.stop:
+
             body["stop"] = list(request.stop)
+
         if request.tools:
+
             body["tools"] = list(request.tools)
+
         return body
 
+
+
     def _parse_response(self, payload: dict[str, Any]) -> ChatResponse:
+
         choices = payload.get("choices") or []
+
         first = choices[0] if choices else {}
+
         message = first.get("message") or {}
+
         usage = payload.get("usage") or {}
+
         return ChatResponse(
+
             model=str(payload.get("model", self.config.default_model)),
+
             message=ChatMessage(
+
                 role=Role(message.get("role", "assistant")),
+
                 content=str(message.get("content", "")),
+
             ),
+
             finish_reason=first.get("finish_reason"),
+
             prompt_tokens=int(usage.get("prompt_tokens", 0) or 0),
+
             completion_tokens=int(usage.get("completion_tokens", 0) or 0),
+
             total_tokens=int(usage.get("total_tokens", 0) or 0),
+
             raw=payload,
+
         )
+
+
 
     async def stream(self, request: ChatRequest) -> AsyncIterator[StreamChunk]:
+
         from forgecli.core.errors import ProviderError
 
+
+
         if not self._api_key:
+
             self.validate()
+
         body = self._format_request(request)
+
         body["stream"] = True
 
+
+
         req = self._client.build_request(
+
             "POST", self._chat_url_for(request), json=body, headers=self._auth_headers()
+
         )
+
         response = await self._client.send(req, stream=True)
+
         if response.status_code >= 400:
+
             await response.aread()
+
             raise ProviderError(
+
                 f"{self.name} stream failed ({response.status_code}): {response.text[:500]}"
+
             )
+
+
 
         import json
 
+
+
         try:
+
             async for line in response.aiter_lines():
+
                 line = line.strip()
+
                 if not line:
+
                     continue
+
                 if line.startswith("data: "):
+
                     data_str = line[6:]
+
                     if data_str == "[DONE]":
+
                         break
+
                     try:
+
                         payload = json.loads(data_str)
+
                         choices = payload.get("choices", [])
+
                         if choices:
+
                             delta = choices[0].get("delta", {})
+
                             content = delta.get("content", "")
+
                             finish_reason = choices[0].get("finish_reason")
+
                             if content or finish_reason:
+
                                 yield StreamChunk(
+
                                     delta=content, finish_reason=finish_reason, raw=payload
+
                                 )
+
                     except Exception:
+
                         pass
+
         finally:
+
             await response.aclose()
 
+
+
     def _format_embeddings(self, request: EmbeddingRequest) -> dict[str, Any]:
+
         return {
+
             "model": request.model or self.config.embeddings_model,
+
             "input": list(request.inputs),
+
         }
 
+
+
     def _parse_embeddings(self, payload: dict[str, Any]) -> EmbeddingResponse:
+
         data = payload.get("data") or []
+
         vectors = [list(item.get("embedding", [])) for item in data]
+
         usage = payload.get("usage") or {}
+
         return EmbeddingResponse(
+
             model=str(payload.get("model", self.config.embeddings_model)),
+
             vectors=vectors,
+
             prompt_tokens=int(usage.get("prompt_tokens", 0) or 0),
+
             total_tokens=int(usage.get("total_tokens", 0) or 0),
+
         )
 
+
+
     def _known_models(self) -> list[ModelInfo]:
+
         from forgecli.core.models import MODEL_CATALOG
 
+
+
         return [
+
             ModelInfo(
+
                 id=m.id,
+
                 name=m.display_name,
+
                 context_window=128_000,
+
                 supports_tools=not m.id.startswith("o1"),
+
                 supports_vision=True,
+
             )
+
             for m in MODEL_CATALOG
+
             if m.provider == "openai"
+
         ]
 
 
+
+
+
 __all__ = ["OpenAIConfig", "OpenAIProvider"]
+

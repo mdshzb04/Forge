@@ -54,3 +54,10 @@ main.go
 forgecli.toml
 .cursor/
 .mcp.json
+
+# Frontend build and dependencies
+**/node_modules/
+**/.next/
+**/out/
+**/dist/
+

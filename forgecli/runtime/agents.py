@@ -6,13 +6,17 @@ a new agent is a single entry here — the wrapper command, help text, and MCP
 auto-configuration are all driven off this registry.
 """
 
+
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
+
 class MCPTarget:
+
     """A location + format where the Forge MCP server should be registered.
 
     ``base`` selects the anchor directory: ``"home"`` for a per-user config
@@ -20,24 +24,44 @@ class MCPTarget:
     (e.g. ``<repo>/.cursor/mcp.json``). ``relpath`` is joined onto that anchor.
     """
 
-    base: str  # "home" | "repo"
+
+
+    base: str
+
     relpath: str
-    fmt: str = "json"  # "json" | "toml"
-    table: str = "mcpServers"  # JSON key / TOML table holding server entries
-    label: str = ""  # human-facing name for success messages
+
+    fmt: str = "json"
+
+    table: str = "mcpServers"
+
+    label: str = ""
+
+
+
 
 
 @dataclass(frozen=True)
+
 class AgentSpec:
+
     """A terminal AI agent Forge can prepare context for and launch."""
 
+
+
     id: str
+
     name: str
+
     binary: str
+
     install_hint: str
+
     mcp_targets: tuple[MCPTarget, ...] = field(default_factory=tuple)
+
     supports_mcp: bool = True
+
     context_flag: str | None = None
+
     """CLI flag used to inject the optimized context file at launch.
 
     For agents without native MCP (e.g. Aider's ``--read``), Forge passes the
@@ -46,89 +70,203 @@ class AgentSpec:
     """
 
 
+
+
+
 AGENTS: dict[str, AgentSpec] = {
+
     "claude": AgentSpec(
+
         id="claude",
+
         name="Claude Code",
+
         binary="claude",
+
         install_hint="Install Claude Code: https://docs.anthropic.com/en/docs/claude-code",
+
         mcp_targets=(
+
             MCPTarget(base="home", relpath=".claude.json", fmt="json", label="Claude Code"),
+
         ),
+
     ),
+
     "codex": AgentSpec(
+
         id="codex",
+
         name="Codex CLI",
+
         binary="codex",
+
         install_hint="Install OpenAI Codex CLI: https://developers.openai.com/codex/cli/",
+
         mcp_targets=(
+
             MCPTarget(
+
                 base="home",
+
                 relpath=".codex/config.toml",
+
                 fmt="toml",
+
                 table="mcp_servers",
+
                 label="Codex CLI",
+
             ),
+
         ),
+
     ),
+
     "cursor": AgentSpec(
+
         id="cursor",
+
         name="Cursor CLI",
+
         binary="cursor",
+
         install_hint="Install Cursor CLI: https://cursor.com/docs/cli/overview",
+
         mcp_targets=(
+
             MCPTarget(base="home", relpath=".cursor/mcp.json", fmt="json", label="Cursor (global)"),
-            MCPTarget(base="repo", relpath=".cursor/mcp.json", fmt="json", label="Cursor (project)"),
+
+            MCPTarget(
+
+                base="repo", relpath=".cursor/mcp.json", fmt="json", label="Cursor (project)"
+
+            ),
+
         ),
+
     ),
+
     "antigravity": AgentSpec(
+
         id="antigravity",
+
         name="Antigravity CLI",
+
         binary="antigravity",
+
         install_hint="Install Antigravity CLI",
-        # Antigravity's MCP config path varies by version; write to all known
-        # locations (best-effort/idempotent) so whichever the install reads is
-        # covered. Forge is a stdio server, so command/args is the right shape.
+
+
+
+
+
+
+
         mcp_targets=(
+
             MCPTarget(
+
                 base="home",
+
                 relpath=".gemini/config/mcp_config.json",
+
                 fmt="json",
+
                 label="Antigravity (unified)",
+
             ),
+
             MCPTarget(
+
                 base="home",
+
                 relpath=".gemini/antigravity-cli/mcp_config.json",
+
                 fmt="json",
+
                 label="Antigravity CLI",
+
             ),
+
             MCPTarget(
+
                 base="home",
+
                 relpath=".gemini/antigravity/mcp_config.json",
+
                 fmt="json",
+
                 label="Antigravity IDE",
+
             ),
+
             MCPTarget(
+
                 base="repo",
+
                 relpath=".agents/mcp_config.json",
+
                 fmt="json",
+
                 label="Antigravity (workspace)",
+
             ),
+
         ),
-    ),
-    "aider": AgentSpec(
-        id="aider",
-        name="Aider",
-        binary="aider",
-        install_hint="Install Aider: https://aider.chat/docs/install.html",
-        # Aider has no native MCP config; it ingests the optimized context via
-        # its --read flag (read-only reference file) plus the FORGE_CONTEXT env
-        # vars and the project-local .mcp.json fallback.
-        mcp_targets=(),
-        supports_mcp=False,
-        context_flag="--read",
-    ),
-}
 
+    ),
 
-__all__ = ["AGENTS", "AgentSpec", "MCPTarget"]
+    "gemini": AgentSpec(
+
+        id="gemini",
+
+        name="Gemini CLI",
+
+        binary="gemini",
+
+        install_hint="Install Gemini CLI",
+
+        mcp_targets=(
+
+            MCPTarget(
+
+                base="home",
+
+                relpath=".gemini/config/mcp_config.json",
+
+                fmt="json",
+
+                label="Gemini (unified)",
+
+            ),
+
+            MCPTarget(
+
+                base="home",
+
+                relpath=".gemini/gemini-cli/mcp_config.json",
+
+                fmt="json",
+
+                label="Gemini CLI",
+
+            ),
+
+            MCPTarget(
+
+                base="repo",
+
+                relpath=".agents/mcp_config.json",
+
+                fmt="json",
+
+                label="Gemini (workspace)",
+
+            ),
+
+        ),
+
+    ),
+
+    }

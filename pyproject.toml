@@ -4,10 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "forgectx"
-version = "0.1.0"
-description = "Forge — AI optimization runtime. Fast prompt and token optimization for Claude Code, Codex, Cursor, and Antigravity CLI."
+version = "1.0.0"
+description = "Forge — AI optimization runtime for Claude Code, Codex, Cursor, Antigravity, Gemini, Aider, OpenCode, and CommandCode."
 readme = "README.md"
-license = { file = "LICENSE" }
+license = { text = "MIT" }
+license-files = []
 requires-python = ">=3.12"
 authors = [
     { name = "Forge Authors" }

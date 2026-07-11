@@ -16,6 +16,8 @@ token) is checked between stages and during long operations so a
 caller can abort cleanly.
 """
 
+
+
 from __future__ import annotations
 
 import asyncio
@@ -27,54 +29,103 @@ from enum import Enum
 
 
 class LogLevel(str, Enum):
+
     """Severity for :class:`TextLogEvent`."""
 
+
+
     DEBUG = "debug"
+
     INFO = "info"
+
     WARN = "warn"
+
     ERROR = "error"
 
 
+
+
+
 @dataclass(frozen=True)
+
 class EngineEvent:
+
     """Abstract base of every event the engine emits."""
 
+
+
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+
     run_id: str = ""
 
 
+
+
+
 @dataclass(frozen=True)
+
 class StageEvent(EngineEvent):
+
     """A stage transitioned to a new state."""
 
+
+
     stage: str = ""
-    status: str = "running"  # "running" | "succeeded" | "failed" | "skipped" | "retrying"
+
+    status: str = "running"
+
     attempt: int = 1
+
     note: str | None = None
 
 
+
+
+
 @dataclass(frozen=True)
+
 class ProgressEvent(EngineEvent):
+
     """Fractional progress within a stage (0.0 - 1.0)."""
 
+
+
     stage: str = ""
+
     progress: float = 0.0
+
     message: str | None = None
 
 
+
+
+
 @dataclass(frozen=True)
+
 class TextLogEvent(EngineEvent):
+
     """A free-form log line emitted by a stage."""
 
+
+
     level: LogLevel = LogLevel.INFO
+
     source: str = ""
+
     message: str = ""
+
+
+
 
 
 EventHandler = Callable[[EngineEvent], "None | Awaitable[None]"]
 
 
+
+
+
 class EventBus:
+
     """In-process pub/sub bus for engine events.
 
     Subscribers are registered per event class. Handlers may be sync
@@ -83,103 +134,205 @@ class EventBus:
     stages so the caller can abort cleanly.
     """
 
+
+
     def __init__(self) -> None:
+
         self._subscribers: dict[type, list[EventHandler]] = {}
+
         self.cancellation = asyncio.Event()
+
         self.history: list[EngineEvent] = []
 
-    # ------------------------------------------------------------------
-    # Subscription
-    # ------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 
     def subscribe(self, event_cls: type[EngineEvent], handler: EventHandler) -> None:
+
         self._subscribers.setdefault(event_cls, []).append(handler)
 
+
+
     def unsubscribe(self, event_cls: type[EngineEvent], handler: EventHandler) -> None:
+
         bucket = self._subscribers.get(event_cls)
+
         if not bucket:
+
             return
+
         with contextlib.suppress(ValueError):
+
             bucket.remove(handler)
 
-    # ------------------------------------------------------------------
-    # Cancellation
-    # ------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 
     def cancel(self) -> None:
+
         """Request cancellation. The engine checks ``cancellation`` between stages."""
+
         self.cancellation.set()
 
+
+
     def reset_cancellation(self) -> None:
+
         self.cancellation.clear()
 
+
+
     def is_cancelled(self) -> bool:
+
         return self.cancellation.is_set()
 
-    # ------------------------------------------------------------------
-    # Publishing
-    # ------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 
     def publish(self, event: EngineEvent) -> None:
+
         """Publish synchronously; async handlers are scheduled."""
+
         self.history.append(event)
+
         for handler in list(self._subscribers.get(type(event), ())):
+
             try:
+
                 result = handler(event)
+
             except Exception:
+
                 continue
+
             if asyncio.iscoroutine(result):
-                # Best-effort: schedule on the running loop if any.
+
+
+
                 try:
+
                     loop = asyncio.get_running_loop()
+
                     task = loop.create_task(result)
+
                     task.add_done_callback(self._discard_task)
+
                 except RuntimeError:
+
                     pass
 
+
+
     @staticmethod
+
     def _discard_task(task: asyncio.Task) -> None:
-        # Placeholder to keep a strong reference to the task until it
-        # completes. Without this, asyncio may garbage-collect the
-        # task mid-flight and emit "Task was destroyed but it is
-        # pending" warnings.
+
+
+
+
+
+
+
+
+
         return None
 
+
+
     async def publish_and_drain(self, event: EngineEvent) -> None:
+
         """Publish and await any async handler results."""
+
         self.history.append(event)
+
         for handler in list(self._subscribers.get(type(event), ())):
+
             try:
+
                 result = handler(event)
+
             except Exception:
+
                 continue
+
             if asyncio.iscoroutine(result):
+
                 await result
 
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 
     def drain(self) -> list[EngineEvent]:
+
         return list(self.history)
 
 
-# ---------------------------------------------------------------------------
-# Cancellation sentinel exception
-# ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 
 class EngineCancelledError(Exception):
+
     """Raised by the engine when the cancellation token is set."""
 
 
+
+
+
 __all__ = [
+
     "EngineCancelledError",
+
     "EngineEvent",
+
     "EventBus",
+
     "EventHandler",
+
     "LogLevel",
+
     "ProgressEvent",
+
     "StageEvent",
+
     "TextLogEvent",
+
 ]
+

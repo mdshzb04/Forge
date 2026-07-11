@@ -11,6 +11,8 @@ a fallback) and are passed as the ``key`` query parameter, matching
 the public REST contract.
 """
 
+
+
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
@@ -33,258 +35,514 @@ from forgecli.providers.http_base import HTTPChatProvider
 
 
 @dataclass
+
 class GeminiConfig:
+
     """Configuration for the Google Gemini provider."""
 
+
+
     api_key_env: str = "GOOGLE_API_KEY"
+
     base_url: str = "https://generativelanguage.googleapis.com/v1beta"
+
     default_model: str = "gemini-1.5-flash"
+
     max_tokens: int = 4096
+
     temperature: float = 0.2
+
     embeddings_model: str = "text-embedding-004"
 
 
+
+
+
 _GEMINI_ROLE_MAP: dict[Role, str] = {
-    Role.SYSTEM: "user",  # Gemini has no "system" role; fold into a user turn
+
+    Role.SYSTEM: "user",
+
     Role.USER: "user",
+
     Role.ASSISTANT: "model",
+
     Role.TOOL: "user",
+
 }
 
 
+
+
+
 class GeminiProvider(HTTPChatProvider):
+
     """Google Gemini generateContent + embedContent provider."""
+
+
 
     name = "google"
 
+
+
     def __init__(
+
         self,
+
         config: GeminiConfig | None = None,
+
         *,
+
         api_key: str | None = None,
+
         base_url: str | None = None,
+
         client: httpx.AsyncClient | None = None,
+
     ) -> None:
+
         super().__init__(
+
             config or GeminiConfig(),
+
             api_key=api_key,
+
             base_url=base_url,
+
             client=client,
+
         )
+
         if not self._api_key:
-            # Fall back to the alternate env var; this is intentional.
+
+
+
             self._api_key = _fallback_api_key(self.config.api_key_env)
 
+
+
     def _default_base_url(self) -> str:
+
         return "https://generativelanguage.googleapis.com/v1beta"
 
+
+
     def _chat_url(self) -> str:
-        # The Gemini chat URL embeds the model name; we use
-        # ``_chat_url_for`` instead. The fallback is here so abstract
-        # callers can still get a URL when they have no request.
+
+
+
+
+
+
+
         return (
+
             f"{self._base_url}/models/{self.config.default_model}:generateContent"
+
             f"?key={self._api_key or ''}"
+
         )
+
+
 
     def _chat_url_for(self, request) -> str:  # type: ignore[override]
+
         model = request.model or self.config.default_model
+
         return f"{self._base_url}/models/{model}:generateContent?key={self._api_key or ''}"
 
+
+
     def _embeddings_url(self) -> str:
+
         return (
+
             f"{self._base_url}/models/{self.config.embeddings_model}:embedContent"
+
             f"?key={self._api_key or ''}"
+
         )
+
+
 
     def _default_embedding_model(self) -> str:
+
         return self.config.embeddings_model
 
-    # ------------------------------------------------------------------
-    # Auth
-    # ------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 
     def _auth_headers(self) -> dict[str, str]:
-        # Gemini uses the API key in the query string; no headers needed.
+
+
+
         return {"Content-Type": "application/json"}
 
-    # ------------------------------------------------------------------
-    # Request / response
-    # ------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 
     def _format_request(self, request: ChatRequest) -> dict[str, Any]:
+
         contents: list[dict[str, Any]] = []
+
         system_parts: list[str] = []
+
         for message in request.messages:
+
             if message.role is Role.SYSTEM:
+
                 if message.content:
+
                     system_parts.append(message.content)
+
                 continue
+
             contents.append(
+
                 {
+
                     "role": _GEMINI_ROLE_MAP[message.role],
+
                     "parts": [{"text": message.content}],
+
                 }
+
             )
+
         body: dict[str, Any] = {
+
             "contents": contents,
+
             "generationConfig": {
+
                 "maxOutputTokens": request.max_tokens or self.config.max_tokens,
+
                 "temperature": (
+
                     request.temperature
+
                     if request.temperature is not None
+
                     else self.config.temperature
+
                 ),
+
             },
+
         }
+
         if system_parts:
+
             body["systemInstruction"] = {"parts": [{"text": "\n\n".join(system_parts)}]}
+
         if request.top_p is not None:
+
             body["generationConfig"]["topP"] = request.top_p
+
         if request.stop:
+
             body["generationConfig"]["stopSequences"] = list(request.stop)
+
         return body
 
+
+
     def _parse_response(self, payload: dict[str, Any]) -> ChatResponse:
+
         candidates = payload.get("candidates") or []
+
         first = candidates[0] if candidates else {}
+
         content = first.get("content") or {}
+
         parts = content.get("parts") or []
+
         text = "".join(str(p.get("text", "")) for p in parts if isinstance(p, dict))
+
         usage = payload.get("usageMetadata") or {}
+
         return ChatResponse(
+
             model=str(payload.get("modelVersion", self.config.default_model)),
+
             message=ChatMessage(role=Role.ASSISTANT, content=text),
+
             finish_reason=first.get("finishReason"),
+
             prompt_tokens=int(usage.get("promptTokenCount", 0) or 0),
+
             completion_tokens=int(usage.get("candidatesTokenCount", 0) or 0),
+
             total_tokens=int(usage.get("totalTokenCount", 0) or 0),
+
             raw=payload,
+
         )
 
+
+
     async def stream(self, request: ChatRequest) -> AsyncIterator[StreamChunk]:
+
         from forgecli.core.errors import ProviderError
 
+
+
         if not self._api_key:
+
             self.validate()
+
         body = self._format_request(request)
+
         model = request.model or self.config.default_model
+
         url = f"{self._base_url}/models/{model}:streamGenerateContent?key={self._api_key or ''}"
+
         req = self._client.build_request("POST", url, json=body, headers=self._auth_headers())
+
         response = await self._client.send(req, stream=True)
+
         if response.status_code >= 400:
+
             await response.aread()
+
             raise ProviderError(
+
                 f"{self.name} stream failed ({response.status_code}): {response.text[:500]}"
+
             )
+
+
 
         import json
 
+
+
         try:
+
             async for line in response.aiter_lines():
+
                 line = line.strip()
+
                 if not line:
+
                     continue
+
                 if line.startswith(","):
+
                     line = line[1:].strip()
+
                 if line.startswith("[") or line.endswith("]"):
+
                     line = line.strip("[]").strip()
+
                 if not line:
+
                     continue
+
                 try:
+
                     payload = json.loads(line)
+
                     candidates = payload.get("candidates") or []
+
                     if candidates:
+
                         first = candidates[0]
+
                         content = first.get("content") or {}
+
                         parts = content.get("parts") or []
+
                         text = "".join(str(p.get("text", "")) for p in parts if isinstance(p, dict))
+
                         finish_reason = first.get("finishReason")
+
                         yield StreamChunk(delta=text, finish_reason=finish_reason, raw=payload)
+
                 except Exception:
+
                     pass
+
         finally:
+
             await response.aclose()
 
+
+
     def _format_embeddings(self, request: EmbeddingRequest) -> dict[str, Any]:
-        # The Gemini embedContent endpoint takes a single ``content``
-        # object; we issue one request per input to keep the wire
-        # format simple. Callers that need batching should compose it
-        # at a higher level.
+
+
+
+
+
+
+
+
+
         if len(request.inputs) != 1:
+
             from forgecli.core.errors import ProviderError
 
+
+
             raise ProviderError(
+
                 f"{self.name} embed() expects exactly one input; got {len(request.inputs)}"
+
             )
+
         return {
+
             "content": {
+
                 "parts": [{"text": request.inputs[0]}],
+
             }
+
         }
 
+
+
     def _parse_embeddings(self, payload: dict[str, Any]) -> EmbeddingResponse:
+
         embedding = payload.get("embedding") or {}
+
         values = list(embedding.get("values", []))
+
         return EmbeddingResponse(
+
             model=str(payload.get("model", self.config.embeddings_model)),
+
             vectors=[values],
+
         )
 
+
+
     async def list_models(self) -> list[ModelInfo]:
+
         try:
+
             url = f"{self._base_url}/models?key={self._api_key or ''}"
+
             response = await self._client.get(url, timeout=5.0)
+
             if response.status_code == 200:
+
                 data = response.json()
+
                 models_list = data.get("models", [])
+
                 if models_list:
+
                     out = []
+
                     for m in models_list:
+
                         m_name = m.get("name", "")
+
                         if m_name.startswith("models/"):
+
                             m_id = m_name.replace("models/", "")
+
                             out.append(
+
                                 ModelInfo(
+
                                     id=m_id,
+
                                     name=m.get("displayName", m_id),
+
                                     context_window=m.get("inputTokenLimit", 1_000_000),
+
                                     supports_tools=True,
+
                                     supports_vision=True,
+
                                 )
+
                             )
+
                     if out:
+
                         return out
+
         except Exception:
+
             pass
+
         return self._known_models()
 
+
+
     def _known_models(self) -> list[ModelInfo]:
+
         from forgecli.core.models import MODEL_CATALOG
 
+
+
         return [
+
             ModelInfo(
+
                 id=m.id,
+
                 name=m.display_name,
+
                 context_window=2_000_000 if "pro" in m.id else 1_000_000,
+
                 supports_tools=True,
+
                 supports_vision=True,
+
             )
+
             for m in MODEL_CATALOG
+
             if m.provider == "google"
+
         ]
 
 
+
+
+
 def _fallback_api_key(primary: str) -> str | None:
+
     """Read ``primary`` or ``GEMINI_API_KEY`` from the environment, or secure storage."""
+
     import os
 
+
+
     env_val = os.environ.get(primary) or os.environ.get("GEMINI_API_KEY")
+
     if env_val:
+
         return env_val
+
     from forgecli.core.credentials import get_api_key
+
+
 
     return get_api_key("google") or get_api_key("gemini")
 
 
+
+
+
 __all__ = ["GeminiConfig", "GeminiProvider"]
+

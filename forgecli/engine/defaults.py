@@ -12,6 +12,8 @@ Individual stages can be overridden via
 :meth:`StageRegistry.replace` before building the engine.
 """
 
+
+
 from __future__ import annotations
 
 from typing import Any
@@ -31,17 +33,29 @@ from forgecli.engine.stages import (
 
 
 def default_registry(
+
     *,
+
     provider: Any = None,
+
     optimizer: Any = None,
+
     caveman_optimizer: Any = None,
+
     graph: Any = None,
+
     classifier: Any = None,
+
     router: Any = None,
+
     test_command: str | None = None,
+
     plugin_registry: Any = None,
+
     **stage_kwargs: Any,
+
 ) -> StageRegistry:
+
     """Create a :class:`StageRegistry` with all nine default pipeline stages.
 
     Keyword arguments are forwarded to stage constructors:
@@ -63,27 +77,52 @@ def default_registry(
     Remaining kwargs are passed to stages that accept them by name
     (e.g. ``auto_commit`` for :class:`GitEngineStage`).
     """
+
     registry = StageRegistry()
 
+
+
     stages: list[Stage] = [
+
         IntentAnalyzerStage(classifier=classifier),
+
         RepositoryAnalyzerStage(graph=graph),
+
         CavemanOptimizerStage(optimizer=caveman_optimizer),
+
         ContextOptimizerStage(optimizer=optimizer),
+
         PlanningEngineStage(**{k: v for k, v in stage_kwargs.items() if k in ("enabled",)}),
+
         ModelRouterStage(router=router),
+
         ExecutionEngineStage(provider=provider),
+
         ValidationEngineStage(test_command=test_command),
+
         GitEngineStage(),
+
     ]
 
+
+
     for stage in stages:
+
         registry.register(stage)
 
+
+
     if plugin_registry is not None:
+
         plugin_registry.link_engine_registry(registry)
+
+
 
     return registry
 
 
+
+
+
 __all__ = ["default_registry"]
+
