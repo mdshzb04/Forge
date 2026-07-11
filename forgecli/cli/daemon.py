@@ -625,16 +625,27 @@ def get_chunks(path: str | None = None) -> dict[str, Any]:
 
 
 
+def is_daemon_running() -> bool:
+    """Return True if the Forge daemon is running and healthy.
+
+    Exposed at module level so tests can patch ``daemon.is_daemon_running``
+    without touching the heavier ``daemon_utils`` module.
+    """
+    from forgecli.cli.daemon_utils import check_daemon_health
+
+    return check_daemon_health()
+
+
 def run_mcp_stdio() -> None:
     """Run the stdio MCP protocol handler, passing requests to the local daemon."""
-    from forgecli.cli.daemon_utils import check_daemon_health, start_daemon_background
+    from forgecli.cli.daemon_utils import start_daemon_background
 
     daemon_url = "http://127.0.0.1:16868"
 
-    if not check_daemon_health():
+    if not is_daemon_running():
         start_daemon_background()
         for _ in range(20):
-            if check_daemon_health():
+            if is_daemon_running():
                 break
             time.sleep(0.2)
 

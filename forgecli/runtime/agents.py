@@ -269,4 +269,78 @@ AGENTS: dict[str, AgentSpec] = {
 
     ),
 
+    "aider": AgentSpec(
+
+        id="aider",
+
+        name="Aider",
+
+        binary="aider",
+
+        install_hint="Install Aider: https://aider.chat/docs/install.html",
+
+        mcp_targets=(),
+
+        supports_mcp=False,
+
+        context_flag="--read",
+
+    ),
+
+    "opencode": AgentSpec(
+
+        id="opencode",
+
+        name="OpenCode",
+
+        binary="opencode",
+
+        install_hint="Install OpenCode: https://opencode.ai",
+
+        mcp_targets=(
+
+            MCPTarget(
+
+                base="repo",
+
+                relpath=".mcp.json",
+
+                fmt="json",
+
+                label="OpenCode (project)",
+
+            ),
+
+        ),
+
+    ),
+
+    "commandcode": AgentSpec(
+
+        id="commandcode",
+
+        name="CommandCode",
+
+        binary="commandcode",
+
+        install_hint="Install CommandCode",
+
+        mcp_targets=(
+
+            MCPTarget(
+
+                base="repo",
+
+                relpath=".mcp.json",
+
+                fmt="json",
+
+                label="CommandCode (project)",
+
+            ),
+
+        ),
+
+    ),
+
     }
