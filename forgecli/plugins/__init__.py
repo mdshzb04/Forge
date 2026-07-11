@@ -35,6 +35,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 from forgecli.core.context import AppContext
+from forgecli.plugins.hook import HookEvent, HookManager
 from forgecli.providers.base import Provider
 from forgecli.review.analyzer import Analyzer
 
@@ -405,11 +406,6 @@ def discover_plugins(
 
     return loaded
 
-
-
-
-
-from forgecli.plugins.hook import HookEvent, HookManager
 
 __all__ = [
 

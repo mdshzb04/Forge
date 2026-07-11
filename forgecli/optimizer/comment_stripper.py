@@ -10,17 +10,18 @@ from __future__ import annotations
 import io
 import re
 import tokenize
+from typing import ClassVar
 
 
 class CommentStripper:
     """Strips comments and docstrings from source code according to the configured mode."""
 
-    LICENSE_KEYWORDS = {
+    LICENSE_KEYWORDS: ClassVar[set[str]] = {
         "copyright", "license", "author", "created by", "credits",
         "contributor", "apache", "mozilla", "bsd", "mit license", "gpl"
     }
 
-    COMPILER_DIRECTIVES = {
+    COMPILER_DIRECTIVES: ClassVar[set[str]] = {
         "go:", "export", "lint:", "sys", "eslint-disable", "eslint-enable",
         "eslint", "@ts-nocheck", "@ts-check", "@ts-ignore", "pragma",
         "include", "define", "ifdef", "ifndef", "endif", "clang", "gcc",
@@ -44,10 +45,8 @@ class CommentStripper:
         for directive in cls.COMPILER_DIRECTIVES:
             if clean.startswith(directive) or clean.lower().startswith(directive):
                 return True
-        # Check standard directive patterns
-        if re.match(r"^[A-Za-z0-9_]+:", clean):  # E.g. go:generate
-            return True
-        return False
+        # Check standard directive patterns (e.g. go:generate)
+        return re.match(r"^[A-Za-z0-9_]+:", clean) is not None
 
     @classmethod
     def strip_comments(cls, content: str, filepath: str | None = None, mode: str = "off") -> str:
@@ -79,10 +78,8 @@ class CommentStripper:
         # Identify docstrings: a STRING token that is the first statement of a logical line,
         # followed by a NEWLINE or NL.
         docstring_tokens = set()
-        
-        # Track logical line start and preceding tokens
-        logical_line_start = True
-        preceding_non_space = None
+
+        # Track tokens accumulated for the current logical line
         current_logical_tokens = []
 
         for idx, tok in enumerate(tokens):
@@ -97,12 +94,9 @@ class CommentStripper:
                     rest = non_space_toks[1:]
                     if all(t.type == tokenize.COMMENT for t in rest):
                         docstring_tokens.add(first)
-                
-                logical_line_start = True
+
                 current_logical_tokens = []
-            elif tok.type == tokenize.INDENT:
-                logical_line_start = True
-            elif tok.type == tokenize.DEDENT:
+            elif tok.type in (tokenize.INDENT, tokenize.DEDENT):
                 pass
             else:
                 current_logical_tokens.append(tok)
@@ -112,7 +106,6 @@ class CommentStripper:
                     # If preceding was colon and next is newline/NL/comment
                     if prev.string == ":" and idx + 1 < len(tokens) and tokens[idx + 1].type in (tokenize.NEWLINE, tokenize.NL, tokenize.COMMENT):
                         docstring_tokens.add(tok)
-                logical_line_start = False
 
         # Reconstruct content
         out = []
@@ -211,7 +204,7 @@ class CommentStripper:
                         line_prefix = "".join(out[-100:]).split("\n")[-1]
                         if not line_prefix.strip():
                             out.append(comment_text)
-                    
+
                     out.append("\n")
                     state = "DEFAULT"
                     i += 1
@@ -226,7 +219,7 @@ class CommentStripper:
                     elif mode == "lite":
                         # Lite mode keeps block comments
                         out.append(comment_text)
-                    
+
                     state = "DEFAULT"
                     i += 2
                 else:

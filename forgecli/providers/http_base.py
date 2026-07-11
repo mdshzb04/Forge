@@ -245,8 +245,8 @@ class HTTPChatProvider(Provider[Any]):
         model = request.model or self._default_embedding_model()
 
         # Lookup in embedding cache
-        from forgecli.utils.paths import ProjectPaths
         from forgecli.optimizer.embedding_cache import EmbeddingCache
+        from forgecli.utils.paths import ProjectPaths
         cache_path = ProjectPaths.from_env().cache_dir / "embedding_cache.db"
         cache = EmbeddingCache(cache_path)
 
@@ -278,7 +278,7 @@ class HTTPChatProvider(Provider[Any]):
         partial_response = self._parse_embeddings(response.json())
 
         # Save new embeddings to cache
-        new_embeddings = {inp: vec for inp, vec in zip(missing_inputs, partial_response.vectors)}
+        new_embeddings = dict(zip(missing_inputs, partial_response.vectors, strict=False))
         cache.save(model, new_embeddings)
 
         # Merge cached and new embeddings in original order

@@ -8,7 +8,6 @@ DeepSeek, GLM, Llama, and Mistral. Gracefully falls back to heuristic estimation
 from __future__ import annotations
 
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -36,13 +35,13 @@ class TokenEstimator:
                     encoding_name = "cl100k_base"
                     if "gpt-4o" in model_lower or "o1" in model_lower or "o3" in model_lower:
                         encoding_name = "o200k_base"
-                    
+
                     if encoding_name not in _TOKENIZER_CACHE:
                         try:
                             _TOKENIZER_CACHE[encoding_name] = tiktoken.get_encoding(encoding_name)
                         except Exception:
                             _TOKENIZER_CACHE[encoding_name] = tiktoken.get_encoding("cl100k_base")
-                    
+
                     return len(_TOKENIZER_CACHE[encoding_name].encode(text))
                 else:
                     # Anthropic: Claude 3 uses a cl100k-compatible BPE

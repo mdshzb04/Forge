@@ -8,7 +8,9 @@ and terminating retrieval early when semantic coverage matches the user's reques
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
+from typing import Any
 
 
 class IntelligentRetrievalManager:
@@ -272,11 +274,4 @@ class IntelligentRetrievalManager:
             self.cache.set("dependency_traversal", cache_key, resolved or "", self.fingerprint)
 
         return resolved
-
-
-
-
-
-import re
-from typing import Any
 

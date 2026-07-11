@@ -8,6 +8,8 @@ and estimates response latency budgets.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 
 class TokenCostEstimator:
 
@@ -17,7 +19,7 @@ class TokenCostEstimator:
 
 
 
-    PROVIDER_PRICING = {
+    PROVIDER_PRICING: ClassVar[dict[str, tuple[float, float]]] = {
 
         "gpt-4o": (5.0, 15.0),
 

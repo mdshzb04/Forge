@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from forgecli.policy.exceptions import PolicyViolationError
 
@@ -55,7 +55,7 @@ class SecretScanningRule(PolicyRule):
 
 
 
-    SECRET_PATTERNS = [
+    SECRET_PATTERNS: ClassVar[list[tuple[re.Pattern[str], str]]] = [
 
         (re.compile(r"xox[bapr]-[0-9]{12}-[0-9]{12}-[a-zA-Z0-9]{24}", re.IGNORECASE), "[REDACTED SLACK TOKEN]"),
 
@@ -175,7 +175,7 @@ class PathExclusionRule(PolicyRule):
 
 
 
-    EXCLUDED_PATTERNS = [
+    EXCLUDED_PATTERNS: ClassVar[list[re.Pattern[str]]] = [
 
         re.compile(r"\.ssh/", re.IGNORECASE),
 

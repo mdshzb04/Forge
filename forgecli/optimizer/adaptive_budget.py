@@ -8,6 +8,8 @@ according to specific LLM models, provider capabilities, and reasoning modes.
 
 from __future__ import annotations
 
+from typing import Any
+
 
 class AdaptiveContextBudget:
 
@@ -122,10 +124,4 @@ class AdaptiveContextBudget:
             "is_reasoning_model": is_reasoning_model,
 
         }
-
-
-
-
-
-from typing import Any
 

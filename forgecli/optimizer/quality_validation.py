@@ -9,6 +9,7 @@ critical dependencies or symbols are lost during context pruning.
 from __future__ import annotations
 
 import ast
+import re
 
 
 class QualityValidator:
@@ -111,10 +112,4 @@ class QualityValidator:
                 )
 
         return warnings
-
-
-
-
-
-import re
 

@@ -78,7 +78,7 @@ class EmbeddingCache:
                         SELECT input_hash, vector FROM embedding_cache
                         WHERE model = ? AND version = ? AND input_hash IN ({placeholders})
                     """
-                    cursor.execute(query, [model, version] + chunk_hashes)
+                    cursor.execute(query, [model, version, *chunk_hashes])
                     for row in cursor.fetchall():
                         h, vec_json = row
                         original_input = hash_to_input.get(h)

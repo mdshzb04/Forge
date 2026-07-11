@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING
 
 from forgecli.providers.base import (
@@ -85,17 +86,8 @@ class ProviderFactory:
 
         for cls in providers_mapping.values():
 
-            try:
-
-
-
+            with contextlib.suppress(Exception):  # pragma: no cover
                 self._container.register(cls, cls, lifetime=Lifetime.SINGLETON)
-
-            except Exception:  # pragma: no cover
-
-
-
-                pass
 
 
 

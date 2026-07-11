@@ -82,11 +82,8 @@ class CircuitBreaker:
 
         with self._lock:
 
-            if self._state == CircuitState.OPEN:
-
-                if self._last_failure_time and (time.time() - self._last_failure_time) > self.recovery_timeout:
-
-                    self._state = CircuitState.HALF_OPEN
+            if self._state == CircuitState.OPEN and self._last_failure_time and (time.time() - self._last_failure_time) > self.recovery_timeout:
+                self._state = CircuitState.HALF_OPEN
 
             return self._state
 

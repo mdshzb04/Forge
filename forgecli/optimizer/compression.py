@@ -237,7 +237,7 @@ class ContextCompressionEngine:
 
             is_import = (
 
-                stripped.startswith("import ") or 
+                stripped.startswith("import ") or
 
                 (stripped.startswith("from ") and " import " in stripped) or
 
@@ -275,7 +275,7 @@ class ContextCompressionEngine:
 
         repeat_count = 0
 
-        
+
 
         for line in lines:
 
@@ -301,13 +301,13 @@ class ContextCompressionEngine:
 
                 last_line = stripped if is_diagnostic else None
 
-                
+
 
         if repeat_count > 0:
 
             result.append(f"... [Repeated {repeat_count} times] ...")
 
-            
+
 
         return "\n".join(result)
 
@@ -318,19 +318,19 @@ class ContextCompressionEngine:
         """Find duplicate code blocks and replace subsequent ones with a concise reference."""
         import hashlib
         pattern = re.compile(r"```(?:\w+)?\n.*?\n```", re.DOTALL)
-        
+
         seen_hashes = {}
         last_idx = 0
         parts = []
-        
+
         for match in pattern.finditer(text):
             parts.append(text[last_idx:match.start()])
             block_text = match.group(0)
-            
+
             lines = block_text.splitlines()
             content = "\n".join(lines[1:-1]) if len(lines) > 2 else ""
             h = hashlib.sha256(content.strip().encode("utf-8")).hexdigest()
-            
+
             if h in seen_hashes:
                 ref = seen_hashes[h]
                 parts.append(f"```\n[Duplicate code block: see {ref}]\n```")
@@ -338,9 +338,9 @@ class ContextCompressionEngine:
                 ref_name = f"Code block {len(seen_hashes) + 1}"
                 seen_hashes[h] = ref_name
                 parts.append(block_text)
-                
+
             last_idx = match.end()
-            
+
         parts.append(text[last_idx:])
         return "".join(parts)
 

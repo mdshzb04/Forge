@@ -9,6 +9,7 @@ and polite filler words, saving tokens without changing intent.
 from __future__ import annotations
 
 import re
+from typing import ClassVar
 
 
 class PromptOptimizer:
@@ -19,7 +20,7 @@ class PromptOptimizer:
 
 
 
-    FILLER_PATTERNS = [
+    FILLER_PATTERNS: ClassVar[list[str]] = [
 
         r"\b(?:could|would|can)\s+you\s+(?:please|kindly|just)\b",
 
