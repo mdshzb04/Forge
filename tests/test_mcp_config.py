@@ -151,7 +151,27 @@ def test_configure_mcp_for_agent_skips_when_unsupported(tmp_path: Path, monkeypa
 
 
 
-    configure_mcp_for_agent(AGENTS["aider"], tmp_path)
+    # Build a minimal AgentSpec with no MCP targets (supports_mcp=False)
+
+    from forgecli.runtime.agents import AgentSpec
+
+    no_mcp_agent = AgentSpec(
+
+        id="test-no-mcp",
+
+        name="Test No MCP",
+
+        binary="test-no-mcp",
+
+        install_hint="",
+
+        mcp_targets=(),
+
+        supports_mcp=False,
+
+    )
+
+    configure_mcp_for_agent(no_mcp_agent, tmp_path)
 
     assert not any(tmp_path.iterdir())
 
@@ -193,7 +213,7 @@ def test_get_forge_mcp_entry_fallback_to_python(monkeypatch) -> None:
 
 def test_all_six_agents_registered() -> None:
 
-    assert set(AGENTS) == {"claude", "codex", "cursor", "antigravity", "aider", "gemini", "opencode", "commandcode"}
+    assert set(AGENTS) == {"claude", "codex", "cursor", "antigravity", "gemini"}
 
     for spec in AGENTS.values():
 

@@ -210,7 +210,7 @@ class TestUnifiedWrappers:
 
         from forgecli.runtime.agents import AGENTS
 
-        expected = {"claude", "codex", "cursor", "antigravity", "gemini", "aider", "opencode", "commandcode"}
+        expected = {"claude", "codex", "cursor", "antigravity", "gemini"}
 
         assert set(AGENTS) == expected
 
@@ -252,21 +252,7 @@ class TestUnifiedWrappers:
 
                 assert len(spec.mcp_targets) > 0, f"{agent_id} supports MCP but has no targets"
 
-            else:
 
-                assert agent_id == "aider", "Only aider should have supports_mcp=False"
-
-
-
-    def test_context_flag_agents_work(self) -> None:
-
-        from forgecli.runtime.agents import AGENTS
-
-        aider = AGENTS["aider"]
-
-        assert aider.context_flag == "--read"
-
-        assert not aider.supports_mcp
 
 
 

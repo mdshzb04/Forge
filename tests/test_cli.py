@@ -43,8 +43,6 @@ def test_cli_help() -> None:
 
     assert "cursor" in result.output
 
-    assert "aider" in result.output
-
     assert "graph" in result.output
 
 
@@ -272,8 +270,6 @@ def test_graph_build_no_api_key(tmp_path: Path, monkeypatch) -> None:
 
         ("antigravity", "antigravity"),
 
-        ("aider", "aider"),
-
     ],
 
 )
@@ -370,73 +366,7 @@ def test_wrapper_command_works_without_api_key(
 
 
 
-def test_aider_receives_context_via_read_flag(tmp_path: Path, monkeypatch) -> None:
 
-    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
-
-    monkeypatch.setenv("FORGECLI_CACHE_DIR", str(tmp_path / "cache"))
-
-    monkeypatch.setenv("FORGECLI_CONFIG_DIR", str(tmp_path / "config"))
-
-    (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
-
-
-
-    import subprocess
-
-
-
-    original_run = subprocess.run
-
-    launched: dict = {}
-
-
-
-    def _fake_run(argv, *args, **kwargs):
-
-        if argv and "aider" in argv[0]:
-
-            launched["argv"] = argv
-
-
-
-            class _Result:
-
-                returncode = 0
-
-
-
-            return _Result()
-
-        return original_run(argv, *args, **kwargs)
-
-
-
-    with (
-
-        patch("forgecli.runtime.wrappers.which", return_value="/usr/bin/aider"),
-
-        patch("forgecli.runtime.wrappers.subprocess.run", side_effect=_fake_run),
-
-    ):
-
-        runner = CliRunner()
-
-        result = runner.invoke(app, ["aider", "-p", str(tmp_path)], catch_exceptions=False)
-
-
-
-    assert result.exit_code == 0
-
-    argv = launched["argv"]
-
-    assert "--read" in argv
-
-    ctx_path = argv[argv.index("--read") + 1]
-
-    assert ctx_path.endswith("_merged.md")
-
-    assert Path(ctx_path).is_file()
 
 
 
