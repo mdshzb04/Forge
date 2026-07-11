@@ -49,6 +49,23 @@ Forge has a single unified context preparation path used by all wrappers:
 
 Forge includes a native Python graph builder (`forgecli/graph/native_builder.py`) that generates `forgegraph-out/graph.json` without external binaries. When the external `graphify` binary is available, it takes priority for advanced features (Leiden clustering, LLM-powered analysis). The native builder always works as a fallback.
 
+### Advanced Graph (optional)
+
+The native builder works out of the box with no extra setup. For the advanced graph (Leiden clustering and LLM-powered analysis), install the external `graphify` tool and provide an API key:
+
+```bash
+# 1. Install graphify (the binary is named `graphify`)
+uv tool install graphifyy --with anthropic
+
+# 2. Provide an API key for your provider
+export ANTHROPIC_API_KEY="your-key-here"
+
+# 3. Build the graph
+forge graph build
+```
+
+`graphify` is **not** bundled with Forge — install it only if you want the advanced graph. Without it, `forge graph build` still works using the native builder.
+
 ## Installation
 
 ```bash
