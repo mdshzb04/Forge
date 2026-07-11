@@ -15,7 +15,6 @@ from forgecli import __app_name__, __version__
 from forgecli.cli import commands_diagnostics, commands_graph, commands_wrappers
 from forgecli.cli.bootstrap import bootstrap_context
 from forgecli.cli.commands_inspect import inspect_cmd
-from forgecli.cli.commands_plugin import plugin_app
 from forgecli.cli.ui import error, get_console
 from forgecli.core.errors import ForgeCLIError
 from forgecli.runtime.agents import AGENTS
@@ -47,8 +46,6 @@ app = typer.Typer(
 
 
 app.add_typer(commands_graph.app, name="graph")
-
-app.add_typer(plugin_app, name="plugin")
 
 for _agent_id, _agent in AGENTS.items():
 
@@ -82,7 +79,7 @@ app.command(
 
     "inspect",
 
-    help="Display the active pipeline, loaded plugins, provider, Graphify status, and optimization stages.",
+    help="Display the active pipeline, provider, Graphify status, and optimization stages.",
 
 )(inspect_cmd)
 
@@ -451,11 +448,10 @@ def main(
 
         "    [cyan]forge doctor[/cyan]       Verify installation, dependencies, and configuration\n"
 
-        "    [cyan]forge inspect[/cyan]      Display pipeline, plugins, provider, and optimization stages\n"
+        "    [cyan]forge inspect[/cyan]      Display pipeline, provider, and optimization stages\n"
 
         "    [cyan]forge explain[/cyan]      Explain pipeline stages, concepts, and topics\n"
 
-        "    [cyan]forge plugin list[/cyan]  Manage ForgeCLI plugin marketplace\n"
 
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"
 

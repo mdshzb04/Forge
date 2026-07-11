@@ -1,7 +1,7 @@
 """End-to-end integration tests for the unified Forge runtime pipeline.
 
 Tests verify complete request flows through the full middleware pipeline,
-wrapper execution, plugin lifecycle, and diagnostic commands.
+wrapper execution, and diagnostic commands.
 """
 
 
@@ -379,48 +379,6 @@ class TestDiagnosticCommands:
         assert result.returncode == 0
 
         assert "Forge Doctor" in result.stdout
-
-
-
-
-
-class TestPluginLifecycle:
-
-    """E2E tests for plugin install/list/remove flow."""
-
-
-
-    def test_plugin_list_runs(self) -> None:
-
-        import subprocess
-        import sys
-
-        result = subprocess.run(
-
-            [sys.executable, "-m", "forgecli.cli.main", "plugin", "list"],
-
-            capture_output=True, text=True,
-
-        )
-
-        assert result.returncode == 0
-
-
-
-    def test_plugin_doctor_runs(self) -> None:
-
-        import subprocess
-        import sys
-
-        result = subprocess.run(
-
-            [sys.executable, "-m", "forgecli.cli.main", "plugin", "doctor"],
-
-            capture_output=True, text=True,
-
-        )
-
-        assert result.returncode == 0
 
 
 

@@ -351,42 +351,6 @@ def inspect_cmd(
 
 
 
-    console.print("  [bold]Loaded Plugins[/bold]")
-
-    console.print()
-
-
-
-    try:
-
-        from forgecli.sdk.manager import PluginManager
-
-        manager = PluginManager()
-
-        plugins = manager.list()
-
-        if plugins:
-
-            for state, loaded in plugins:
-
-                status = "[green]enabled[/green]" if state.enabled else "[yellow]disabled[/yellow]"
-
-                version = state.version or "unknown"
-
-                ep_count = len(loaded.manifest.entry_points) if loaded and loaded.manifest else 0
-
-                console.print(f"    {state.name:<20}  v{version:<10}  {status}  [dim]{ep_count} entry points[/dim]")
-
-        else:
-
-            console.print("    [dim]No plugins installed.[/dim]")
-
-    except Exception as e:
-
-        console.print(f"    [dim]Plugin system unavailable: {e}[/dim]")
-
-
-
     console.print()
 
 

@@ -36,10 +36,6 @@ The following internal functions were renamed but backward-compatible aliases ex
 
 No changes to `forgecli.toml` format. All existing configuration files work without modification.
 
-### Plugin API
-
-The Plugin SDK (`forgecli/sdk/`) is stable. Plugins using `forgecli-plugin.toml` manifests from earlier versions continue to work.
-
 ### Provider System
 
 No breaking changes. The same `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `GOOGLE_API_KEY` environment variables are used.

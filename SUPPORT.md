@@ -2,9 +2,8 @@
 
 ## Getting Help
 
-- **Documentation**: See the [README.md](README.md) for a full command reference, architecture overview, and plugin development guide.
-- **Examples**: Check the [examples/](examples/) directory for a sample plugin with provider, analyzer, and optimizer entry points.
-- **CLI Help**: Every command has built-in help: `forge --help`, `forge plugin --help`, `forge explain pipeline`, etc.
+- **Documentation**: See the [README.md](README.md) for a full command reference and architecture overview.
+- **CLI Help**: Every command has built-in help: `forge --help`, `forge explain pipeline`, etc.
 - **Diagnostics**: Run `forge doctor` for system diagnostics, `forge inspect` for pipeline status, and `forge stats` for usage metrics.
 
 ## Reporting Issues

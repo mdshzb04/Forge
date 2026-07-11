@@ -216,28 +216,6 @@ def stats_cmd() -> None:
 
     try:
 
-        from forgecli.sdk.manager import PluginManager
-
-        manager = PluginManager()
-
-        plugins = manager.list()
-
-        enabled_count = sum(1 for s, _ in plugins if s.enabled)
-
-        console.print()
-
-        console.print(f"  Installed plugins  : {len(plugins)}")
-
-        console.print(f"  Enabled plugins    : {enabled_count}")
-
-    except Exception:
-
-        pass
-
-
-
-    try:
-
         from forgecli.providers.base import default_registry
 
         names = default_registry.names()
@@ -732,12 +710,6 @@ def doctor_cmd() -> None:
 
 
 
-
-
-    _check_plugin_health(console)
-
-
-
     console.print()
 
 
@@ -819,42 +791,6 @@ def _check_ai_clis(console) -> None:
         else:
 
             console.print(f"    [dim]-[/dim] {label} [dim](not installed)[/dim]")
-
-
-
-
-
-def _check_plugin_health(console) -> None:
-
-    try:
-
-        from forgecli.sdk.manager import PluginManager
-
-        manager = PluginManager()
-
-        plugins = manager.list()
-
-        console.print()
-
-        console.print("  [bold]Plugin Health[/bold]")
-
-        if not plugins:
-
-            console.print("    [dim]No plugins installed[/dim]")
-
-            return
-
-        for state, _loaded in plugins:
-
-            status = "[green]enabled[/green]" if state.enabled else "[yellow]disabled[/yellow]"
-
-            version = state.version or "unknown"
-
-            console.print(f"    [green]✓[/green] {state.name}  v{version}  {status}")
-
-    except Exception:
-
-        pass
 
 
 

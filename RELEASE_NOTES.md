@@ -27,17 +27,13 @@ forge profile         # View/set profiles with rich output
 forge status          # Repository and daemon status
 forge stats           # Usage statistics
 forge doctor          # System diagnostics
-forge inspect         # Pipeline, plugins, and providers
+forge inspect         # Pipeline and providers
 forge explain         # Explain pipeline stages and concepts
-
-forge plugin list     # Plugin marketplace
-forge plugin install  # Install from path or git
 ```
 
 ## Key Capabilities
 
 - **19-stage middleware pipeline** processes every AI request through telemetry, auth, policy, caching, history compression, token planning, context optimization, conversation tracking, Ponytail prompt engineering, Caveman output compression, repository scanning, dependency analysis, symbol extraction, graph enrichment, semantic ranking, streaming, resilience, provider execution, and response optimization.
-- **Plugin SDK** with sandboxed execution, entry points, version management, and health checking.
 - **8 AI CLI wrappers** unified through a single runtime path.
 - **16 providers** with real HTTP drivers for OpenAI, Anthropic, and Google Gemini.
 - **Knowledge graph** integration for intelligent file context injection.
@@ -53,6 +49,5 @@ uv tool install forgectx
 
 ## What's Next
 
-- PyPI plugin registry for `forge plugin install <name>` (currently git + local only)
 - Performance profiling and optimization of 19-stage pipeline under production load
 - Standalone binary packaging (PyInstaller/Nuitka)

@@ -87,7 +87,6 @@ Forge provides two ways to connect with your AI coding tools:
 | `forge stats` | Show cache metrics and pipeline performance |
 | `forge profile` | View or set optimization profiles |
 | `forge explain` | Explain pipeline stages, concepts, or topics |
-| `forge plugin list` | List installed plugins |
 | `forge --version` | Show version |
 
 Use `--refresh` to bypass the cache on any wrapper command:
