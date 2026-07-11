@@ -231,7 +231,7 @@ def inspect_cmd(
 
         else:
 
-            console.print("    [yellow]Not available[/yellow] — install with [cyan]uv tool install graphifyy[/cyan]")
+            console.print("    [yellow]Not available[/yellow] — install with [cyan]uv tool install graphifyy --with anthropic[/cyan]")
 
     except Exception:
 

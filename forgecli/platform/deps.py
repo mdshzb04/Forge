@@ -8,7 +8,7 @@ optional / required external tool ForgeCLI integrates with:
 * ``ponytail``   — **built-in**; the ruleset optimizer ships with
   ForgeCLI — no external binary required
 * ``graphify``   — optional; powers the knowledge graph
-  (install via ``uv tool install graphifyy``)
+  (install via ``uv tool install graphifyy --with anthropic``)
 * ``node``       — optional; needed by some LLM providers
 * ``pip`` / ``uv`` / ``brew`` / ``scoop`` / ``winget`` — package
   managers used to render install hints.
@@ -371,7 +371,7 @@ def check_dependencies() -> DependencyReport:
 
             lambda: _run_version("forgegraph") or _run_version("graphify"),
 
-            note="Optional. Install with: uv tool install graphifyy",
+            note="Optional. Install with: uv tool install graphifyy --with anthropic",
 
         )
 
@@ -535,33 +535,27 @@ _HINTS: Final[dict[str, dict[OS, tuple[str, ...]]]] = {
 
         OS.LINUX: (
 
-            "uv tool install graphifyy",
+            "uv tool install graphifyy --with anthropic",
 
-            "or:  pipx install graphifyy",
+            "or:  pipx install graphifyy && pipx inject graphifyy anthropic",
 
-            "or:  pip install --user graphifyy",
+            "or:  pip install --user graphifyy anthropic",
 
         ),
 
         OS.MACOS: (
 
-            "brew install graphifyy",
-
-            "or:  uv tool install graphifyy",
+            "uv tool install graphifyy --with anthropic",
 
         ),
 
         OS.WINDOWS: (
 
-            "winget install graphifyy",
-
-            "or:  scoop install graphifyy",
-
-            "or:  uv tool install graphifyy",
+            "uv tool install graphifyy --with anthropic",
 
         ),
 
-        OS.OTHER: ("uv tool install graphifyy",),
+        OS.OTHER: ("uv tool install graphifyy --with anthropic",),
 
     },
 
@@ -569,33 +563,27 @@ _HINTS: Final[dict[str, dict[OS, tuple[str, ...]]]] = {
 
         OS.LINUX: (
 
-            "uv tool install graphifyy",
+            "uv tool install graphifyy --with anthropic",
 
-            "or:  pipx install graphifyy",
+            "or:  pipx install graphifyy && pipx inject graphifyy anthropic",
 
-            "or:  pip install --user graphifyy",
+            "or:  pip install --user graphifyy anthropic",
 
         ),
 
         OS.MACOS: (
 
-            "brew install graphifyy",
-
-            "or:  uv tool install graphifyy",
+            "uv tool install graphifyy --with anthropic",
 
         ),
 
         OS.WINDOWS: (
 
-            "winget install graphifyy",
-
-            "or:  scoop install graphifyy",
-
-            "or:  uv tool install graphifyy",
+            "uv tool install graphifyy --with anthropic",
 
         ),
 
-        OS.OTHER: ("uv tool install graphifyy",),
+        OS.OTHER: ("uv tool install graphifyy --with anthropic",),
 
     },
 

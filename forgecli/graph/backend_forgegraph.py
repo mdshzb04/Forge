@@ -122,7 +122,7 @@ class ForgeRepositoryGraph(RepositoryGraph):
     async def install_hint(self) -> str:
         return (
             "ForgeGraph binary is not installed; native Python builder will be used.\n"
-            "Install graphifyy for advanced features: uv tool install graphifyy\n"
+            "Install graphifyy for advanced features: uv tool install graphifyy --with anthropic\n"
             "Docs: https://graphifylabs.ai/"
         )
 
