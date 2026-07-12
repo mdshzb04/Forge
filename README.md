@@ -74,7 +74,7 @@ The CLI entrypoint is `forge`.
 
 Forge provides two ways to connect with your AI coding tools:
 
-1. **Convenience Wrappers** (`forge claude`, `forge cursor`, `forge codex`, `forge antigravity`, `forge gemini`) — Automatically prepare context, configure MCP, and launch the target AI CLI.
+1. **Convenience Wrappers** (`forge claude`, `forge cursor`, `forge codex`, `forge antigravity`) — Automatically prepare context, configure MCP, and launch the target AI CLI.
 2. **MCP Server** (`forge mcp`) — Standard stdio JSON-RPC interface exposing 6 tools that AI clients can call during sessions.
 
 ---
@@ -87,7 +87,6 @@ Forge provides two ways to connect with your AI coding tools:
 | `forge codex` | Launch Codex CLI with optimized context |
 | `forge cursor` | Launch Cursor CLI with optimized context |
 | `forge antigravity` | Launch Antigravity CLI with optimized context |
-| `forge gemini` | Launch Gemini CLI with optimized context |
 | `forge commit` | Generate a Conventional Commit message from staged changes |
 | `forge mcp` | Start the stdio MCP server |
 | `forge start` | Start the background daemon |

@@ -210,7 +210,7 @@ class TestUnifiedWrappers:
 
         from forgecli.runtime.agents import AGENTS
 
-        expected = {"claude", "codex", "cursor", "antigravity", "gemini"}
+        expected = {"claude", "codex", "cursor", "antigravity"}
 
         assert set(AGENTS) == expected
 

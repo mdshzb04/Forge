@@ -273,9 +273,9 @@ def test_get_forge_mcp_entry_fallback_to_python(monkeypatch) -> None:
 
 
 
-def test_all_six_agents_registered() -> None:
+def test_all_agents_registered() -> None:
 
-    assert set(AGENTS) == {"claude", "codex", "cursor", "antigravity", "gemini"}
+    assert set(AGENTS) == {"claude", "codex", "cursor", "antigravity"}
 
     for spec in AGENTS.values():
 

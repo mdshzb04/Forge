@@ -12,7 +12,6 @@ Forge provides a complete developer experience:
 forge claude          # Launch Claude Code with optimized context
 forge codex           # Launch Codex CLI
 forge cursor          # Launch Cursor CLI  
-forge gemini          # Launch Gemini CLI
 forge antigravity     # Launch Antigravity CLI
 forge aider           # Launch Aider with context injection
 forge opencode        # Launch OpenCode
@@ -34,7 +33,7 @@ forge explain         # Explain pipeline stages and concepts
 ## Key Capabilities
 
 - **19-stage middleware pipeline** processes every AI request through telemetry, auth, policy, caching, history compression, token planning, context optimization, conversation tracking, Ponytail prompt engineering, Caveman output compression, repository scanning, dependency analysis, symbol extraction, graph enrichment, semantic ranking, streaming, resilience, provider execution, and response optimization.
-- **8 AI CLI wrappers** unified through a single runtime path.
+- **7 AI CLI wrappers** unified through a single runtime path.
 - **16 providers** with real HTTP drivers for OpenAI, Anthropic, and Google Gemini.
 - **Knowledge graph** integration for intelligent file context injection.
 - **Optimization profiles** with 4-5 intensity levels per optimizer.

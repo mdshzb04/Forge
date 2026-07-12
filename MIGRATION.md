@@ -12,7 +12,6 @@ forge claude     # unchanged
 forge codex      # unchanged
 forge cursor     # unchanged
 forge antigravity # unchanged
-forge gemini     # unchanged
 forge aider      # unchanged
 ```
 

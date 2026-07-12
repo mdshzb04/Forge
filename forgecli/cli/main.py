@@ -34,7 +34,7 @@ app = typer.Typer(
 
     name="forge",
 
-    help="Forge — pre-launch context preparation for Claude, Codex, Cursor, Antigravity, and Gemini.",
+    help="Forge — pre-launch context preparation for Claude, Codex, Cursor, and Antigravity.",
 
     no_args_is_help=False,
 
@@ -434,8 +434,6 @@ def main(
         "    [cyan]forge cursor[/cyan]       Launch Cursor CLI with optimized context\n"
 
         "    [cyan]forge antigravity[/cyan]  Launch Antigravity CLI with optimized context\n"
-
-        "    [cyan]forge gemini[/cyan]       Launch Gemini CLI with optimized context\n"
 
 
         "    [cyan]forge start[/cyan]        Start the background context optimization daemon\n"

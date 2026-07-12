@@ -54,6 +54,7 @@ main.go
 forgecli.toml
 .cursor/
 .mcp.json
+.agents/
 
 # Frontend build and dependencies
 **/node_modules/

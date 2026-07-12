@@ -776,8 +776,6 @@ def _check_ai_clis(console) -> None:
 
         "antigravity": ["antigravity"],
 
-        "gemini": ["gemini"],
-
     }
 
     for label, bins in clis.items():

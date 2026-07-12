@@ -581,18 +581,6 @@ def test_mcp_auto_configuration(tmp_path: Path, monkeypatch) -> None:
 
 
 
-    gemini_json = mock_home / ".gemini" / "gemini-cli" / "mcp_config.json"
-
-    assert gemini_json.exists()
-
-    gemini_config = json.loads(gemini_json.read_text(encoding="utf-8"))
-
-    assert "forge" in gemini_config.get("mcpServers", {})
-
-
-
-
-
 def test_wrapper_rejects_prompts_and_extra_arguments(tmp_path: Path, monkeypatch) -> None:
 
     monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
