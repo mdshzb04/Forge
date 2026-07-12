@@ -45,11 +45,8 @@ Forge has a single unified context preparation path used by all wrappers:
 6. **Caching** — Fingerprints repositories and caches context between launches.
 7. **Launch** — Sets `FORGE_CONTEXT` env var and starts the AI CLI.
 
-### Native Graph Builder
 
-Forge includes a native Python graph builder (`forgecli/graph/native_builder.py`) that generates `forgegraph-out/graph.json` without external binaries. When the external `graphify` binary is available, it takes priority for advanced features (Leiden clustering, LLM-powered analysis). The native builder always works as a fallback.
-
-### Advanced Graph (optional)
+### Advanced Graph 
 
 The native builder works out of the box with no extra setup. For the advanced graph (Leiden clustering and LLM-powered analysis), Forge will automatically detect and install the external `graphify` tool and its required provider dependencies when you run the build command.
 

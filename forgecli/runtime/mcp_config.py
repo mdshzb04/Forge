@@ -307,7 +307,6 @@ def _disable_codex_github_if_no_token(path: Path) -> None:
     """Disable github@openai-curated plugin in Codex configuration if GITHUB_PAT_TOKEN is not set."""
 
     import os
-
     import re
 
 
