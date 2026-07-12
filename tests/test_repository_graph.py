@@ -484,9 +484,9 @@ def test_build_uses_client_and_caches_snapshot(tmp_path: Path) -> None:
 
 
 def test_setup_forgegraph_credentials_fallbacks(tmp_path: Path, monkeypatch) -> None:
+    from unittest.mock import MagicMock, patch
+
     from forgecli.cli.commands_graph import setup_forgegraph_credentials
-    from unittest.mock import patch, MagicMock
-    import os
 
     # Clean env keys
     for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"]:
@@ -495,8 +495,8 @@ def test_setup_forgegraph_credentials_fallbacks(tmp_path: Path, monkeypatch) -> 
     # By default, if nothing is set, it returns None
     with (
         patch("forgecli.cli.bootstrap.bootstrap_context") as mock_boot,
-        patch("forgecli.providers.router_state.load_state") as mock_load,
-        patch("forgecli.core.credentials.get_api_key", return_value=None) as mock_get_api_key,
+        patch("forgecli.providers.router_state.load_state"),
+        patch("forgecli.core.credentials.get_api_key", return_value=None),
     ):
         mock_decision = MagicMock()
         mock_decision.provider_name = "mock"

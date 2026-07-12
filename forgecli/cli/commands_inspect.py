@@ -204,37 +204,22 @@ def inspect_cmd(
 
 
     try:
-
         from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
-
         graph = ForgeRepositoryGraph(root=cwd)
-
-        available = _run_async(graph.is_available())
-
-        if available:
-
-            console.print("    [green]Available[/green] — graphifyy binary found")
-
-            try:
-
-                snapshot = _run_async(graph.load())
-
-                node_count = len(snapshot.nodes)
-
-                edge_count = len(snapshot.edges)
-
-                console.print(f"    Nodes: {node_count}  Edges: {edge_count}")
-
-            except Exception:
-
-                console.print("    [dim]Graph not built yet. Run [cyan]forge graph build[/cyan][/dim]")
-
+        is_installed = _run_async(graph._client.is_installed())
+        if is_installed:
+            console.print("    [green]Available[/green] — built-in + external graphifyy binary detected")
         else:
+            console.print("    [green]Available[/green] — built-in native builder")
 
-            console.print("    [yellow]Not available[/yellow] — install with [cyan]uv tool install graphifyy --with anthropic[/cyan]")
-
+        try:
+            snapshot = _run_async(graph.load())
+            node_count = len(snapshot.nodes)
+            edge_count = len(snapshot.edges)
+            console.print(f"    Nodes: {node_count}  Edges: {edge_count}")
+        except Exception:
+            console.print("    [dim]Graph not built yet. Run [cyan]forge graph build[/cyan][/dim]")
     except Exception:
-
         console.print("    [dim]Graphify backend not available.[/dim]")
 
 

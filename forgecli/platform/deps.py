@@ -362,19 +362,13 @@ def check_dependencies() -> DependencyReport:
     )
 
     deps.append(
-
-        _probe_optional(
-
-            "forgegraph",
-
-            has_forgegraph,
-
-            lambda: _run_version("forgegraph") or _run_version("graphify"),
-
-            note="Optional. Install with: uv tool install graphifyy --with anthropic",
-
+        Dependency(
+            name="forgegraph",
+            status=DependencyStatus.FOUND,
+            version="built-in",
+            required=False,
+            note="Graph builder ships with ForgeCLI (uses native builder or external graphifyy)",
         )
-
     )
 
     deps.append(_probe_optional("node", has_node, _version_for("node")))

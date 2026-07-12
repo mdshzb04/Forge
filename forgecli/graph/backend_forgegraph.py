@@ -20,8 +20,8 @@ from forgecli.core.errors import ConfigError
 from forgecli.graph.forgegraph import (
     ForgeGraphArtifacts,
     ForgeGraphClient,
-    ForgeGraphNotFoundError,
     ForgeGraphInvocationError,
+    ForgeGraphNotFoundError,
 )
 from forgecli.graph.native_builder import NativeGraphBuilder
 from forgecli.graph.repository import (
@@ -139,9 +139,9 @@ class ForgeRepositoryGraph(RepositoryGraph):
 
     async def _try_install_missing_dependency(self, error_msg: str) -> bool:
         """Attempt to automatically install missing dependencies for graphifyy."""
-        import shutil
-        import re
         import asyncio
+        import re
+        import shutil
 
         match = re.search(r"['\"]([a-zA-Z0-9_-]+)['\"]\s+package\s+is\s+required", error_msg)
         if not match:
