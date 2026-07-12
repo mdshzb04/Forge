@@ -90,6 +90,10 @@ def configure_mcp_for_agent(spec: AgentSpec, repo_root: Path) -> None:
 
                 _write_toml_mcp(path, target.table)
 
+                if spec.id == "codex":
+
+                    _disable_codex_github_if_no_token(path)
+
             else:
 
                 _write_json_mcp(path, target.table)
@@ -97,6 +101,7 @@ def configure_mcp_for_agent(spec: AgentSpec, repo_root: Path) -> None:
         except Exception as e:
 
             info(f"Note: Could not auto-configure {target.label or spec.name} MCP: {e}")
+
 
 
 
@@ -292,6 +297,80 @@ def _write_toml_mcp(path: Path, table: str) -> None:
     path.write_text(prefix + block, encoding="utf-8")
 
     success(f"✨ Configured Forge MCP server in {path}.")
+
+
+
+
+
+def _disable_codex_github_if_no_token(path: Path) -> None:
+
+    """Disable github@openai-curated plugin in Codex configuration if GITHUB_PAT_TOKEN is not set."""
+
+    import os
+
+    import re
+
+
+
+    if os.environ.get("GITHUB_PAT_TOKEN"):
+
+        return
+
+
+
+    if not path.exists():
+
+        return
+
+
+
+    try:
+
+        content = path.read_text(encoding="utf-8")
+
+        # Flexible match for [plugins."github@openai-curated"] with possible whitespace/newlines
+
+        pattern_true = re.compile(
+
+            r'(\[\s*plugins\s*\.\s*["\']github@openai-curated["\']\s*\][^\[]*?enabled\s*=\s*)true',
+
+            re.IGNORECASE | re.DOTALL
+
+        )
+
+        pattern_false = re.compile(
+
+            r'\[\s*plugins\s*\.\s*["\']github@openai-curated["\']\s*\][^\[]*?enabled\s*=\s*false',
+
+            re.IGNORECASE | re.DOTALL
+
+        )
+
+
+
+        if pattern_true.search(content):
+
+            new_content = pattern_true.sub(r'\g<1>false', content)
+
+            path.write_text(new_content, encoding="utf-8")
+
+            info("Auto-disabled Codex GitHub plugin because GITHUB_PAT_TOKEN is not set.")
+
+        elif not pattern_false.search(content):
+
+            # If the plugin is not configured or disabled in the file, append the disabled config
+
+            # to silence Codex's default warning.
+
+            suffix = '\n\n[plugins."github@openai-curated"]\nenabled = false\n'
+
+            path.write_text(content.rstrip() + suffix, encoding="utf-8")
+
+            info("Configured Codex GitHub plugin to disabled because GITHUB_PAT_TOKEN is not set.")
+
+    except Exception as e:
+
+        info(f"Note: Could not auto-disable Codex GitHub plugin: {e}")
 
 
 

@@ -145,6 +145,68 @@ def test_configure_mcp_for_agent_toml(tmp_path: Path, monkeypatch, mock_mcp_entr
 
 
 
+def test_configure_mcp_for_agent_codex_disables_github_when_no_token(tmp_path: Path, monkeypatch, mock_mcp_entry) -> None:
+
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+    monkeypatch.delenv("GITHUB_PAT_TOKEN", raising=False)
+
+
+
+    # Case 1: Config file doesn't have the section. It should append it as disabled.
+
+    configure_mcp_for_agent(AGENTS["codex"], tmp_path)
+
+    toml_path = tmp_path / ".codex" / "config.toml"
+
+    assert toml_path.exists()
+
+    content = toml_path.read_text(encoding="utf-8")
+
+    assert '[plugins."github@openai-curated"]' in content
+
+    assert 'enabled = false' in content
+
+
+
+    # Case 2: Config file has the section enabled. It should change it to disabled.
+
+    toml_path.write_text('[plugins."github@openai-curated"]\nenabled = true\n', encoding="utf-8")
+
+    configure_mcp_for_agent(AGENTS["codex"], tmp_path)
+
+    content2 = toml_path.read_text(encoding="utf-8")
+
+    assert '[plugins."github@openai-curated"]' in content2
+
+    assert 'enabled = false' in content2
+
+    assert 'enabled = true' not in content2
+
+
+
+    # Case 3: GITHUB_PAT_TOKEN is set. It should not disable it.
+
+    monkeypatch.setenv("GITHUB_PAT_TOKEN", "some_token")
+
+    toml_path.write_text('[plugins."github@openai-curated"]\nenabled = true\n', encoding="utf-8")
+
+    configure_mcp_for_agent(AGENTS["codex"], tmp_path)
+
+    content3 = toml_path.read_text(encoding="utf-8")
+
+    assert '[plugins."github@openai-curated"]' in content3
+
+    assert 'enabled = true' in content3
+
+    assert 'enabled = false' not in content3
+
+
+
+
+
+
+
 def test_configure_mcp_for_agent_skips_when_unsupported(tmp_path: Path, monkeypatch) -> None:
 
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
