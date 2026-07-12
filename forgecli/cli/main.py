@@ -14,6 +14,7 @@ import typer
 from forgecli import __app_name__, __version__
 from forgecli.cli import commands_diagnostics, commands_graph, commands_wrappers
 from forgecli.cli.bootstrap import bootstrap_context
+from forgecli.cli.commands_commit import commit_cmd
 from forgecli.cli.commands_inspect import inspect_cmd
 from forgecli.cli.ui import error, get_console
 from forgecli.core.errors import ForgeCLIError
@@ -100,12 +101,14 @@ app.command(
 )(commands_diagnostics.profile_cmd)
 
 app.command(
-
     "explain",
-
     help="Explain Forge concepts, pipeline stages, or diagnostics.",
-
 )(commands_diagnostics.explain_cmd)
+
+app.command(
+    "commit",
+    help="Generate a Conventional Commit message from staged changes and commit them.",
+)(commit_cmd)
 
 
 
@@ -449,12 +452,9 @@ def main(
         "    [cyan]forge doctor[/cyan]       Verify installation, dependencies, and configuration\n"
 
         "    [cyan]forge inspect[/cyan]      Display pipeline, provider, and optimization stages\n"
-
         "    [cyan]forge explain[/cyan]      Explain pipeline stages, concepts, and topics\n"
-
-
+        "    [cyan]forge commit[/cyan]       Generate Conventional Commit from staged changes\n"
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"
-
         "    [cyan]forge --help[/cyan]       Show all options\n"
 
     )

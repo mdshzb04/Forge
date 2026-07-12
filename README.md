@@ -94,6 +94,7 @@ Forge provides two ways to connect with your AI coding tools:
 | `forge cursor` | Launch Cursor CLI with optimized context |
 | `forge antigravity` | Launch Antigravity CLI with optimized context |
 | `forge gemini` | Launch Gemini CLI with optimized context |
+| `forge commit` | Generate a Conventional Commit message from staged changes |
 | `forge mcp` | Start the stdio MCP server |
 | `forge start` | Start the background daemon |
 | `forge graph build` | Build a codebase graph (native or external) |
