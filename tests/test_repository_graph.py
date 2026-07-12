@@ -482,3 +482,48 @@ def test_build_uses_client_and_caches_snapshot(tmp_path: Path) -> None:
 
     assert snap is result.snapshot
 
+
+def test_setup_forgegraph_credentials_fallbacks(tmp_path: Path, monkeypatch) -> None:
+    from forgecli.cli.commands_graph import setup_forgegraph_credentials
+    from unittest.mock import patch, MagicMock
+    import os
+
+    # Clean env keys
+    for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"]:
+        monkeypatch.delenv(key, raising=False)
+
+    # By default, if nothing is set, it returns None
+    with (
+        patch("forgecli.cli.bootstrap.bootstrap_context") as mock_boot,
+        patch("forgecli.providers.router_state.load_state") as mock_load,
+        patch("forgecli.core.credentials.get_api_key", return_value=None) as mock_get_api_key,
+    ):
+        mock_decision = MagicMock()
+        mock_decision.provider_name = "mock"
+
+        mock_router = MagicMock()
+        mock_router.select.return_value = mock_decision
+
+        mock_container = MagicMock()
+        mock_container.resolve.return_value = mock_router
+
+        mock_app_ctx = MagicMock()
+        mock_app_ctx.container = mock_container
+        mock_boot.return_value = mock_app_ctx
+
+        # Test case 1: nothing set -> None
+        res = setup_forgegraph_credentials(tmp_path)
+        assert res is None
+
+        # Test case 2: Export ANTHROPIC_API_KEY -> should return "anthropic"
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+        res = setup_forgegraph_credentials(tmp_path)
+        assert res == "anthropic"
+
+        # Test case 3: Export OPENAI_API_KEY instead -> should return "openai"
+        monkeypatch.delenv("ANTHROPIC_API_KEY")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-open-test")
+        res = setup_forgegraph_credentials(tmp_path)
+        assert res == "openai"
+
+

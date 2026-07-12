@@ -21,6 +21,7 @@ from forgecli.graph.forgegraph import (
     ForgeGraphArtifacts,
     ForgeGraphClient,
     ForgeGraphNotFoundError,
+    ForgeGraphInvocationError,
 )
 from forgecli.graph.native_builder import NativeGraphBuilder
 from forgecli.graph.repository import (
@@ -136,6 +137,58 @@ class ForgeRepositoryGraph(RepositoryGraph):
 
 
 
+    async def _try_install_missing_dependency(self, error_msg: str) -> bool:
+        """Attempt to automatically install missing dependencies for graphifyy."""
+        import shutil
+        import re
+        import asyncio
+
+        match = re.search(r"['\"]([a-zA-Z0-9_-]+)['\"]\s+package\s+is\s+required", error_msg)
+        if not match:
+            match = re.search(r"requires\s+the\s+['\"]([a-zA-Z0-9_-]+)['\"]\s+package", error_msg)
+
+        if not match:
+            return False
+
+        pkg_name = match.group(1)
+
+        uv_bin = shutil.which("uv")
+        if uv_bin:
+            cmd = [
+                uv_bin, "tool", "install", "graphifyy", "--force",
+                "--with", "anthropic",
+                "--with", "openai",
+                "--with", "google-generativeai"
+            ]
+            try:
+                proc = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                await proc.communicate()
+                if proc.returncode == 0:
+                    return True
+            except Exception:
+                pass
+
+        pip_bin = shutil.which("pip")
+        if pip_bin:
+            cmd = [pip_bin, "install", pkg_name]
+            try:
+                proc = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                await proc.communicate()
+                if proc.returncode == 0:
+                    return True
+            except Exception:
+                pass
+
+        return False
+
     async def build(
         self,
         *,
@@ -144,12 +197,28 @@ class ForgeRepositoryGraph(RepositoryGraph):
         extra_args: Iterable[str] | None = None,
     ) -> BuildResult:
         if await self._client.is_installed():
-            outcome = await self._client.build(
-                self._root,
-                force=force,
-                no_cluster=no_cluster,
-                extra_args=tuple(extra_args or ()),
-            )
+            try:
+                outcome = await self._client.build(
+                    self._root,
+                    force=force,
+                    no_cluster=no_cluster,
+                    extra_args=tuple(extra_args or ()),
+                )
+            except ForgeGraphInvocationError as exc:
+                err_msg = str(exc)
+                if "package is required" in err_msg or "requires the" in err_msg:
+                    if await self._try_install_missing_dependency(err_msg):
+                        outcome = await self._client.build(
+                            self._root,
+                            force=force,
+                            no_cluster=no_cluster,
+                            extra_args=tuple(extra_args or ()),
+                        )
+                    else:
+                        raise
+                else:
+                    raise
+
             snapshot = self._snapshot_from_payload(outcome.graph_payload)
             self._cached = snapshot
             return BuildResult(
@@ -177,6 +246,7 @@ class ForgeRepositoryGraph(RepositoryGraph):
             },
             raw_output="Built with native Python graph builder.",
         )
+
     async def update_graph(
         self,
         *,
@@ -184,11 +254,26 @@ class ForgeRepositoryGraph(RepositoryGraph):
         no_cluster: bool = False,
     ) -> BuildResult:
         if await self._client.is_installed():
-            outcome = await self._client.update(
-                self._root,
-                force=force,
-                no_cluster=no_cluster,
-            )
+            try:
+                outcome = await self._client.update(
+                    self._root,
+                    force=force,
+                    no_cluster=no_cluster,
+                )
+            except ForgeGraphInvocationError as exc:
+                err_msg = str(exc)
+                if "package is required" in err_msg or "requires the" in err_msg:
+                    if await self._try_install_missing_dependency(err_msg):
+                        outcome = await self._client.update(
+                            self._root,
+                            force=force,
+                            no_cluster=no_cluster,
+                        )
+                    else:
+                        raise
+                else:
+                    raise
+
             snapshot = self._snapshot_from_payload(outcome.graph_payload)
             self._cached = snapshot
             return BuildResult(

@@ -74,38 +74,35 @@ def setup_forgegraph_credentials(path: Path) -> str | None:
 
 
     provider_name = decision.provider_name
+    if provider_name != "mock":
+        env_vars = _PROVIDER_ENV_VARS.get(provider_name, ())
+        for ev in env_vars:
+            if os.environ.get(ev):
+                return provider_name
 
-    if provider_name == "mock":
-
-        return None
-
-
-
-
-
-    env_vars = _PROVIDER_ENV_VARS.get(provider_name, ())
-
-    for ev in env_vars:
-
-        if os.environ.get(ev):
-
+        api_key = get_api_key(provider_name)
+        if api_key:
+            for ev in env_vars:
+                os.environ[ev] = api_key
             return provider_name
 
+    # Fallback: scan other providers to see if the user exported any of their API keys
+    for name, vars_tuple in _PROVIDER_ENV_VARS.items():
+        if name == "mock":
+            continue
+        for ev in vars_tuple:
+            if os.environ.get(ev):
+                return name
 
-
-
-
-    api_key = get_api_key(provider_name)
-
-    if api_key:
-
-        for ev in env_vars:
-
-            os.environ[ev] = api_key
-
-        return provider_name
-
-
+    # Fallback 2: check if any provider has a saved key in the credentials store
+    for name, vars_tuple in _PROVIDER_ENV_VARS.items():
+        if name == "mock":
+            continue
+        api_key = get_api_key(name)
+        if api_key:
+            for ev in vars_tuple:
+                os.environ[ev] = api_key
+            return name
 
     return None
 
