@@ -42,9 +42,9 @@ forge explain         # Explain pipeline stages and concepts
 ## Installation
 
 ```bash
-pip install forgectx
+pip install forgeoptimizer
 # or
-uv tool install forgectx
+uv tool install forgeoptimizer
 ```
 
 ## What's Next

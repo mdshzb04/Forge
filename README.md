@@ -4,11 +4,11 @@
   <a href="https://github.com/mdshzb04/Forge/actions/workflows/ci.yml">
     <img src="https://github.com/mdshzb04/Forge/actions/workflows/ci.yml/badge.svg" alt="CI Status">
   </a>
-  <a href="https://pypi.org/project/forgectx/">
-    <img src="https://img.shields.io/pypi/v/forgectx.svg" alt="PyPI Version">
+  <a href="https://pypi.org/project/forgeoptimizer/">
+    <img src="https://img.shields.io/pypi/v/forgeoptimizer.svg" alt="PyPI Version">
   </a>
-  <a href="https://pypi.org/project/forgectx/">
-    <img src="https://img.shields.io/pypi/pyversions/forgectx.svg" alt="Supported Python Versions">
+  <a href="https://pypi.org/project/forgeoptimizer/">
+    <img src="https://img.shields.io/pypi/pyversions/forgeoptimizer.svg" alt="Supported Python Versions">
   </a>
   <a href="https://github.com/mdshzb04/Forge/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/mdshzb04/Forge.svg" alt="License: MIT">
@@ -63,7 +63,7 @@ forge graph build
 ## Installation
 
 ```bash
-uv tool install forgectx
+uv tool install forgeoptimizer
 ```
 
 The CLI entrypoint is `forge`.
