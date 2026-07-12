@@ -45,6 +45,8 @@ def test_cli_help() -> None:
 
     assert "graph" in result.output
 
+    assert "auth" in result.output
+
 
 
 

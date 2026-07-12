@@ -12,7 +12,7 @@ from pathlib import Path
 import typer
 
 from forgecli import __app_name__, __version__
-from forgecli.cli import commands_diagnostics, commands_graph, commands_wrappers
+from forgecli.cli import commands_auth, commands_diagnostics, commands_graph, commands_wrappers
 from forgecli.cli.bootstrap import bootstrap_context
 from forgecli.cli.commands_commit import commit_cmd
 from forgecli.cli.commands_inspect import inspect_cmd
@@ -47,6 +47,7 @@ app = typer.Typer(
 
 
 app.add_typer(commands_graph.app, name="graph")
+app.add_typer(commands_auth.app, name="auth")
 
 for _agent_id, _agent in AGENTS.items():
 
@@ -454,6 +455,7 @@ def main(
         "    [cyan]forge inspect[/cyan]      Display pipeline, provider, and optimization stages\n"
         "    [cyan]forge explain[/cyan]      Explain pipeline stages, concepts, and topics\n"
         "    [cyan]forge commit[/cyan]       Generate Conventional Commit from staged changes\n"
+        "    [cyan]forge auth login[/cyan]  Authenticate and configure AI providers\n"
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"
         "    [cyan]forge --help[/cyan]       Show all options\n"
 
