@@ -51,20 +51,17 @@ Forge includes a native Python graph builder (`forgecli/graph/native_builder.py`
 
 ### Advanced Graph (optional)
 
-The native builder works out of the box with no extra setup. For the advanced graph (Leiden clustering and LLM-powered analysis), install the external `graphify` tool and provide an API key:
+The native builder works out of the box with no extra setup. For the advanced graph (Leiden clustering and LLM-powered analysis), Forge will automatically detect and install the external `graphify` tool and its required provider dependencies when you run the build command.
+
+You only need to configure your API key and run the command:
 
 ```bash
-# 1. Install graphify (the binary is named `graphify`)
-uv tool install graphifyy --with anthropic
-
-# 2. Provide an API key for your provider
+# 1. Provide an API key for your provider
 export ANTHROPIC_API_KEY="your-key-here"
 
-# 3. Build the graph
+# 2. Build the graph (Forge automatically manages the graphify installation)
 forge graph build
 ```
-
-`graphify` is **not** bundled with Forge — install it only if you want the advanced graph. Without it, `forge graph build` still works using the native builder.
 
 ## Installation
 
