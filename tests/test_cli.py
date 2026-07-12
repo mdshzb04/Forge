@@ -240,7 +240,9 @@ def test_graph_build_no_api_key(tmp_path: Path, monkeypatch) -> None:
 
     runner = CliRunner()
 
-    result = runner.invoke(app, ["graph", "build", "-p", str(tmp_path)])
+    with patch("forgecli.core.credentials.get_api_key", return_value=None):
+
+        result = runner.invoke(app, ["graph", "build", "-p", str(tmp_path)])
 
     assert result.exit_code == 1
 
@@ -253,6 +255,99 @@ def test_graph_build_no_api_key(tmp_path: Path, monkeypatch) -> None:
         in result.output
 
     )
+
+
+
+
+def test_graph_build_with_groq_api_key(tmp_path: Path, monkeypatch) -> None:
+
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+
+    monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
+
+
+
+    (tmp_path / "main.py").write_text("print('hello')", encoding="utf-8")
+
+
+
+    runner = CliRunner()
+
+
+
+    from forgecli.providers.router_state import load_state, save_state
+
+    state = load_state(tmp_path / "data" / "router.json")
+
+    state.choice = "groq"
+
+    state.provider = "groq"
+
+    state.model = "llama-4-scout"
+
+    save_state(tmp_path / "data" / "router.json", state)
+
+
+
+    def mock_get_api_key(provider_name: str) -> str | None:
+
+        if provider_name == "groq":
+
+            return "sk-groq-test-key"
+
+        return None
+
+
+
+    from forgecli.graph.repository import BuildResult, GraphSnapshot
+
+    mock_snapshot = GraphSnapshot(root=str(tmp_path), nodes=(), edges=(), communities=())
+
+    mock_result = BuildResult(snapshot=mock_snapshot, artifacts={}, raw_output="mocked build output")
+
+
+
+    with patch("forgecli.core.credentials.get_api_key", side_effect=mock_get_api_key), \
+         patch("forgecli.graph.backend_forgegraph.ForgeRepositoryGraph.is_available", return_value=True), \
+         patch("forgecli.graph.backend_forgegraph.ForgeRepositoryGraph.build", return_value=mock_result) as mock_build:
+
+
+
+        result = runner.invoke(app, ["graph", "build", "-p", str(tmp_path)])
+
+
+
+    assert result.exit_code == 0
+
+    mock_build.assert_called_once()
+
+    kwargs = mock_build.call_args[1]
+
+    extra_args = kwargs.get("extra_args", [])
+
+    assert "--backend" in extra_args
+
+    assert "openai" in extra_args
+
+    assert "--model" in extra_args
+
+    assert "llama-3.1-70b-versatile" in extra_args
+
+
+
+    import os
+
+    assert os.environ.get("OPENAI_API_KEY") == "sk-groq-test-key"
+
+    assert os.environ.get("OPENAI_BASE_URL") == "https://api.groq.com/openai/v1"
 
 
 

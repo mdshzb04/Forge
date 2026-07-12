@@ -455,7 +455,7 @@ def main(
         "    [cyan]forge inspect[/cyan]      Display pipeline, provider, and optimization stages\n"
         "    [cyan]forge explain[/cyan]      Explain pipeline stages, concepts, and topics\n"
         "    [cyan]forge commit[/cyan]       Generate Conventional Commit from staged changes\n"
-        "    [cyan]forge auth login[/cyan]  Authenticate and configure AI providers\n"
+        "    [cyan]forge auth login[/cyan]   Authenticate and configure AI providers\n"
         "    [cyan]forge graph build[/cyan]  Build a full knowledge graph (optional)\n"
         "    [cyan]forge --help[/cyan]       Show all options\n"
 

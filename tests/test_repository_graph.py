@@ -489,8 +489,12 @@ def test_setup_forgegraph_credentials_fallbacks(tmp_path: Path, monkeypatch) -> 
     from forgecli.cli.commands_graph import setup_forgegraph_credentials
 
     # Clean env keys
-    for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"]:
-        monkeypatch.delenv(key, raising=False)
+    from forgecli.providers.router import _PROVIDER_ENV_VARS
+    for name, vars_tuple in _PROVIDER_ENV_VARS.items():
+        for ev in vars_tuple:
+            monkeypatch.delenv(ev, raising=False)
+    for ev in ["OPENAI_BASE_URL", "OPENAI_MODEL"]:
+        monkeypatch.delenv(ev, raising=False)
 
     # By default, if nothing is set, it returns None
     with (

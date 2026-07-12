@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "forge": {
+      "command": "/home/mohammed-shazeb/.local/share/uv/tools/forgectx/bin/forge",
+      "args": [
+        "mcp"
+      ]
+    }
+  }
+}
