@@ -68,6 +68,23 @@ uv tool install forgeoptimizer
 
 The CLI entrypoint is `forge`.
 
+To upgrade an existing installation to get the latest optimization fixes:
+
+```bash
+uv tool upgrade forgeoptimizer
+```
+
+---
+
+## Important Usage Guidelines
+
+> [!IMPORTANT]
+> **Always run commands inside your specific project directories.**
+>
+> Forge scans the files in your current working directory to build context.
+> - **Do not run `forge` commands inside your home directory (`~`) or root (`/)`**, as this will cause Forge to scan all unrelated system/home directories and files, leading to long scans or freezes.
+> - **Always `cd` into your specific project folder or Git repository** before running commands like `forge claude`, `forge cursor`, or `forge antigravity`.
+
 ---
 
 ## Interfaces
