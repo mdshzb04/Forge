@@ -211,7 +211,7 @@ def has_supported_source_files(path: Path) -> bool:
         return False
 
     try:
-        for dirpath, dirnames, filenames in os.walk(path, topdown=True):
+        for _, dirnames, filenames in os.walk(path, topdown=True):
             dirnames[:] = [d for d in dirnames if not (d.startswith(".") or d in ignored_dirs)]
             for filename in filenames:
                 if not filename.startswith("."):
