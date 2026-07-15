@@ -379,6 +379,11 @@ def configure_project_local_mcp(repo_root: Path) -> None:
 
     """Create a project-local .mcp.json for tools that support auto-discovery."""
 
+    # Never create a project-local .mcp.json in the user's home or system root directory
+    resolved = repo_root.resolve()
+    if resolved == Path.home().resolve() or resolved == Path("/").resolve():
+        return
+
     _write_json_mcp(repo_root / ".mcp.json", "mcpServers")
 
 
