@@ -208,26 +208,18 @@ def has_supported_source_files(path: Path) -> bool:
     }
 
     if not path.exists() or not path.is_dir():
-
         return False
 
-    for p in path.rglob("*"):
-
-        try:
-
-            parts = p.relative_to(path).parts
-
-            if any(part.startswith(".") or part in ignored_dirs for part in parts[:-1]):
-
-                continue
-
-            if p.is_file() and not p.name.startswith(".") and p.suffix.lower() in supported_exts:
-
-                return True
-
-        except ValueError:
-
-            continue
+    try:
+        for dirpath, dirnames, filenames in os.walk(path, topdown=True):
+            dirnames[:] = [d for d in dirnames if not (d.startswith(".") or d in ignored_dirs)]
+            for filename in filenames:
+                if not filename.startswith("."):
+                    suffix = Path(filename).suffix.lower()
+                    if suffix in supported_exts:
+                        return True
+    except OSError:
+        pass
 
     return False
 

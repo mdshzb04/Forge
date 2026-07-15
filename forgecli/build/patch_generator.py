@@ -97,13 +97,16 @@ class PatchGenerator:
                 return path
 
         # Fallback: scan root files for a filename match if only a base name was extracted
+        import os
+        skip_dirs = {".git", ".venv", "node_modules", "dist", "build", ".forge"}
         for candidate in candidates:
             base_name = Path(candidate).name
-            for file_path in root.rglob("*"):
-                if file_path.is_file() and file_path.name == base_name:
-                    # Ignore skip dirs
-                    skip_dirs = {".git", ".venv", "node_modules", "dist", "build", ".forge"}
-                    if not any(part in skip_dirs for part in file_path.parts):
-                        return file_path
+            try:
+                for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+                    dirnames[:] = [d for d in dirnames if not (d.startswith(".") or d in skip_dirs)]
+                    if base_name in filenames:
+                        return Path(dirpath) / base_name
+            except OSError:
+                pass
 
         return None

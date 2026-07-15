@@ -955,19 +955,16 @@ class DocsWorkflow(Workflow):
 
 
         root = context.app_context.cwd
-
         files_info = []
-
-        for path in sorted(root.rglob("*.py")):
-
-            if any(part.startswith(".") for part in path.parts):
-
-                continue
-
-            if any(part in {"__pycache__", "node_modules", ".venv", "venv"} for part in path.parts):
-
-                continue
-
+        import os
+        skip = {"__pycache__", "node_modules", ".venv", "venv"}
+        py_paths = []
+        for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+            dirnames[:] = [d for d in dirnames if not (d.startswith(".") or d in skip)]
+            for filename in filenames:
+                if filename.endswith(".py") and not filename.startswith("."):
+                    py_paths.append(Path(dirpath) / filename)
+        for path in sorted(py_paths):
             files_info.append(str(path.relative_to(root)))
 
 

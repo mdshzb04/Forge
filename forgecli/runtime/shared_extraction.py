@@ -6,6 +6,7 @@ All other implementations (middleware defaults, inline daemon parsers) must dele
 
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
@@ -40,15 +41,11 @@ def should_skip(parts: tuple[str, ...]) -> bool:
 def iter_trackable_files(root: Path) -> Iterable[Path]:
     root = root.resolve()
     try:
-        for p in root.rglob("*"):
-            try:
-                parts = p.relative_to(root).parts
-                if should_skip(parts):
-                    continue
-                if p.is_file() and not p.name.startswith("."):
-                    yield p
-            except (ValueError, OSError):
-                continue
+        for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+            dirnames[:] = [d for d in dirnames if not (d.startswith(".") or d in _SKIP_DIRS)]
+            for filename in filenames:
+                if not filename.startswith("."):
+                    yield Path(dirpath) / filename
     except OSError:
         return
 
@@ -134,23 +131,24 @@ def extract_files(root: Path) -> list[dict[str, Any]]:
     root = root.resolve()
     files: list[dict[str, Any]] = []
     try:
-        for p in sorted(root.rglob("*"), key=lambda x: str(x)):
-            try:
-                parts = p.relative_to(root).parts
-                if should_skip(parts):
-                    continue
-                if p.is_file() and not p.name.startswith("."):
-                    stat = p.stat()
-                    files.append({
-                        "name": p.name,
-                        "path": str(p.relative_to(root)),
-                        "size_bytes": stat.st_size,
-                        "mtime": stat.st_mtime,
-                    })
-            except (ValueError, OSError):
-                continue
+        for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+            dirnames[:] = [d for d in dirnames if not (d.startswith(".") or d in _SKIP_DIRS)]
+            for filename in filenames:
+                if not filename.startswith("."):
+                    p = Path(dirpath) / filename
+                    try:
+                        stat = p.stat()
+                        files.append({
+                            "name": filename,
+                            "path": str(p.relative_to(root)),
+                            "size_bytes": stat.st_size,
+                            "mtime": stat.st_mtime,
+                        })
+                    except OSError:
+                        continue
     except OSError:
         pass
+    files.sort(key=lambda x: x["path"])
     return files
 
 

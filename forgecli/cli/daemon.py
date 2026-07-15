@@ -114,26 +114,27 @@ watchers_lock = threading.Lock()
 
 def get_recursive_fingerprint(root: Path) -> str:
     """Compute a signature of the repository based on file paths, modification times, and sizes."""
-    from forgecli.runtime.shared_extraction import should_skip
+    from forgecli.runtime.shared_extraction import _SKIP_DIRS
 
     sig = hashlib.sha256()
     sig.update(str(root.resolve()).encode("utf-8"))
 
     try:
-        for path in sorted(root.rglob("*"), key=lambda p: str(p)):
+        paths = []
+        for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+            dirnames[:] = [d for d in dirnames if not (d.startswith(".") or d in _SKIP_DIRS)]
+            for filename in filenames:
+                if not filename.startswith("."):
+                    paths.append(Path(dirpath) / filename)
+        paths.sort(key=lambda p: str(p))
+        for path in paths:
             try:
-                parts = path.relative_to(root).parts
-                if should_skip(parts):
-                    continue
-                if path.is_file() and not path.name.startswith("."):
-                    stat = path.stat()
-                    sig.update(f"{path.name}:{stat.st_mtime}:{stat.st_size}".encode())
-            except (ValueError, OSError):
+                stat = path.stat()
+                sig.update(f"{path.name}:{stat.st_mtime}:{stat.st_size}".encode())
+            except OSError:
                 continue
     except OSError:
         pass
-
-
 
     return sig.hexdigest()[:24]
 

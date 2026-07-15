@@ -167,27 +167,24 @@ def stats_cmd() -> None:
 
 
     try:
-
         repo_root = resolve_repo_root(Path.cwd())
-
-        py_files = list(repo_root.rglob("*.py"))
-
-        all_files = list(repo_root.rglob("*"))
-
         skip = {".git", ".venv", "node_modules", "__pycache__", "dist", "build", ".forge", "forgegraph-out"}
-
-        trackable = [f for f in all_files if not any(s in f.parts for s in skip)]
+        py_files = []
+        trackable = []
+        for dirpath, dirnames, filenames in os.walk(repo_root, topdown=True):
+            dirnames[:] = [d for d in dirnames if not (d.startswith(".") or d in skip)]
+            for filename in filenames:
+                if not filename.startswith("."):
+                    p = Path(dirpath) / filename
+                    trackable.append(p)
+                    if filename.endswith(".py"):
+                        py_files.append(p)
 
         console.print()
-
         console.print(f"  Repository         : {repo_root.name}")
-
         console.print(f"  Python files       : {len(py_files)}")
-
         console.print(f"  Total trackable    : {len(trackable)}")
-
     except Exception:
-
         pass
 
 

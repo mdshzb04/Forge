@@ -162,20 +162,21 @@ class AnalysisContext:
 
             return cls(root=root, files=files)
 
-        for path in sorted(root.rglob("*")):
+        import os
+        paths = []
+        try:
+            for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+                dirnames[:] = [d for d in dirnames if not (d.startswith(".") or d in ignore_set)]
+                for filename in filenames:
+                    if filename in ignore_set:
+                        continue
+                    p = Path(dirpath) / filename
+                    if p.suffix.lower() in extensions:
+                        paths.append(p)
+        except OSError:
+            pass
 
-            if not path.is_file():
-
-                continue
-
-            if path.suffix.lower() not in extensions:
-
-                continue
-
-            if any(part in ignore_set for part in path.parts):
-
-                continue
-
+        for path in sorted(paths):
             files.append(SourceFile.load(path))
 
         return cls(root=root, files=files)
