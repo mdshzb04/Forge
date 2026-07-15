@@ -1,7 +1,5 @@
 """Tests for the ForgeGraph-backed :class:`RepositoryGraph` adapter."""
 
-
-
 from __future__ import annotations
 
 import asyncio
@@ -23,9 +21,7 @@ from forgecli.graph.repository import (
 
 
 def _write_graph(
-
     tmp_path: Path, *, nodes: list[dict[str, Any]], links: list[dict[str, Any]]
-
 ) -> Path:
 
     out = tmp_path / "forgegraph-out"
@@ -35,29 +31,17 @@ def _write_graph(
     graph_json = out / "graph.json"
 
     graph_json.write_text(
-
         json.dumps(
-
             {
-
                 "directed": False,
-
                 "multigraph": False,
-
                 "graph": {},
-
                 "nodes": nodes,
-
                 "links": links,
-
                 "hyperedges": [],
-
             }
-
         ),
-
         encoding="utf-8",
-
     )
 
     (out / "manifest.json").write_text("{}", encoding="utf-8")
@@ -65,53 +49,30 @@ def _write_graph(
     return graph_json
 
 
-
-
-
 def _client_with_files(tmp_path: Path) -> ForgeGraphClient:
 
     return ForgeGraphClient(executable="/usr/bin/forgegraph")
 
 
-
-
-
 def test_load_snapshot_from_payload(tmp_path: Path) -> None:
 
     _write_graph(
-
         tmp_path,
-
         nodes=[
-
             {"id": "a", "label": "a.py", "file_type": "code", "community": 0},
-
             {"id": "a_foo", "label": "foo()", "file_type": "code", "community": 0},
-
             {"id": "b", "label": "b.py", "file_type": "code", "community": 1},
-
         ],
-
         links=[
-
             {"source": "a", "target": "a_foo", "relation": "contains", "confidence": "EXTRACTED"},
-
             {
-
                 "source": "b",
-
                 "target": "a_foo",
-
                 "relation": "calls",
-
                 "confidence": "INFERRED",
-
                 "confidence_score": 0.7,
-
             },
-
         ],
-
     )
 
     backend = ForgeRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
@@ -126,17 +87,9 @@ def test_load_snapshot_from_payload(tmp_path: Path) -> None:
 
     assert len(snap.communities) == 2
 
-
-
-
-
     matches = snap.search("foo")
 
     assert any(n.id == "a_foo" for n in matches)
-
-
-
-
 
     node = snap.node("a")
 
@@ -147,50 +100,32 @@ def test_load_snapshot_from_payload(tmp_path: Path) -> None:
     assert any(e.target == "a_foo" for e in incident)
 
 
-
-
-
 def test_load_raises_when_graph_missing(tmp_path: Path) -> None:
 
     backend = ForgeRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
 
     with pytest.raises(ConfigError):
-
         asyncio.run(backend.load())
-
-
-
 
 
 def test_query_extracts_cited_nodes(tmp_path: Path) -> None:
 
     _write_graph(
-
         tmp_path,
-
         nodes=[
-
             {"id": "a", "label": "a.py", "file_type": "code", "community": 0},
-
             {"id": "b", "label": "b.py", "file_type": "code", "community": 0},
-
         ],
-
         links=[],
-
     )
 
     client = _client_with_files(tmp_path)
 
     backend = ForgeRepositoryGraph(root=tmp_path, client=client)
 
-
-
     async def fake_query(*args, **kwargs):
 
         return "auth lives in a.py and b.py (L1)"
-
-
 
     client.query = AsyncMock(side_effect=fake_query)  # type: ignore[method-assign]
 
@@ -205,46 +140,28 @@ def test_query_extracts_cited_nodes(tmp_path: Path) -> None:
     assert "b.py" in result.cited_nodes
 
 
-
-
-
 def test_explain_returns_related_nodes(tmp_path: Path) -> None:
 
     _write_graph(
-
         tmp_path,
-
         nodes=[
-
             {"id": "a", "label": "a.py", "file_type": "code", "community": 0},
-
             {"id": "a_foo", "label": "foo()", "file_type": "code", "community": 0},
-
             {"id": "b", "label": "b.py", "file_type": "code", "community": 0},
-
         ],
-
         links=[
-
             {"source": "a", "target": "a_foo", "relation": "contains"},
-
             {"source": "b", "target": "a", "relation": "imports"},
-
         ],
-
     )
 
     client = _client_with_files(tmp_path)
 
     backend = ForgeRepositoryGraph(root=tmp_path, client=client)
 
-
-
     async def fake_explain(*args, **kwargs):
 
         return "a.py is a Python module containing foo()."
-
-
 
     client.explain = AsyncMock(side_effect=fake_explain)  # type: ignore[method-assign]
 
@@ -261,33 +178,19 @@ def test_explain_returns_related_nodes(tmp_path: Path) -> None:
     assert "b.py" in related_labels
 
 
-
-
-
 def test_shortest_path_finds_two_hop(tmp_path: Path) -> None:
 
     _write_graph(
-
         tmp_path,
-
         nodes=[
-
             {"id": "a", "label": "a.py"},
-
             {"id": "b", "label": "b.py"},
-
             {"id": "c", "label": "c.py"},
-
         ],
-
         links=[
-
             {"source": "a", "target": "b", "relation": "imports"},
-
             {"source": "b", "target": "c", "relation": "imports"},
-
         ],
-
     )
 
     backend = ForgeRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
@@ -301,19 +204,12 @@ def test_shortest_path_finds_two_hop(tmp_path: Path) -> None:
     assert edges[1].source == "b" and edges[1].target == "c"
 
 
-
-
-
 def test_shortest_path_no_match_returns_empty(tmp_path: Path) -> None:
 
     _write_graph(
-
         tmp_path,
-
         nodes=[{"id": "a", "label": "a.py"}],
-
         links=[],
-
     )
 
     backend = ForgeRepositoryGraph(root=tmp_path, client=_client_with_files(tmp_path))
@@ -321,65 +217,35 @@ def test_shortest_path_no_match_returns_empty(tmp_path: Path) -> None:
     assert asyncio.run(backend.shortest_path("a.py", "missing.py")) == []
 
 
-
-
-
 def test_affected_filters_by_relation(tmp_path: Path) -> None:
 
     _write_graph(
-
         tmp_path,
-
         nodes=[
-
             {"id": "a", "label": "a.py"},
-
             {"id": "b", "label": "b.py"},
-
             {"id": "c", "label": "c.py"},
-
         ],
-
         links=[
-
             {"source": "a", "target": "a_target", "relation": "contains"},
-
             {"source": "b", "target": "a", "relation": "imports"},
-
             {"source": "c", "target": "a", "relation": "calls"},
-
         ],
-
     )
 
-
-
     _write_graph(
-
         tmp_path,
-
         nodes=[
-
             {"id": "a", "label": "a.py"},
-
             {"id": "b", "label": "b.py"},
-
             {"id": "c", "label": "c.py"},
-
             {"id": "a_target", "label": "target"},
-
         ],
-
         links=[
-
             {"source": "a", "target": "a_target", "relation": "contains"},
-
             {"source": "b", "target": "a", "relation": "imports"},
-
             {"source": "c", "target": "a", "relation": "calls"},
-
         ],
-
     )
 
     client = _client_with_files(tmp_path)
@@ -397,9 +263,6 @@ def test_affected_filters_by_relation(tmp_path: Path) -> None:
     assert ("c", "calls") not in sources
 
 
-
-
-
 def test_is_available_uses_client(tmp_path: Path) -> None:
 
     client = _client_with_files(tmp_path)
@@ -412,11 +275,8 @@ def test_is_available_uses_client(tmp_path: Path) -> None:
 
     client.is_installed = AsyncMock(return_value=False)  # type: ignore[method-assign]
 
-    # Native builder always available as fallback
-    assert asyncio.run(backend.is_available()) is True
-
-
-
+    # Native builder is now removed, so is_available should return False
+    assert asyncio.run(backend.is_available()) is False
 
 
 def test_install_hint_contains_install_command() -> None:
@@ -426,42 +286,27 @@ def test_install_hint_contains_install_command() -> None:
     assert "uv tool install graphifyy" in asyncio.run(backend.install_hint())
 
 
-
-
-
 def test_build_uses_client_and_caches_snapshot(tmp_path: Path) -> None:
 
     _write_graph(
-
         tmp_path,
-
         nodes=[{"id": "a", "label": "a.py", "community": 0}],
-
         links=[],
-
     )
 
     client = _client_with_files(tmp_path)
+    client.is_installed = AsyncMock(return_value=True)  # type: ignore[method-assign]
 
     backend = ForgeRepositoryGraph(root=tmp_path, client=client)
-
-
 
     from forgecli.graph.forgegraph import ForgeGraphBuildOutcome
     from forgecli.graph.repository import BuildResult
 
-
-
     outcome = ForgeGraphBuildOutcome(
-
         root=tmp_path,
-
         artifacts=ForgeGraphArtifacts.for_root(tmp_path),
-
         stdout="ok",
-
         stderr="",
-
     )
 
     client.build = AsyncMock(return_value=outcome)  # type: ignore[method-assign]
@@ -471,10 +316,6 @@ def test_build_uses_client_and_caches_snapshot(tmp_path: Path) -> None:
     assert isinstance(result, BuildResult)
 
     assert result.snapshot.node("a") is not None
-
-
-
-
 
     client.load_graph = lambda path: {"nodes": [], "links": []}  # type: ignore[method-assign]
 
@@ -490,6 +331,7 @@ def test_setup_forgegraph_credentials_fallbacks(tmp_path: Path, monkeypatch) -> 
 
     # Clean env keys
     from forgecli.providers.router import _PROVIDER_ENV_VARS
+
     for name, vars_tuple in _PROVIDER_ENV_VARS.items():
         for ev in vars_tuple:
             monkeypatch.delenv(ev, raising=False)
@@ -519,15 +361,16 @@ def test_setup_forgegraph_credentials_fallbacks(tmp_path: Path, monkeypatch) -> 
         res = setup_forgegraph_credentials(tmp_path)
         assert res is None
 
-        # Test case 2: Export ANTHROPIC_API_KEY -> should return "anthropic"
+        # Mock default model lookup on the router for fallbacks
+        mock_router.default_model_for.return_value = "default-model"
+
+        # Test case 2: Export ANTHROPIC_API_KEY -> should return ("anthropic", "default-model")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
         res = setup_forgegraph_credentials(tmp_path)
-        assert res == "anthropic"
+        assert res == ("anthropic", "default-model")
 
-        # Test case 3: Export OPENAI_API_KEY instead -> should return "openai"
+        # Test case 3: Export OPENAI_API_KEY instead -> should return ("openai", "default-model")
         monkeypatch.delenv("ANTHROPIC_API_KEY")
         monkeypatch.setenv("OPENAI_API_KEY", "sk-open-test")
         res = setup_forgegraph_credentials(tmp_path)
-        assert res == "openai"
-
-
+        assert res == ("openai", "default-model")

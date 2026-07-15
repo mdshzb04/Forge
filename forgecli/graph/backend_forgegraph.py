@@ -23,7 +23,6 @@ from forgecli.graph.forgegraph import (
     ForgeGraphInvocationError,
     ForgeGraphNotFoundError,
 )
-from forgecli.graph.native_builder import NativeGraphBuilder
 from forgecli.graph.repository import (
     BuildResult,
     ExplainResult,
@@ -116,13 +115,11 @@ class ForgeRepositoryGraph(RepositoryGraph):
 
 
     async def is_available(self) -> bool:
-        if await self._client.is_installed():
-            return True
-        return NativeGraphBuilder.is_available()
+        return await self._client.is_installed()
 
     async def install_hint(self) -> str:
         return (
-            "ForgeGraph binary is not installed; native Python builder will be used.\n"
+            "ForgeGraph binary is not installed.\n"
             "Install graphifyy for advanced features: uv tool install graphifyy --with anthropic\n"
             "Docs: https://graphifylabs.ai/"
         )
@@ -196,55 +193,42 @@ class ForgeRepositoryGraph(RepositoryGraph):
         no_cluster: bool = False,
         extra_args: Iterable[str] | None = None,
     ) -> BuildResult:
-        if await self._client.is_installed():
-            try:
-                outcome = await self._client.build(
-                    self._root,
-                    force=force,
-                    no_cluster=no_cluster,
-                    extra_args=tuple(extra_args or ()),
-                )
-            except ForgeGraphInvocationError as exc:
-                err_msg = str(exc)
-                if "package is required" in err_msg or "requires the" in err_msg:
-                    if await self._try_install_missing_dependency(err_msg):
-                        outcome = await self._client.build(
-                            self._root,
-                            force=force,
-                            no_cluster=no_cluster,
-                            extra_args=tuple(extra_args or ()),
-                        )
-                    else:
-                        raise
+        if not await self._client.is_installed():
+            raise ConfigError(await self.install_hint())
+
+        try:
+            outcome = await self._client.build(
+                self._root,
+                force=force,
+                no_cluster=no_cluster,
+                extra_args=tuple(extra_args or ()),
+            )
+        except ForgeGraphInvocationError as exc:
+            err_msg = str(exc)
+            if "package is required" in err_msg or "requires the" in err_msg:
+                if await self._try_install_missing_dependency(err_msg):
+                    outcome = await self._client.build(
+                        self._root,
+                        force=force,
+                        no_cluster=no_cluster,
+                        extra_args=tuple(extra_args or ()),
+                    )
                 else:
                     raise
+            else:
+                raise
 
-            snapshot = self._snapshot_from_payload(outcome.graph_payload)
-            self._cached = snapshot
-            return BuildResult(
-                snapshot=snapshot,
-                artifacts={
-                    "graph_json": str(outcome.artifacts.graph_json),
-                    "graph_html": str(outcome.artifacts.graph_html),
-                    "graph_report": str(outcome.artifacts.graph_report),
-                    "manifest_json": str(outcome.artifacts.manifest_json),
-                },
-                raw_output=outcome.stdout,
-            )
-
-        native = NativeGraphBuilder(self._root)
-        payload = native.build(force=force)
-        snapshot = self._snapshot_from_payload(payload)
+        snapshot = self._snapshot_from_payload(outcome.graph_payload)
         self._cached = snapshot
         return BuildResult(
             snapshot=snapshot,
             artifacts={
-                "graph_json": str(self._artifacts.graph_json),
-                "graph_html": "",
-                "graph_report": "",
-                "manifest_json": str(self._artifacts.manifest_json),
+                "graph_json": str(outcome.artifacts.graph_json),
+                "graph_html": str(outcome.artifacts.graph_html),
+                "graph_report": str(outcome.artifacts.graph_report),
+                "manifest_json": str(outcome.artifacts.manifest_json),
             },
-            raw_output="Built with native Python graph builder.",
+            raw_output=outcome.stdout,
         )
 
     async def update_graph(
@@ -253,53 +237,40 @@ class ForgeRepositoryGraph(RepositoryGraph):
         force: bool = False,
         no_cluster: bool = False,
     ) -> BuildResult:
-        if await self._client.is_installed():
-            try:
-                outcome = await self._client.update(
-                    self._root,
-                    force=force,
-                    no_cluster=no_cluster,
-                )
-            except ForgeGraphInvocationError as exc:
-                err_msg = str(exc)
-                if "package is required" in err_msg or "requires the" in err_msg:
-                    if await self._try_install_missing_dependency(err_msg):
-                        outcome = await self._client.update(
-                            self._root,
-                            force=force,
-                            no_cluster=no_cluster,
-                        )
-                    else:
-                        raise
+        if not await self._client.is_installed():
+            raise ConfigError(await self.install_hint())
+
+        try:
+            outcome = await self._client.update(
+                self._root,
+                force=force,
+                no_cluster=no_cluster,
+            )
+        except ForgeGraphInvocationError as exc:
+            err_msg = str(exc)
+            if "package is required" in err_msg or "requires the" in err_msg:
+                if await self._try_install_missing_dependency(err_msg):
+                    outcome = await self._client.update(
+                        self._root,
+                        force=force,
+                        no_cluster=no_cluster,
+                    )
                 else:
                     raise
+            else:
+                raise
 
-            snapshot = self._snapshot_from_payload(outcome.graph_payload)
-            self._cached = snapshot
-            return BuildResult(
-                snapshot=snapshot,
-                artifacts={
-                    "graph_json": str(outcome.artifacts.graph_json),
-                    "graph_html": str(outcome.artifacts.graph_html),
-                    "graph_report": str(outcome.artifacts.graph_report),
-                    "manifest_json": str(outcome.artifacts.manifest_json),
-                },
-                raw_output=outcome.stdout,
-            )
-
-        native = NativeGraphBuilder(self._root)
-        payload = native.build(force=force)
-        snapshot = self._snapshot_from_payload(payload)
+        snapshot = self._snapshot_from_payload(outcome.graph_payload)
         self._cached = snapshot
         return BuildResult(
             snapshot=snapshot,
             artifacts={
-                "graph_json": str(self._artifacts.graph_json),
-                "graph_html": "",
-                "graph_report": "",
-                "manifest_json": str(self._artifacts.manifest_json),
+                "graph_json": str(outcome.artifacts.graph_json),
+                "graph_html": str(outcome.artifacts.graph_html),
+                "graph_report": str(outcome.artifacts.graph_report),
+                "manifest_json": str(outcome.artifacts.manifest_json),
             },
-            raw_output="Updated with native Python graph builder.",
+            raw_output=outcome.stdout,
         )
     async def load(self) -> GraphSnapshot:
 
