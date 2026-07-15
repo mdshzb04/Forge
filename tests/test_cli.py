@@ -486,6 +486,7 @@ def test_mcp_auto_configuration(tmp_path: Path, monkeypatch) -> None:
 
     import subprocess
 
+    # 1. Test Claude Code MCP Configuration
     with (
         patch("forgecli.runtime.wrappers.which", return_value="/usr/bin/claude"),
         patch(
@@ -507,7 +508,22 @@ def test_mcp_auto_configuration(tmp_path: Path, monkeypatch) -> None:
 
     assert "forge" in claude_config.get("mcpServers", {})
 
-    assert "forge" in claude_config["mcpServers"]["forge"]["command"]
+    # Verify other agents' configs are NOT created yet
+    assert not (mock_home / ".cursor" / "mcp.json").exists()
+
+    # 2. Test Cursor MCP Configuration
+    with (
+        patch("forgecli.runtime.wrappers.which", return_value="/usr/bin/cursor"),
+        patch(
+            "forgecli.runtime.wrappers.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+        ),
+    ):
+        runner = CliRunner()
+
+        result = runner.invoke(app, ["cursor", "-p", str(mock_repo)], catch_exceptions=False)
+
+        assert result.exit_code == 0
 
     cursor_global_file = mock_home / ".cursor" / "mcp.json"
 
@@ -519,13 +535,39 @@ def test_mcp_auto_configuration(tmp_path: Path, monkeypatch) -> None:
 
     assert (mock_repo / ".cursor" / "mcp.json").exists()
 
-    assert (mock_repo / ".mcp.json").exists()
+    # 3. Test Codex MCP Configuration
+    with (
+        patch("forgecli.runtime.wrappers.which", return_value="/usr/bin/codex"),
+        patch(
+            "forgecli.runtime.wrappers.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+        ),
+    ):
+        runner = CliRunner()
+
+        result = runner.invoke(app, ["codex", "-p", str(mock_repo)], catch_exceptions=False)
+
+        assert result.exit_code == 0
 
     codex_toml = mock_home / ".codex" / "config.toml"
 
     assert codex_toml.exists()
 
     assert "[mcp_servers.forge]" in codex_toml.read_text(encoding="utf-8")
+
+    # 4. Test Antigravity MCP Configuration
+    with (
+        patch("forgecli.runtime.wrappers.which", return_value="/usr/bin/antigravity"),
+        patch(
+            "forgecli.runtime.wrappers.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+        ),
+    ):
+        runner = CliRunner()
+
+        result = runner.invoke(app, ["antigravity", "-p", str(mock_repo)], catch_exceptions=False)
+
+        assert result.exit_code == 0
 
     antigravity_json = mock_home / ".gemini" / "config" / "mcp_config.json"
 

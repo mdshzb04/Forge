@@ -78,8 +78,12 @@ def launch_wrapper(
 
     if spec.supports_mcp:
         try:
-            from forgecli.runtime.mcp_config import configure_mcp_for_all
-            configure_mcp_for_all(repo_root)
+            from forgecli.runtime.mcp_config import (
+                configure_mcp_for_agent,
+                configure_project_local_mcp,
+            )
+            configure_mcp_for_agent(spec, repo_root)
+            configure_project_local_mcp(repo_root)
         except Exception:
             pass
 

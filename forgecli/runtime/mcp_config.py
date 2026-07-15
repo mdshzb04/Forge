@@ -98,6 +98,15 @@ def configure_mcp_for_agent(spec: AgentSpec, repo_root: Path) -> None:
 
                 _write_json_mcp(path, target.table)
 
+        except PermissionError as e:
+
+            # Quietly skip permission errors on project/workspace targets since home targets are configured
+            if target.base == "repo":
+
+                continue
+
+            info(f"Note: Could not auto-configure {target.label or spec.name} MCP: {e}")
+
         except Exception as e:
 
             info(f"Note: Could not auto-configure {target.label or spec.name} MCP: {e}")
@@ -384,7 +393,9 @@ def configure_project_local_mcp(repo_root: Path) -> None:
     if resolved == Path.home().resolve() or resolved == Path("/").resolve():
         return
 
-    _write_json_mcp(repo_root / ".mcp.json", "mcpServers")
+    with contextlib.suppress(PermissionError):
+
+        _write_json_mcp(repo_root / ".mcp.json", "mcpServers")
 
 
 
