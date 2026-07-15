@@ -1,11 +1,10 @@
-name: ci
+name: release
 env:
   PYTHONUTF8: "1"
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -125,3 +124,66 @@ jobs:
           forge claude --help
           forge codex --help
           forge cursor --help
+
+  publish-testpypi:
+    name: publish to TestPyPI (on tag or manual)
+    needs: [test, build, uv-install]
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rename package to match TestPyPI Trusted Publisher
+        run: |
+          python -c "
+          p = 'pyproject.toml'
+          content = open(p).read()
+          content = content.replace('name = \"forgectx\"', 'name = \"forgekit\"')
+          open(p, 'w').write(content)
+          "
+      - name: Build sdist and wheel
+        run: |
+          pip install --upgrade build
+          python -m build
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  publish-pypi:
+    name: publish to PyPI (on tag or manual)
+    needs: [test, build, uv-install]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rename package to match PyPI Trusted Publisher
+        run: |
+          python -c "
+          p = 'pyproject.toml'
+          content = open(p).read()
+          content = content.replace('name = \"forgectx\"', 'name = \"forgeoptimizer\"')
+          open(p, 'w').write(content)
+          "
+      - name: Build sdist and wheel
+        run: |
+          pip install --upgrade build
+          python -m build
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
