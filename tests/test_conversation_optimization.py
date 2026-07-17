@@ -21,10 +21,10 @@ from forgecli.graph.repository import (
     RepositoryGraph,
 )
 from forgecli.memory.middleware import HistoryCompressionMiddleware
-from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
 from forgecli.middleware.context import RequestContext, ResponseContext
 from forgecli.middleware.forgegraph_adapter import ForgeGraphAdapterMiddleware
 from forgecli.middleware.promptforge_adapter import PromptForgeAdapterMiddleware
+from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
 from forgecli.runtime_core.context import RuntimeContext
 from forgecli.runtime_core.request import AIRequest, FileContext
 from forgecli.runtime_core.response import AIResponse

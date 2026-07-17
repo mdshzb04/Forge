@@ -42,7 +42,6 @@ def build_default_pipeline(
     """
 
     from forgecli.middleware.builder import PipelineBuilder
-    from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
     from forgecli.middleware.defaults import (
         AuthenticationMiddleware,
         CachingMiddleware,
@@ -62,6 +61,7 @@ def build_default_pipeline(
         TokenPlannerMiddleware,
     )
     from forgecli.middleware.promptforge_adapter import PromptForgeAdapterMiddleware
+    from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
     from forgecli.resilience.middleware import ResilienceMiddleware
 
 

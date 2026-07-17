@@ -7,6 +7,7 @@ from __future__ import annotations
 import contextlib
 import signal
 import warnings
+from datetime import UTC
 from pathlib import Path
 
 import typer
@@ -331,15 +332,20 @@ def loop_cmd(
     ),
 ) -> None:
     """Scaffold loop files, write the budget config, and print the workflow state."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from forgecli.cli.ui import get_console, success
-    from forgecli.loop import build_loop_context, ensure_loop_scaffold, record_loop_run, summarize_loop_files
+    from forgecli.loop import (
+        build_loop_context,
+        ensure_loop_scaffold,
+        record_loop_run,
+        summarize_loop_files,
+    )
 
     context = build_loop_context(path.resolve(), force_prepare=refresh)
     files = ensure_loop_scaffold(context["prepared"].root)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     record_loop_run(
         context["prepared"].root,
         tool=tool,

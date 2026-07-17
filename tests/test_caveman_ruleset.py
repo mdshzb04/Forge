@@ -9,11 +9,11 @@ import asyncio
 import pytest
 
 from forgecli.optimizer.responseforge import (
+    OptimizedRequest,
     ResponseForgeCompositeOptimizer,
     ResponseForgeIntensity,
     ResponseForgePromptOptimizer,
     ResponseForgeRulesetOptimizer,
-    OptimizedRequest,
 )
 from forgecli.providers.base import ChatMessage, ChatRequest, Role
 

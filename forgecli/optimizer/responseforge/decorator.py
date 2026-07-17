@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from typing import Any
 
-from forgecli.optimizer.responseforge import ResponseForgePromptOptimizer, OptimizedRequest
+from forgecli.optimizer.responseforge import OptimizedRequest, ResponseForgePromptOptimizer
 from forgecli.providers.base import (
     ChatRequest,
     ChatResponse,

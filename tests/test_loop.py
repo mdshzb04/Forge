@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
+import tomllib
 from pathlib import Path
 
-import tomllib
 from typer.testing import CliRunner
 
 from forgecli.cli.main import app
-from forgecli.loop import ensure_loop_scaffold, loop_files, record_loop_run
+from forgecli.loop import ensure_loop_scaffold, loop_files
 
 
 def test_config_persists_loop_budget(tmp_path: Path, monkeypatch) -> None:

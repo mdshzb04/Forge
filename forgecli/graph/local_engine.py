@@ -8,7 +8,16 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from forgecli.graph.repository import BuildResult, ExplainResult, GraphCommunity, GraphEdge, GraphNode, GraphSnapshot, QueryResult, RepositoryGraph
+from forgecli.graph.repository import (
+    BuildResult,
+    ExplainResult,
+    GraphCommunity,
+    GraphEdge,
+    GraphNode,
+    GraphSnapshot,
+    QueryResult,
+    RepositoryGraph,
+)
 
 SNAPSHOT_DIR = ".forge-graph"
 SNAPSHOT_FILE = "snapshot.json"
@@ -56,10 +65,7 @@ class LocalCodeGraph(RepositoryGraph):
         snapshot = await self.load()
         ranked = _rank_nodes(snapshot, question, limit=max(1, min(8, budget // 250 or 1)))
         cited = tuple(node.source_file or node.label for node, _ in ranked)
-        if cited:
-            answer = "Relevant files: " + ", ".join(cited)
-        else:
-            answer = "No direct matches found."
+        answer = "Relevant files: " + ", ".join(cited) if cited else "No direct matches found."
         return QueryResult(question=question, answer=answer, cited_nodes=cited, extra={"matched_nodes": len(ranked)})
 
     async def explain(self, target: str) -> ExplainResult:
@@ -193,8 +199,8 @@ def _python_symbols(tree: ast.AST, rel: str, text: str) -> list[GraphNode]:
             kind = "class" if isinstance(node, ast.ClassDef) else ("method" if any(isinstance(parent, ast.ClassDef) for parent in ast.walk(node) if parent is not node) else "function")
             source_location = f"{node.lineno}:{getattr(node, 'end_lineno', node.lineno)}"
             body_text = _extract_text(lines, node.lineno, getattr(node, "end_lineno", node.lineno))
-            calls = tuple(sorted({callee for callee in _collect_calls(node)}))
-            refs = tuple(sorted({ref for ref in _collect_names(node)} - {node.name}))
+            calls = tuple(sorted(set(_collect_calls(node))))
+            refs = tuple(sorted(set(_collect_names(node)) - {node.name}))
             out.append(GraphNode(id=f"{rel}:{node.lineno}:{node.name}", label=node.name, file_type=kind, source_file=rel, source_location=source_location, norm_label=node.name.lower(), extra={"calls": calls, "references": refs, "signature": body_text.splitlines()[0].strip() if body_text else node.name}))
     return out
 
@@ -283,7 +289,7 @@ def _bfs_path(snapshot: GraphSnapshot, start: str, goal: str) -> list[GraphEdge]
         for edge in adjacency.get(current, []):
             if edge.target not in seen:
                 seen.add(edge.target)
-                queue.append((edge.target, path + [edge]))
+                queue.append((edge.target, [*path, edge]))
     return []
 
 

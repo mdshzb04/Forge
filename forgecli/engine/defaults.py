@@ -20,7 +20,6 @@ from typing import Any
 
 from forgecli.engine.execution import Stage, StageRegistry
 from forgecli.engine.stages import (
-    ResponseForgeOptimizerStage,
     ContextOptimizerStage,
     ExecutionEngineStage,
     GitEngineStage,
@@ -28,6 +27,7 @@ from forgecli.engine.stages import (
     ModelRouterStage,
     PlanningEngineStage,
     RepositoryAnalyzerStage,
+    ResponseForgeOptimizerStage,
     ValidationEngineStage,
 )
 

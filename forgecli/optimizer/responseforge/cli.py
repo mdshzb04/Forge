@@ -14,9 +14,9 @@ import logging
 import shutil
 
 from forgecli.optimizer.responseforge import (
+    OptimizedRequest,
     ResponseForgeIntensity,
     ResponseForgePromptOptimizer,
-    OptimizedRequest,
 )
 from forgecli.providers.base import ChatRequest
 

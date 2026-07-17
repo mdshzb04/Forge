@@ -543,34 +543,6 @@ _HINTS: Final[dict[str, dict[OS, tuple[str, ...]]]] = {
 
     },
 
-    "forgegraph": {
-
-        OS.LINUX: (
-
-            "uv tool install forgegraphy --with anthropic",
-
-            "or:  pipx install forgegraphy && pipx inject forgegraphy anthropic",
-
-            "or:  pip install --user forgegraphy anthropic",
-
-        ),
-
-        OS.MACOS: (
-
-            "uv tool install forgegraphy --with anthropic",
-
-        ),
-
-        OS.WINDOWS: (
-
-            "uv tool install forgegraphy --with anthropic",
-
-        ),
-
-        OS.OTHER: ("uv tool install forgegraphy --with anthropic",),
-
-    },
-
     "promptforge": {
 
 
@@ -654,37 +626,20 @@ def install_hint(tool: str) -> tuple[str, ...]:
 __all__ = [
 
     "Dependency",
-
     "DependencyReport",
-
     "DependencyStatus",
-
     "check_dependencies",
-
     "find_executable",
-
     "has_forgegraph",
-
     "has_git",
-
-    "has_forgegraph",
-
     "has_homebrew",
-
     "has_node",
-
     "has_pip",
-
     "has_promptforge",
-
     "has_python",
-
     "has_scoop",
-
     "has_uv",
-
     "has_winget",
-
     "install_hint",
 
 ]

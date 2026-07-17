@@ -255,9 +255,9 @@ def _build_container(
     """Register default services in the DI container."""
 
     from forgecli.core.container import Container
-    from forgecli.graph.local_engine import LocalCodeGraph
     from forgecli.graph.graph import CodeGraph
     from forgecli.graph.indexer import Indexer
+    from forgecli.graph.local_engine import LocalCodeGraph
     from forgecli.graph.repository import RepositoryGraph
     from forgecli.memory.store import MemoryStore
     from forgecli.optimizer.chunker import Chunker

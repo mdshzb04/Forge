@@ -8,7 +8,11 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
 from forgecli.middleware.base import Middleware
-from forgecli.optimizer.promptforge import CompositeOptimizer, Intensity, PromptForgeRulesetOptimizer
+from forgecli.optimizer.promptforge import (
+    CompositeOptimizer,
+    Intensity,
+    PromptForgeRulesetOptimizer,
+)
 from forgecli.providers.base import ChatMessage, ChatRequest, Role
 
 if TYPE_CHECKING:

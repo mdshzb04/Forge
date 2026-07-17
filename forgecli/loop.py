@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from forgecli.config.loader import ConfigLoader
 from forgecli.config.settings import ForgeSettings
 from forgecli.runtime.prepare import build_merged_context, prepare_runtime_sync
-from forgecli.utils.paths import ProjectPaths
 
 
 @dataclass(frozen=True)
@@ -166,4 +165,4 @@ def _workflow_markdown(settings: ForgeSettings, budget: dict[str, Any]) -> str:
 
 
 def _iso(value: datetime) -> str:
-    return value.astimezone(timezone.utc).isoformat()
+    return value.astimezone(UTC).isoformat()

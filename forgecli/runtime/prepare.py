@@ -197,7 +197,6 @@ def build_merged_context(repo_context: str, repo_root: Path | None = None) -> st
 
     promptforge_guidance = get_promptforge_instructions(settings)
     responseforge_guidance = get_responseforge_instructions(settings)
-    loop_engineering_guidance = get_loop_engineering_instructions(settings)
 
     blocks = []
     if promptforge_guidance:

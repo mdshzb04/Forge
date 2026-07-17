@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from forgecli.middleware.base import Middleware
 from forgecli.middleware.builder import PipelineBuilder
-from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
 from forgecli.middleware.context import RequestContext, ResponseContext
 from forgecli.middleware.decorators import middleware
 from forgecli.middleware.defaults import (
@@ -44,13 +43,13 @@ from forgecli.middleware.registration import (
     register_middleware_type,
     unregister_middleware_type,
 )
+from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
 from forgecli.observability.middleware import TelemetryMiddleware
 
 __all__ = [
 
     "AuthenticationMiddleware",
     "CachingMiddleware",
-    "ResponseForgeAdapterMiddleware",
     "ConversationMiddleware",
     "DependencyGraphMiddleware",
     "ForgeGraphAdapterMiddleware",
@@ -71,6 +70,7 @@ __all__ = [
     "RepositoryPlannerMiddleware",
     "RequestContext",
     "ResponseContext",
+    "ResponseForgeAdapterMiddleware",
     "ResponseOptimizerMiddleware",
     "SemanticRetrievalMiddleware",
     "ShortCircuitException",

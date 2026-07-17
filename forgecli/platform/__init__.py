@@ -39,7 +39,6 @@ from forgecli.platform.deps import (
     find_executable,
     has_forgegraph,
     has_git,
-    has_forgegraph,
     has_node,
     has_promptforge,
     has_python,
@@ -63,65 +62,35 @@ from forgecli.platform.update import (
 __all__ = [
 
     "OS",
-
     "DependencyReport",
-
     "DependencyStatus",
-
     "Platform",
-
     "ProjectPaths",
-
     "ShellResult",
-
     "UpdateInfo",
-
     "check_dependencies",
-
     "check_for_update",
-
     "config_dir",
-
     "current_platform",
-
     "current_version",
-
     "data_dir",
-
     "detect_os",
-
     "find_executable",
-
     "has_forgegraph",
-
+    "has_forgegraph",
     "has_git",
-
-    "has_forgegraph",
-
     "has_node",
-
     "has_promptforge",
-
     "has_python",
-
     "install_hint",
-
     "is_linux",
-
     "is_macos",
-
     "is_windows",
-
     "load_dotenv",
-
     "python_version",
-
     "run",
-
     "shell_quote",
-
     "state_dir",
-
     "upgrade_command",
 
 ]

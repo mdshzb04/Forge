@@ -154,13 +154,13 @@ def _clone_request(request: ChatRequest, messages: Sequence[ChatMessage]) -> Cha
 
 
 __all__ = [
+    "OptimizedRequest",
     "ResponseForgeCLIOptimizer",
     "ResponseForgeCompositeOptimizer",
     "ResponseForgeIntensity",
     "ResponseForgePromptOptimizer",
     "ResponseForgeProvider",
     "ResponseForgeRulesetOptimizer",
-    "OptimizedRequest",
 ]
 
 from forgecli.optimizer.responseforge.cli import ResponseForgeCLIOptimizer  # noqa: E402

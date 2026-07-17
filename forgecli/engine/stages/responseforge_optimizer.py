@@ -11,7 +11,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from forgecli.build import BuildContext
-from forgecli.build.responseforge_optimize import responseforge_optimization as _build_responseforge_optimize
+from forgecli.build.responseforge_optimize import (
+    responseforge_optimization as _build_responseforge_optimize,
+)
 from forgecli.engine.execution import StageContext, StageResult, StageStatus
 from forgecli.optimizer.responseforge import ResponseForgePromptOptimizer
 

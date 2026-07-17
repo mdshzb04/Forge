@@ -21,9 +21,9 @@ tests can pin it.
 from __future__ import annotations
 
 from forgecli.optimizer.responseforge import (
+    OptimizedRequest,
     ResponseForgeIntensity,
     ResponseForgePromptOptimizer,
-    OptimizedRequest,
     _clone_request,
     _ensure_user_message,
 )

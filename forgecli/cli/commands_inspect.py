@@ -123,8 +123,8 @@ def inspect_cmd(
 
 
 
-    from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
     from forgecli.middleware.promptforge_adapter import PromptForgeAdapterMiddleware
+    from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
     from forgecli.resilience.middleware import ResilienceMiddleware
 
 
