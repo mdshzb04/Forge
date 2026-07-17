@@ -32,7 +32,7 @@ forge explain         # Explain pipeline stages and concepts
 
 ## Key Capabilities
 
-- **19-stage middleware pipeline** processes every AI request through telemetry, auth, policy, caching, history compression, token planning, context optimization, conversation tracking, Ponytail prompt engineering, Caveman output compression, repository scanning, dependency analysis, symbol extraction, graph enrichment, semantic ranking, streaming, resilience, provider execution, and response optimization.
+- **19-stage middleware pipeline** processes every AI request through telemetry, auth, policy, caching, history compression, token planning, context optimization, conversation tracking, PromptForge prompt engineering, ResponseForge output compression, repository scanning, dependency analysis, symbol extraction, graph enrichment, semantic ranking, streaming, resilience, provider execution, and response optimization.
 - **7 AI CLI wrappers** unified through a single runtime path.
 - **16 providers** with real HTTP drivers for OpenAI, Anthropic, and Google Gemini.
 - **Knowledge graph** integration for intelligent file context injection.

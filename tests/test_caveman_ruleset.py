@@ -1,4 +1,4 @@
-"""Tests for the Caveman ruleset prompt optimizer."""
+"""Tests for the ResponseForge ruleset prompt optimizer."""
 
 
 
@@ -8,11 +8,11 @@ import asyncio
 
 import pytest
 
-from forgecli.optimizer.caveman import (
-    CavemanCompositeOptimizer,
-    CavemanIntensity,
-    CavemanPromptOptimizer,
-    CavemanRulesetOptimizer,
+from forgecli.optimizer.responseforge import (
+    ResponseForgeCompositeOptimizer,
+    ResponseForgeIntensity,
+    ResponseForgePromptOptimizer,
+    ResponseForgeRulesetOptimizer,
     OptimizedRequest,
 )
 from forgecli.providers.base import ChatMessage, ChatRequest, Role
@@ -44,15 +44,15 @@ def _system(text: str) -> ChatMessage:
 
 def test_intensity_parse_accepts_known_values() -> None:
 
-    assert CavemanIntensity.parse("off") is CavemanIntensity.OFF
+    assert ResponseForgeIntensity.parse("off") is ResponseForgeIntensity.OFF
 
-    assert CavemanIntensity.parse("LITE") is CavemanIntensity.LITE
+    assert ResponseForgeIntensity.parse("LITE") is ResponseForgeIntensity.LITE
 
-    assert CavemanIntensity.parse("Full") is CavemanIntensity.FULL
+    assert ResponseForgeIntensity.parse("Full") is ResponseForgeIntensity.FULL
 
-    assert CavemanIntensity.parse("ULTRA") is CavemanIntensity.ULTRA
+    assert ResponseForgeIntensity.parse("ULTRA") is ResponseForgeIntensity.ULTRA
 
-    assert CavemanIntensity.parse("WENYAN") is CavemanIntensity.WENYAN
+    assert ResponseForgeIntensity.parse("WENYAN") is ResponseForgeIntensity.WENYAN
 
 
 
@@ -60,11 +60,11 @@ def test_intensity_parse_accepts_known_values() -> None:
 
 def test_intensity_parse_defaults_to_lite() -> None:
 
-    assert CavemanIntensity.parse(None) is CavemanIntensity.LITE
+    assert ResponseForgeIntensity.parse(None) is ResponseForgeIntensity.LITE
 
-    assert CavemanIntensity.parse("") is CavemanIntensity.LITE
+    assert ResponseForgeIntensity.parse("") is ResponseForgeIntensity.LITE
 
-    assert CavemanIntensity.parse(CavemanIntensity.LITE) is CavemanIntensity.LITE
+    assert ResponseForgeIntensity.parse(ResponseForgeIntensity.LITE) is ResponseForgeIntensity.LITE
 
 
 
@@ -74,7 +74,7 @@ def test_intensity_parse_rejects_unknown() -> None:
 
     with pytest.raises(ValueError):
 
-        CavemanIntensity.parse("ferocious")
+        ResponseForgeIntensity.parse("ferocious")
 
 
 
@@ -82,17 +82,17 @@ def test_intensity_parse_rejects_unknown() -> None:
 
 def test_ruleset_off_returns_passthrough() -> None:
 
-    optimizer = CavemanRulesetOptimizer(intensity=CavemanIntensity.OFF)
+    optimizer = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.OFF)
 
     request = _request(_user("hi"))
 
     result = asyncio.run(optimizer.optimize_chat(request))
 
-    assert result.intensity is CavemanIntensity.OFF
+    assert result.intensity is ResponseForgeIntensity.OFF
 
-    assert result.source == "caveman-ruleset"
+    assert result.source == "responseforge-ruleset"
 
-    assert result.notes == ("caveman off",)
+    assert result.notes == ("responseforge off",)
 
     assert [m.content for m in result.request.messages] == ["hi"]
 
@@ -102,13 +102,13 @@ def test_ruleset_off_returns_passthrough() -> None:
 
 def test_ruleset_lite_appends_guidance_when_no_system_message() -> None:
 
-    optimizer = CavemanRulesetOptimizer(intensity=CavemanIntensity.LITE)
+    optimizer = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.LITE)
 
     request = _request(_user("hi"))
 
     result = asyncio.run(optimizer.optimize_chat(request))
 
-    assert result.intensity is CavemanIntensity.LITE
+    assert result.intensity is ResponseForgeIntensity.LITE
 
     assert len(result.request.messages) == 2
 
@@ -126,7 +126,7 @@ def test_ruleset_lite_appends_guidance_when_no_system_message() -> None:
 
 def test_ruleset_full_includes_rules() -> None:
 
-    optimizer = CavemanRulesetOptimizer(intensity=CavemanIntensity.FULL)
+    optimizer = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.FULL)
 
     request = _request(_user("hi"))
 
@@ -140,7 +140,7 @@ def test_ruleset_full_includes_rules() -> None:
 
     assert "fragments" in system
 
-    assert any("caveman full mode" in n for n in result.notes)
+    assert any("responseforge full mode" in n for n in result.notes)
 
 
 
@@ -148,7 +148,7 @@ def test_ruleset_full_includes_rules() -> None:
 
 def test_ruleset_ultra_compresses() -> None:
 
-    optimizer = CavemanRulesetOptimizer(intensity=CavemanIntensity.ULTRA)
+    optimizer = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.ULTRA)
 
     request = _request(_user("hi"))
 
@@ -160,7 +160,7 @@ def test_ruleset_ultra_compresses() -> None:
 
     assert "communication compression" in system
 
-    assert any("caveman ultra" in n for n in result.notes)
+    assert any("responseforge ultra" in n for n in result.notes)
 
 
 
@@ -168,7 +168,7 @@ def test_ruleset_ultra_compresses() -> None:
 
 def test_ruleset_wenyan_uses_classical_chinese() -> None:
 
-    optimizer = CavemanRulesetOptimizer(intensity=CavemanIntensity.WENYAN)
+    optimizer = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.WENYAN)
 
     request = _request(_user("hi"))
 
@@ -180,7 +180,7 @@ def test_ruleset_wenyan_uses_classical_chinese() -> None:
 
     assert "Classical Chinese" in system
 
-    assert any("caveman wenyan" in n for n in result.notes)
+    assert any("responseforge wenyan" in n for n in result.notes)
 
 
 
@@ -188,7 +188,7 @@ def test_ruleset_wenyan_uses_classical_chinese() -> None:
 
 def test_ruleset_prepends_to_existing_system_message() -> None:
 
-    optimizer = CavemanRulesetOptimizer(intensity=CavemanIntensity.FULL)
+    optimizer = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.FULL)
 
     request = _request(_system("You are a Python assistant."), _user("hi"))
 
@@ -210,7 +210,7 @@ def test_ruleset_prepends_to_existing_system_message() -> None:
 
 def test_ruleset_replaces_empty_system_message() -> None:
 
-    optimizer = CavemanRulesetOptimizer(intensity=CavemanIntensity.LITE)
+    optimizer = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.LITE)
 
     request = _request(_system(""), _user("hi"))
 
@@ -226,13 +226,13 @@ def test_ruleset_replaces_empty_system_message() -> None:
 
 def test_ruleset_passthrough_when_no_user_message() -> None:
 
-    optimizer = CavemanRulesetOptimizer(intensity=CavemanIntensity.FULL)
+    optimizer = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.FULL)
 
     request = _request(_system("hello"))
 
     result = asyncio.run(optimizer.optimize_chat(request))
 
-    assert result.notes == ("no user message; caveman passthrough",)
+    assert result.notes == ("no user message; responseforge passthrough",)
 
     assert [m.content for m in result.request.messages] == ["hello"]
 
@@ -242,7 +242,7 @@ def test_ruleset_passthrough_when_no_user_message() -> None:
 
 def test_ruleset_does_not_mutate_input_request() -> None:
 
-    optimizer = CavemanRulesetOptimizer(intensity=CavemanIntensity.FULL)
+    optimizer = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.FULL)
 
     request = _request(_user("hi"))
 
@@ -258,11 +258,11 @@ def test_ruleset_does_not_mutate_input_request() -> None:
 
 def test_composite_off_short_circuits() -> None:
 
-    composite = CavemanCompositeOptimizer(
+    composite = ResponseForgeCompositeOptimizer(
 
-        intensity=CavemanIntensity.OFF,
+        intensity=ResponseForgeIntensity.OFF,
 
-        ruleset=CavemanRulesetOptimizer(),
+        ruleset=ResponseForgeRulesetOptimizer(),
 
     )
 
@@ -270,9 +270,9 @@ def test_composite_off_short_circuits() -> None:
 
     result = asyncio.run(composite.optimize_chat(request))
 
-    assert result.intensity is CavemanIntensity.OFF
+    assert result.intensity is ResponseForgeIntensity.OFF
 
-    assert result.source == "caveman-passthrough"
+    assert result.source == "responseforge-passthrough"
 
 
 
@@ -280,9 +280,9 @@ def test_composite_off_short_circuits() -> None:
 
 def test_composite_uses_external_when_available() -> None:
 
-    class _External(CavemanPromptOptimizer):
+    class _External(ResponseForgePromptOptimizer):
 
-        name = "ext-caveman"
+        name = "ext-responseforge"
 
 
 
@@ -298,21 +298,21 @@ def test_composite_uses_external_when_available() -> None:
 
                 request=request,
 
-                notes=("from external caveman",),
+                notes=("from external responseforge",),
 
-                intensity=CavemanIntensity.LITE,
+                intensity=ResponseForgeIntensity.LITE,
 
-                source="caveman-external",
+                source="responseforge-external",
 
             )
 
 
 
-    composite = CavemanCompositeOptimizer(
+    composite = ResponseForgeCompositeOptimizer(
 
-        intensity=CavemanIntensity.LITE,
+        intensity=ResponseForgeIntensity.LITE,
 
-        ruleset=CavemanRulesetOptimizer(),
+        ruleset=ResponseForgeRulesetOptimizer(),
 
         external=_External(),
 
@@ -322,9 +322,9 @@ def test_composite_uses_external_when_available() -> None:
 
     result = asyncio.run(composite.optimize_chat(request))
 
-    assert result.source == "caveman-external"
+    assert result.source == "responseforge-external"
 
-    assert "from external caveman" in result.notes
+    assert "from external responseforge" in result.notes
 
 
 
@@ -332,9 +332,9 @@ def test_composite_uses_external_when_available() -> None:
 
 def test_composite_falls_back_to_ruleset_when_external_unavailable() -> None:
 
-    class _External(CavemanPromptOptimizer):
+    class _External(ResponseForgePromptOptimizer):
 
-        name = "ext-caveman"
+        name = "ext-responseforge"
 
 
 
@@ -350,11 +350,11 @@ def test_composite_falls_back_to_ruleset_when_external_unavailable() -> None:
 
 
 
-    composite = CavemanCompositeOptimizer(
+    composite = ResponseForgeCompositeOptimizer(
 
-        intensity=CavemanIntensity.FULL,
+        intensity=ResponseForgeIntensity.FULL,
 
-        ruleset=CavemanRulesetOptimizer(),
+        ruleset=ResponseForgeRulesetOptimizer(),
 
         external=_External(),
 
@@ -364,7 +364,7 @@ def test_composite_falls_back_to_ruleset_when_external_unavailable() -> None:
 
     result = asyncio.run(composite.optimize_chat(request))
 
-    assert result.source == "caveman-ruleset"
+    assert result.source == "responseforge-ruleset"
 
     assert "CAVEMAN (full)" in result.request.messages[0].content
 
@@ -374,13 +374,13 @@ def test_composite_falls_back_to_ruleset_when_external_unavailable() -> None:
 
 def test_composite_no_ruleset_no_external_returns_passthrough() -> None:
 
-    composite = CavemanCompositeOptimizer(intensity=CavemanIntensity.LITE)
+    composite = ResponseForgeCompositeOptimizer(intensity=ResponseForgeIntensity.LITE)
 
     request = _request(_user("hi"))
 
     result = asyncio.run(composite.optimize_chat(request))
 
-    assert result.source == "caveman-passthrough"
+    assert result.source == "responseforge-passthrough"
 
-    assert "no caveman ruleset registered" in result.notes
+    assert "no responseforge ruleset registered" in result.notes
 

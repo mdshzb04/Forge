@@ -1,6 +1,6 @@
-"""Optional adapter for an external ``ponytail`` CLI.
+"""Optional adapter for an external ``promptforge`` CLI.
 
-Some Ponytail installations (or future refactors) ship a binary on
+Some PromptForge installations (or future refactors) ship a binary on
 ``PATH`` that can rewrite a prompt itself. This adapter detects the
 binary and forwards the conversation to it. When the binary is not
 installed, :meth:`is_available` returns ``False`` and the
@@ -19,7 +19,7 @@ import tempfile
 from pathlib import Path
 
 from forgecli.core.errors import ForgeCLIError
-from forgecli.optimizer.ponytail import (
+from forgecli.optimizer.promptforge import (
     Intensity,
     OptimizedRequest,
     PromptOptimizer,
@@ -27,17 +27,17 @@ from forgecli.optimizer.ponytail import (
 from forgecli.providers.base import ChatMessage, ChatRequest, Role
 
 
-class PonytailCLIError(ForgeCLIError):
+class PromptForgeCLIError(ForgeCLIError):
 
-    """Raised when the external ``ponytail`` binary fails."""
-
-
+    """Raised when the external ``promptforge`` binary fails."""
 
 
 
-class PonytailCLIOptimizer(PromptOptimizer):
 
-    """Forward prompts to an external ``ponytail`` binary via stdin/stdout.
+
+class PromptForgeCLIOptimizer(PromptOptimizer):
+
+    """Forward prompts to an external ``promptforge`` binary via stdin/stdout.
 
     The CLI is expected to accept a JSON payload on stdin and emit a
     JSON payload on stdout. When such a binary is not present the
@@ -47,7 +47,7 @@ class PonytailCLIOptimizer(PromptOptimizer):
 
 
 
-    name = "ponytail.cli"
+    name = "promptforge.cli"
 
 
 
@@ -63,7 +63,7 @@ class PonytailCLIOptimizer(PromptOptimizer):
 
     ) -> None:
 
-        self._executable = executable or os.environ.get("FORGECLI_PONYTAIL_BIN", "ponytail")
+        self._executable = executable or os.environ.get("FORGECLI_PONYTAIL_BIN", "promptforge")
 
         self._timeout = timeout
 
@@ -87,7 +87,7 @@ class PonytailCLIOptimizer(PromptOptimizer):
 
         if not await self.is_available():
 
-            raise PonytailCLIError(f"Ponytail executable {self._executable!r} not found on PATH")
+            raise PromptForgeCLIError(f"PromptForge executable {self._executable!r} not found on PATH")
 
 
 
@@ -131,9 +131,9 @@ class PonytailCLIOptimizer(PromptOptimizer):
 
                 proc.kill()
 
-                raise PonytailCLIError(
+                raise PromptForgeCLIError(
 
-                    f"ponytail optimize timed out after {self._timeout}s"
+                    f"promptforge optimize timed out after {self._timeout}s"
 
                 ) from exc
 
@@ -147,9 +147,9 @@ class PonytailCLIOptimizer(PromptOptimizer):
 
         if proc.returncode != 0:
 
-            raise PonytailCLIError(
+            raise PromptForgeCLIError(
 
-                f"ponytail exited with {proc.returncode}: {stderr.decode(errors='replace').strip()}"
+                f"promptforge exited with {proc.returncode}: {stderr.decode(errors='replace').strip()}"
 
             )
 
@@ -221,7 +221,7 @@ def _json_to_optimized(raw: str) -> OptimizedRequest:
 
     except json.JSONDecodeError as exc:
 
-        raise PonytailCLIError(f"ponytail returned invalid JSON: {exc}") from exc
+        raise PromptForgeCLIError(f"promptforge returned invalid JSON: {exc}") from exc
 
 
 
@@ -249,7 +249,7 @@ def _json_to_optimized(raw: str) -> OptimizedRequest:
 
     except (KeyError, ValueError) as exc:
 
-        raise PonytailCLIError(f"ponytail returned an unexpected payload: {exc}") from exc
+        raise PromptForgeCLIError(f"promptforge returned an unexpected payload: {exc}") from exc
 
 
 
@@ -283,5 +283,5 @@ def _json_to_optimized(raw: str) -> OptimizedRequest:
 
 
 
-__all__ = ["PonytailCLIError", "PonytailCLIOptimizer"]
+__all__ = ["PromptForgeCLIError", "PromptForgeCLIOptimizer"]
 

@@ -5,10 +5,10 @@ optional / required external tool ForgeCLI integrates with:
 
 * ``git``        — required (we have a ``git`` adapter regardless)
 * ``python``     — the running interpreter
-* ``ponytail``   — **built-in**; the ruleset optimizer ships with
+* ``promptforge``   — **built-in**; the ruleset optimizer ships with
   ForgeCLI — no external binary required
-* ``graphify``   — optional; powers the knowledge graph
-  (install via ``uv tool install graphifyy --with anthropic``)
+* ``forgegraph``   — optional; powers the knowledge graph
+  (install via ``uv tool install forgegraphy --with anthropic``)
 * ``node``       — optional; needed by some LLM providers
 * ``pip`` / ``uv`` / ``brew`` / ``scoop`` / ``winget`` — package
   managers used to render install hints.
@@ -17,9 +17,9 @@ Each dependency is :class:`DependencyStatus` (found / missing /
 version). :func:`check_dependencies` returns a report; callers can
 serialize it for ``forge doctor`` output.
 
-Install hints are platform-aware: a missing ``graphify`` on macOS
-gets a ``brew install graphify`` line; on Windows, a
-``winget install Graphify.Graphify`` line; on Ubuntu, an
+Install hints are platform-aware: a missing ``forgegraph`` on macOS
+gets a ``brew install forgegraph`` line; on Windows, a
+``winget install ForgeGraph.ForgeGraph`` line; on Ubuntu, an
 ``apt``/``snap`` line. We never suggest a Linux command when
 ``is_windows()`` is True.
 """
@@ -197,23 +197,13 @@ def has_python() -> bool:
 
 def has_forgegraph() -> bool:
 
-    return find_executable("forgegraph") is not None or find_executable("graphify") is not None
+    return find_executable("forgegraph") is not None
 
 
 
+def has_promptforge() -> bool:
 
-
-def has_graphify() -> bool:
-
-    return has_forgegraph()
-
-
-
-
-
-def has_ponytail() -> bool:
-
-    return find_executable("ponytail") is not None
+    return find_executable("promptforge") is not None
 
 
 
@@ -347,7 +337,7 @@ def check_dependencies() -> DependencyReport:
 
         Dependency(
 
-            name="ponytail",
+            name="promptforge",
 
             status=DependencyStatus.FOUND,
 
@@ -367,7 +357,7 @@ def check_dependencies() -> DependencyReport:
             status=DependencyStatus.FOUND,
             version="built-in",
             required=False,
-            note="Graph builder ships with ForgeCLI (uses native builder or external graphifyy)",
+            note="Graph builder ships with ForgeCLI (uses native builder or external forgegraphy)",
         )
     )
 
@@ -529,69 +519,69 @@ _HINTS: Final[dict[str, dict[OS, tuple[str, ...]]]] = {
 
         OS.LINUX: (
 
-            "uv tool install graphifyy --with anthropic",
+            "uv tool install forgegraphy --with anthropic",
 
-            "or:  pipx install graphifyy && pipx inject graphifyy anthropic",
+            "or:  pipx install forgegraphy && pipx inject forgegraphy anthropic",
 
-            "or:  pip install --user graphifyy anthropic",
+            "or:  pip install --user forgegraphy anthropic",
 
         ),
 
         OS.MACOS: (
 
-            "uv tool install graphifyy --with anthropic",
+            "uv tool install forgegraphy --with anthropic",
 
         ),
 
         OS.WINDOWS: (
 
-            "uv tool install graphifyy --with anthropic",
+            "uv tool install forgegraphy --with anthropic",
 
         ),
 
-        OS.OTHER: ("uv tool install graphifyy --with anthropic",),
+        OS.OTHER: ("uv tool install forgegraphy --with anthropic",),
 
     },
 
-    "graphify": {
+    "forgegraph": {
 
         OS.LINUX: (
 
-            "uv tool install graphifyy --with anthropic",
+            "uv tool install forgegraphy --with anthropic",
 
-            "or:  pipx install graphifyy && pipx inject graphifyy anthropic",
+            "or:  pipx install forgegraphy && pipx inject forgegraphy anthropic",
 
-            "or:  pip install --user graphifyy anthropic",
+            "or:  pip install --user forgegraphy anthropic",
 
         ),
 
         OS.MACOS: (
 
-            "uv tool install graphifyy --with anthropic",
+            "uv tool install forgegraphy --with anthropic",
 
         ),
 
         OS.WINDOWS: (
 
-            "uv tool install graphifyy --with anthropic",
+            "uv tool install forgegraphy --with anthropic",
 
         ),
 
-        OS.OTHER: ("uv tool install graphifyy --with anthropic",),
+        OS.OTHER: ("uv tool install forgegraphy --with anthropic",),
 
     },
 
-    "ponytail": {
+    "promptforge": {
 
 
 
 
 
-        OS.LINUX: ("Built-in — no install needed. External CLI: uv tool install ponytail",),
+        OS.LINUX: ("Built-in — no install needed. External CLI: uv tool install promptforge",),
 
-        OS.MACOS: ("Built-in — no install needed. External CLI: uv tool install ponytail",),
+        OS.MACOS: ("Built-in — no install needed. External CLI: uv tool install promptforge",),
 
-        OS.WINDOWS: ("Built-in — no install needed. External CLI: uv tool install ponytail",),
+        OS.WINDOWS: ("Built-in — no install needed. External CLI: uv tool install promptforge",),
 
         OS.OTHER: ("Built-in — no install needed.",),
 
@@ -677,7 +667,7 @@ __all__ = [
 
     "has_git",
 
-    "has_graphify",
+    "has_forgegraph",
 
     "has_homebrew",
 
@@ -685,7 +675,7 @@ __all__ = [
 
     "has_pip",
 
-    "has_ponytail",
+    "has_promptforge",
 
     "has_python",
 

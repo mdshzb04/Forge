@@ -100,11 +100,11 @@ def status_cmd() -> None:
 
     p_val = settings.prompt_optimizer.intensity if settings.prompt_optimizer.enabled else "off"
 
-    console.print(f"  Ponytail            : [white]{p_val.capitalize()}[/white]")
+    console.print(f"  PromptForge            : [white]{p_val.capitalize()}[/white]")
 
-    c_val = settings.caveman.intensity if settings.caveman.enabled else "off"
+    c_val = settings.responseforge.intensity if settings.responseforge.enabled else "off"
 
-    console.print(f"  Caveman             : [white]{c_val.capitalize()}[/white]")
+    console.print(f"  ResponseForge             : [white]{c_val.capitalize()}[/white]")
 
     o_val = settings.output_optimization.intensity if settings.output_optimization.enabled else "off"
 
@@ -237,7 +237,7 @@ def stats_cmd() -> None:
         ContextOptimizerMiddleware,
         ConversationMiddleware,
         DependencyGraphMiddleware,
-        GraphifyMiddleware,
+        ForgeGraphMiddleware,
         HistoryCompressorMiddleware,
         PolicyMiddleware,
         PromptOptimizerMiddleware,
@@ -259,7 +259,7 @@ def stats_cmd() -> None:
 
         ConversationMiddleware, PromptOptimizerMiddleware, RepositoryPlannerMiddleware,
 
-        DependencyGraphMiddleware, SymbolLookupMiddleware, GraphifyMiddleware,
+        DependencyGraphMiddleware, SymbolLookupMiddleware, ForgeGraphMiddleware,
 
         SemanticRetrievalMiddleware, StreamingMiddleware, ProviderMiddleware,
 
@@ -281,9 +281,9 @@ def stats_cmd() -> None:
 
 def profile_cmd(
 
-    ponytail: str = typer.Option(None, "--ponytail", "-p", help="Set Ponytail intensity (off|lite|full|ultra)"),
+    promptforge: str = typer.Option(None, "--promptforge", "-p", help="Set PromptForge intensity (off|lite|full|ultra)"),
 
-    caveman: str = typer.Option(None, "--caveman", "-c", help="Set Caveman intensity (off|lite|full|ultra|wenyan)"),
+    responseforge: str = typer.Option(None, "--responseforge", "-c", help="Set ResponseForge intensity (off|lite|full|ultra|wenyan)"),
 
 ) -> None:
 
@@ -293,11 +293,11 @@ def profile_cmd(
 
 
 
-    if ponytail or caveman:
+    if promptforge or responseforge:
 
         from forgecli.config.writer import update_config
 
-        path = update_config(ponytail=ponytail, caveman=caveman)
+        path = update_config(promptforge=promptforge, responseforge=responseforge)
 
         console.print()
 
@@ -343,19 +343,19 @@ def profile_cmd(
 
     p_intensity = settings.prompt_optimizer.intensity if settings.prompt_optimizer.enabled else "off"
 
-    c_intensity = settings.caveman.intensity if settings.caveman.enabled else "off"
+    c_intensity = settings.responseforge.intensity if settings.responseforge.enabled else "off"
 
     o_intensity = settings.output_optimization.intensity if settings.output_optimization.enabled else "off"
 
 
 
-    console.print(f"  Ponytail (prompt)     : {_color(p_intensity, settings.prompt_optimizer.enabled)}")
+    console.print(f"  PromptForge (prompt)     : {_color(p_intensity, settings.prompt_optimizer.enabled)}")
 
     console.print("    YAGNI rules — ship minimum viable change, challenge requirements")
 
     console.print()
 
-    console.print(f"  Caveman (style)       : {_color(c_intensity, settings.caveman.enabled)}")
+    console.print(f"  ResponseForge (style)       : {_color(c_intensity, settings.responseforge.enabled)}")
 
     console.print("    Be concise, drop filler, keep technical terms exact")
 
@@ -367,7 +367,7 @@ def profile_cmd(
 
     console.print()
 
-    console.print("  [dim]Change with: forge profile --ponytail ultra --caveman full[/dim]")
+    console.print("  [dim]Change with: forge profile --promptforge ultra --responseforge full[/dim]")
 
     console.print()
 
@@ -377,7 +377,7 @@ def profile_cmd(
 
 def explain_cmd(
 
-    topic: str = typer.Argument(None, help="Topic to explain (pipeline, ponytail, caveman, graphify, mcp, daemon)"),
+    topic: str = typer.Argument(None, help="Topic to explain (pipeline, promptforge, responseforge, forgegraph, mcp, daemon)"),
 
 ) -> None:
 
@@ -411,9 +411,9 @@ def explain_cmd(
 
             "  8. Conversation (650) — Session persistence\n"
 
-            "  9. Caveman (580)      — Output conciseness\n"
+            "  9. ResponseForge (580)      — Output conciseness\n"
 
-            "  10. Ponytail (600)    — Prompt engineering\n"
+            "  10. PromptForge (600)    — Prompt engineering\n"
 
             "  11. Repository (550)  — File scanning\n"
 
@@ -421,7 +421,7 @@ def explain_cmd(
 
             "  13. SymbolLookup (450)— Extract classes/functions\n"
 
-            "  14. Graphify (400)    — Knowledge graph injection\n"
+            "  14. ForgeGraph (400)    — Knowledge graph injection\n"
 
             "  15. Semantic (350)    — Relevance ranking\n"
 
@@ -435,11 +435,11 @@ def explain_cmd(
 
         ),
 
-        "ponytail": (
+        "promptforge": (
 
-            "Ponytail",
+            "PromptForge",
 
-            "Ponytail is a prompt optimization ruleset that implements YAGNI (You Ain't "
+            "PromptForge is a prompt optimization ruleset that implements YAGNI (You Ain't "
 
             "Gonna Need It) principles. It rewrites prompts to instruct models to ship "
 
@@ -457,11 +457,11 @@ def explain_cmd(
 
         ),
 
-        "caveman": (
+        "responseforge": (
 
-            "Caveman",
+            "ResponseForge",
 
-            "Caveman is an output optimization ruleset that reduces LLM response verbosity. "
+            "ResponseForge is an output optimization ruleset that reduces LLM response verbosity. "
 
             "It injects system prompts instructing the model to communicate in concise, "
 
@@ -481,11 +481,11 @@ def explain_cmd(
 
         ),
 
-        "graphify": (
+        "forgegraph": (
 
-            "Graphify",
+            "ForgeGraph",
 
-            "Graphify builds a knowledge graph of your codebase — mapping symbols "
+            "ForgeGraph builds a knowledge graph of your codebase — mapping symbols "
 
             "(classes, functions), their dependencies, and structural relationships. "
 

@@ -800,7 +800,7 @@ def test_default_placeholders() -> None:
         ContextOptimizerMiddleware,
         ConversationMiddleware,
         DependencyGraphMiddleware,
-        GraphifyMiddleware,
+        ForgeGraphMiddleware,
         HistoryCompressorMiddleware,
         PolicyMiddleware,
         PromptOptimizerMiddleware,
@@ -842,7 +842,7 @@ def test_default_placeholders() -> None:
 
         SymbolLookupMiddleware,
 
-        GraphifyMiddleware,
+        ForgeGraphMiddleware,
 
         SemanticRetrievalMiddleware,
 

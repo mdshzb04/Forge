@@ -2,8 +2,8 @@
 
 Provides the canonical 19-stage execution chain:
   Telemetry → Auth → Policy → Cache → History → Token → Context →
-  Conversation → Caveman → Ponytail → Repository → DepGraph →
-  SymbolLookup → Graphify → SemanticRetrieval → Streaming →
+  Conversation → ResponseForge → PromptForge → Repository → DepGraph →
+  SymbolLookup → ForgeGraph → SemanticRetrieval → Streaming →
   Resilience → Provider → ResponseOptimizer
 """
 
@@ -28,9 +28,9 @@ def build_default_pipeline(
 
     repo_root: Path | None = None,
 
-    ponytail_intensity: str = "lite",
+    promptforge_intensity: str = "lite",
 
-    caveman_intensity: str = "lite",
+    responseforge_intensity: str = "lite",
 
 ) -> MiddlewarePipeline:
 
@@ -42,14 +42,14 @@ def build_default_pipeline(
     """
 
     from forgecli.middleware.builder import PipelineBuilder
-    from forgecli.middleware.caveman_adapter import CavemanAdapterMiddleware
+    from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
     from forgecli.middleware.defaults import (
         AuthenticationMiddleware,
         CachingMiddleware,
         ContextOptimizerMiddleware,
         ConversationMiddleware,
         DependencyGraphMiddleware,
-        GraphifyMiddleware,
+        ForgeGraphMiddleware,
         HistoryCompressorMiddleware,
         PolicyMiddleware,
         ProviderMiddleware,
@@ -61,7 +61,7 @@ def build_default_pipeline(
         TelemetryMiddleware,
         TokenPlannerMiddleware,
     )
-    from forgecli.middleware.ponytail_adapter import PonytailAdapterMiddleware
+    from forgecli.middleware.promptforge_adapter import PromptForgeAdapterMiddleware
     from forgecli.resilience.middleware import ResilienceMiddleware
 
 
@@ -90,9 +90,9 @@ def build_default_pipeline(
 
 
 
-    builder.add(CavemanAdapterMiddleware(intensity=caveman_intensity))
+    builder.add(ResponseForgeAdapterMiddleware(intensity=responseforge_intensity))
 
-    builder.add(PonytailAdapterMiddleware(intensity=ponytail_intensity))
+    builder.add(PromptForgeAdapterMiddleware(intensity=promptforge_intensity))
 
 
 
@@ -104,7 +104,7 @@ def build_default_pipeline(
 
 
 
-    builder.add(GraphifyMiddleware())
+    builder.add(ForgeGraphMiddleware())
 
     builder.add(SemanticRetrievalMiddleware())
 
@@ -138,9 +138,9 @@ async def run_pipeline_async(
 
     model: str = "gpt-4o-mini",
 
-    ponytail_intensity: str = "lite",
+    promptforge_intensity: str = "lite",
 
-    caveman_intensity: str = "lite",
+    responseforge_intensity: str = "lite",
 
     metadata: dict[str, Any] | None = None,
 
@@ -154,8 +154,8 @@ async def run_pipeline_async(
         session_id: Session identifier for conversation persistence.
         provider: Target provider name.
         model: Target model name.
-        ponytail_intensity: Ponytail optimization level.
-        caveman_intensity: Caveman optimization level.
+        promptforge_intensity: PromptForge optimization level.
+        responseforge_intensity: ResponseForge optimization level.
         metadata: Optional extra metadata to attach to the request context.
 
     Returns:
@@ -173,9 +173,9 @@ async def run_pipeline_async(
 
         repo_root=repo_root,
 
-        ponytail_intensity=ponytail_intensity,
+        promptforge_intensity=promptforge_intensity,
 
-        caveman_intensity=caveman_intensity,
+        responseforge_intensity=responseforge_intensity,
 
     )
 
@@ -263,9 +263,9 @@ def run_pipeline_sync(
 
     model: str = "gpt-4o-mini",
 
-    ponytail_intensity: str = "lite",
+    promptforge_intensity: str = "lite",
 
-    caveman_intensity: str = "lite",
+    responseforge_intensity: str = "lite",
 
     metadata: dict[str, Any] | None = None,
 
@@ -294,9 +294,9 @@ def run_pipeline_sync(
 
             model=model,
 
-            ponytail_intensity=ponytail_intensity,
+            promptforge_intensity=promptforge_intensity,
 
-            caveman_intensity=caveman_intensity,
+            responseforge_intensity=responseforge_intensity,
 
             metadata=metadata,
 

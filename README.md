@@ -28,7 +28,7 @@ Forge is a pre-launch context preparation tool for AI coding assistants. Before 
 > Forge focuses on three areas:
 >
 > - **Repository Intelligence** — Symbol extraction, dependency analysis, file scanning, and native graph generation.
-> - **Behavior Optimization** — Configurable implementation guidance (Ponytail YAGNI rules) and response style optimization (Caveman conciseness rules).
+> - **Behavior Optimization** — Configurable implementation guidance (PromptForge YAGNI rules) and response style optimization (ResponseForge conciseness rules).
 > - **Runtime Infrastructure** — Zero-configuration wrappers, context caching, background daemon, and MCP server.
 >
 > Forge prepares context before the AI session begins. It does **not** modify provider billing, quota accounting, model pricing, model inference, or the AI client's internal tool selection logic.
@@ -40,7 +40,7 @@ Forge has a single unified context preparation path used by all wrappers:
 1. **Repository scan** — Extracts files, symbols (classes/functions), and dependencies (imports/requires) using parallel regex-based parsers for Python, JS, TS, JSX, and TSX.
 2. **Semantic ranking** — Ranks files by TF-IDF query relevance with dependency centrality scoring.
 3. **AST pruning** — Uses tree-sitter to prune files to only relevant symbols, keeping context lean.
-4. **Behavior injection** — Prepends intensity-gated Ponytail (YAGNI) and Caveman (conciseness) instructions.
+4. **Behavior injection** — Prepends intensity-gated PromptForge (YAGNI) and ResponseForge (conciseness) instructions.
 5. **Compression** — Collapses whitespace, strips boilerplate, and removes redundant content.
 6. **Caching** — Fingerprints repositories and caches context between launches.
 7. **Launch** — Sets `FORGE_CONTEXT` env var and starts the AI CLI.
@@ -48,7 +48,7 @@ Forge has a single unified context preparation path used by all wrappers:
 
 ### Advanced Graph 
 
-The native builder works out of the box with no extra setup. For the advanced graph (Leiden clustering and LLM-powered analysis), Forge will automatically detect and install the external `graphify` tool and its required provider dependencies when you run the build command.
+The native builder works out of the box with no extra setup. For the advanced graph (Leiden clustering and LLM-powered analysis), Forge will automatically detect and install the external `forgegraph` tool and its required provider dependencies when you run the build command.
 
 You only need to configure your API key and run the command:
 
@@ -56,7 +56,7 @@ You only need to configure your API key and run the command:
 # 1. Provide an API key for your provider
 export ANTHROPIC_API_KEY="your-key-here"
 
-# 2. Build the graph (Forge automatically manages the graphify installation)
+# 2. Build the graph (Forge automatically manages the forgegraph installation)
 forge graph build
 ```
 
@@ -92,6 +92,7 @@ uv tool upgrade forgeoptimizer
 Forge provides two ways to connect with your AI coding tools:
 
 1. **Convenience Wrappers** (`forge claude`, `forge cursor`, `forge codex`, `forge antigravity`) — Automatically prepare context, configure MCP, and launch the target AI CLI.
+2. **Loop Workflow** (`forge loop`) — Creates local budget, workflow, and run-log files under `.forge/loop/` and records loop iterations.
 2. **MCP Server** (`forge mcp`) — Standard stdio JSON-RPC interface exposing 6 tools that AI clients can call during sessions.
 
 ---
@@ -105,6 +106,7 @@ Forge provides two ways to connect with your AI coding tools:
 | `forge cursor` | Launch Cursor CLI with optimized context |
 | `forge antigravity` | Launch Antigravity CLI with optimized context |
 | `forge commit` | Generate a Conventional Commit message from staged changes |
+| `forge loop` | Scaffold and update the local loop-engineering workflow |
 | `forge mcp` | Start the stdio MCP server |
 | `forge start` | Start the background daemon |
 | `forge graph build` | Build a codebase graph (native or external) |

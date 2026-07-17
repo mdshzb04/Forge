@@ -370,7 +370,7 @@ def test_run_mcp_stdio_prepends_behavior_instructions(monkeypatch) -> None:
 
         "forgecli.runtime.prepare.build_behavior_instructions",
 
-        lambda: "=== SYSTEM INSTRUCTION ===\nPonytail caveman rules"
+        lambda: "=== SYSTEM INSTRUCTION ===\nPromptForge responseforge rules"
 
     )
 

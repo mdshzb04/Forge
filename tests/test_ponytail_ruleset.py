@@ -1,4 +1,4 @@
-"""Tests for the Ponytail ruleset prompt optimizer."""
+"""Tests for the PromptForge ruleset prompt optimizer."""
 
 
 
@@ -8,11 +8,11 @@ import asyncio
 
 import pytest
 
-from forgecli.optimizer.ponytail import (
+from forgecli.optimizer.promptforge import (
     CompositeOptimizer,
     Intensity,
     OptimizedRequest,
-    PonytailRulesetOptimizer,
+    PromptForgeRulesetOptimizer,
     PromptOptimizer,
 )
 from forgecli.providers.base import ChatMessage, ChatRequest, Role
@@ -80,7 +80,7 @@ def test_intensity_parse_rejects_unknown() -> None:
 
 def test_ruleset_off_returns_passthrough() -> None:
 
-    optimizer = PonytailRulesetOptimizer(intensity=Intensity.OFF)
+    optimizer = PromptForgeRulesetOptimizer(intensity=Intensity.OFF)
 
     request = _request(_user("hi"))
 
@@ -90,7 +90,7 @@ def test_ruleset_off_returns_passthrough() -> None:
 
     assert result.source == "ruleset"
 
-    assert result.notes == ("ponytail off",)
+    assert result.notes == ("promptforge off",)
 
     assert [m.content for m in result.request.messages] == ["hi"]
 
@@ -100,7 +100,7 @@ def test_ruleset_off_returns_passthrough() -> None:
 
 def test_ruleset_lite_appends_guidance_when_no_system_message() -> None:
 
-    optimizer = PonytailRulesetOptimizer(intensity=Intensity.LITE)
+    optimizer = PromptForgeRulesetOptimizer(intensity=Intensity.LITE)
 
     request = _request(_user("hi"))
 
@@ -114,7 +114,7 @@ def test_ruleset_lite_appends_guidance_when_no_system_message() -> None:
 
     assert first.role is Role.SYSTEM
 
-    assert "Ponytail (lite)" in first.content
+    assert "PromptForge (lite)" in first.content
 
     assert "lazier correct alternative" in first.content
 
@@ -124,7 +124,7 @@ def test_ruleset_lite_appends_guidance_when_no_system_message() -> None:
 
 def test_ruleset_full_includes_ladder() -> None:
 
-    optimizer = PonytailRulesetOptimizer(intensity=Intensity.FULL)
+    optimizer = PromptForgeRulesetOptimizer(intensity=Intensity.FULL)
 
     request = _request(_user("hi"))
 
@@ -132,9 +132,9 @@ def test_ruleset_full_includes_ladder() -> None:
 
     system = result.request.messages[0].content
 
-    assert "Ponytail (full)" in system
+    assert "PromptForge (full)" in system
 
-    assert "Ponytail ladder" in system
+    assert "PromptForge ladder" in system
 
     assert "Speculative need" in system
 
@@ -146,7 +146,7 @@ def test_ruleset_full_includes_ladder() -> None:
 
 def test_ruleset_ultra_challenges_requirement() -> None:
 
-    optimizer = PonytailRulesetOptimizer(intensity=Intensity.ULTRA)
+    optimizer = PromptForgeRulesetOptimizer(intensity=Intensity.ULTRA)
 
     request = _request(_user("hi"))
 
@@ -154,7 +154,7 @@ def test_ruleset_ultra_challenges_requirement() -> None:
 
     system = result.request.messages[0].content
 
-    assert "Ponytail (ultra)" in system
+    assert "PromptForge (ultra)" in system
 
     assert "YAGNI extremist" in system
 
@@ -166,7 +166,7 @@ def test_ruleset_ultra_challenges_requirement() -> None:
 
 def test_ruleset_prepends_to_existing_system_message() -> None:
 
-    optimizer = PonytailRulesetOptimizer(intensity=Intensity.FULL)
+    optimizer = PromptForgeRulesetOptimizer(intensity=Intensity.FULL)
 
     request = _request(_system("You are a Python assistant."), _user("hi"))
 
@@ -176,13 +176,13 @@ def test_ruleset_prepends_to_existing_system_message() -> None:
 
     system = result.request.messages[0].content
 
-    assert "Ponytail (full)" in system
+    assert "PromptForge (full)" in system
 
     assert "You are a Python assistant." in system
 
 
 
-    assert system.index("Ponytail (full)") < system.index("You are a Python assistant.")
+    assert system.index("PromptForge (full)") < system.index("You are a Python assistant.")
 
 
 
@@ -190,7 +190,7 @@ def test_ruleset_prepends_to_existing_system_message() -> None:
 
 def test_ruleset_replaces_empty_system_message() -> None:
 
-    optimizer = PonytailRulesetOptimizer(intensity=Intensity.LITE)
+    optimizer = PromptForgeRulesetOptimizer(intensity=Intensity.LITE)
 
     request = _request(_system(""), _user("hi"))
 
@@ -198,7 +198,7 @@ def test_ruleset_replaces_empty_system_message() -> None:
 
     system = result.request.messages[0].content
 
-    assert "Ponytail (lite)" in system
+    assert "PromptForge (lite)" in system
 
 
 
@@ -206,7 +206,7 @@ def test_ruleset_replaces_empty_system_message() -> None:
 
 def test_ruleset_passthrough_when_no_user_message() -> None:
 
-    optimizer = PonytailRulesetOptimizer(intensity=Intensity.FULL)
+    optimizer = PromptForgeRulesetOptimizer(intensity=Intensity.FULL)
 
     request = _request(_system("hello"))
 
@@ -222,7 +222,7 @@ def test_ruleset_passthrough_when_no_user_message() -> None:
 
 def test_ruleset_does_not_mutate_input_request() -> None:
 
-    optimizer = PonytailRulesetOptimizer(intensity=Intensity.FULL)
+    optimizer = PromptForgeRulesetOptimizer(intensity=Intensity.FULL)
 
     request = _request(_user("hi"))
 
@@ -242,7 +242,7 @@ def test_composite_off_short_circuits() -> None:
 
         intensity=Intensity.OFF,
 
-        ruleset=PonytailRulesetOptimizer(),
+        ruleset=PromptForgeRulesetOptimizer(),
 
     )
 
@@ -292,7 +292,7 @@ def test_composite_uses_external_when_available() -> None:
 
         intensity=Intensity.LITE,
 
-        ruleset=PonytailRulesetOptimizer(),
+        ruleset=PromptForgeRulesetOptimizer(),
 
         external=_External(),
 
@@ -334,7 +334,7 @@ def test_composite_falls_back_to_ruleset_when_external_unavailable() -> None:
 
         intensity=Intensity.FULL,
 
-        ruleset=PonytailRulesetOptimizer(),
+        ruleset=PromptForgeRulesetOptimizer(),
 
         external=_External(),
 
@@ -346,7 +346,7 @@ def test_composite_falls_back_to_ruleset_when_external_unavailable() -> None:
 
     assert result.source == "ruleset"
 
-    assert "Ponytail (full)" in result.request.messages[0].content
+    assert "PromptForge (full)" in result.request.messages[0].content
 
 
 

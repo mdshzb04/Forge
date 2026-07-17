@@ -1,12 +1,12 @@
-"""Self-contained Python implementation of the Ponytail ruleset.
+"""Self-contained Python implementation of the PromptForge ruleset.
 
-The ruleset mirrors the behavior described on https://ponytail.dev/ and
-the project's GitHub README (DietrichGebert/ponytail). It does not
+The ruleset mirrors the behavior described on https://promptforge.dev/ and
+the project's GitHub README (DietrichGebert/promptforge). It does not
 shell out to anything; it rewrites the system message of a
 :class:`ChatRequest` to bias the model toward the lazier correct
 solution.
 
-The four intensity levels match the official ``/ponytail`` command:
+The four intensity levels match the official ``/promptforge`` command:
 
 * ``off``   - pass-through (handled by the composite, not this class).
 * ``lite``  - default; appends a single sentence reminding the model to
@@ -24,7 +24,7 @@ tests can pin it.
 
 from __future__ import annotations
 
-from forgecli.optimizer.ponytail import (
+from forgecli.optimizer.promptforge import (
     CompositeOptimizer,
     Intensity,
     OptimizedRequest,
@@ -36,7 +36,7 @@ from forgecli.providers.base import ChatMessage, ChatRequest, Role
 
 LADDER_INSTRUCTION = (
 
-    "Stop at the first rung that holds. Apply the Ponytail ladder before "
+    "Stop at the first rung that holds. Apply the PromptForge ladder before "
 
     "writing any code:\n"
 
@@ -72,7 +72,7 @@ _INTENSITY_GUIDANCE: dict[Intensity, str] = {
 
     Intensity.LITE: (
 
-        "Ponytail (lite): when you reach for code, also name the lazier "
+        "PromptForge (lite): when you reach for code, also name the lazier "
 
         "correct alternative in a single sentence. The user picks."
 
@@ -80,7 +80,7 @@ _INTENSITY_GUIDANCE: dict[Intensity, str] = {
 
     Intensity.FULL: (
 
-        "Ponytail (full): apply the Ponytail ladder before writing any code. "
+        "PromptForge (full): apply the PromptForge ladder before writing any code. "
 
         "Ship the shortest diff and the shortest explanation. Never "
 
@@ -92,7 +92,7 @@ _INTENSITY_GUIDANCE: dict[Intensity, str] = {
 
     Intensity.ULTRA: (
 
-        "Ponytail (ultra): YAGNI extremist. Ship the one-liner. In the "
+        "PromptForge (ultra): YAGNI extremist. Ship the one-liner. In the "
 
         "same breath, name what is being *cut* from the original "
 
@@ -106,13 +106,13 @@ _INTENSITY_GUIDANCE: dict[Intensity, str] = {
 
 
 
-class PonytailRulesetOptimizer(PromptOptimizer):
+class PromptForgeRulesetOptimizer(PromptOptimizer):
 
-    """Rewrite system messages to apply the Ponytail ruleset."""
+    """Rewrite system messages to apply the PromptForge ruleset."""
 
 
 
-    name = "ponytail.ruleset"
+    name = "promptforge.ruleset"
 
 
 
@@ -144,7 +144,7 @@ class PonytailRulesetOptimizer(PromptOptimizer):
 
                 request=request,
 
-                notes=("ponytail off",),
+                notes=("promptforge off",),
 
                 intensity=Intensity.OFF,
 
@@ -208,7 +208,7 @@ def _rewrite_messages(
 
 ) -> list[ChatMessage]:
 
-    """Insert Ponytail guidance at the head of the conversation.
+    """Insert PromptForge guidance at the head of the conversation.
 
     Rules:
     * If the first message is a system message, prepend the guidance
@@ -252,7 +252,7 @@ def _build_notes(
 
 ) -> tuple[str, ...]:
 
-    notes: list[str] = [f"ponytail intensity={intensity.value}"]
+    notes: list[str] = [f"promptforge intensity={intensity.value}"]
 
     if intensity is Intensity.FULL:
 
@@ -280,7 +280,7 @@ __all__ = [
 
     "LADDER_INSTRUCTION",
 
-    "PonytailRulesetOptimizer",
+    "PromptForgeRulesetOptimizer",
 
 ]
 

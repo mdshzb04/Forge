@@ -17,7 +17,7 @@ def inspect_cmd(
 
 ) -> None:
 
-    """Display the active pipeline, loaded plugins, provider, Graphify status, and optimization stages."""
+    """Display the active pipeline, loaded plugins, provider, ForgeGraph status, and optimization stages."""
 
     console = get_console()
 
@@ -53,7 +53,7 @@ def inspect_cmd(
         ContextOptimizerMiddleware,
         ConversationMiddleware,
         DependencyGraphMiddleware,
-        GraphifyMiddleware,
+        ForgeGraphMiddleware,
         HistoryCompressorMiddleware,
         PolicyMiddleware,
         PromptOptimizerMiddleware,
@@ -87,7 +87,7 @@ def inspect_cmd(
 
         (ConversationMiddleware(), "forgecli.middleware.defaults"),
 
-        (PromptOptimizerMiddleware(), "forgecli.middleware.ponytail_adapter"),
+        (PromptOptimizerMiddleware(), "forgecli.middleware.promptforge_adapter"),
 
         (RepositoryPlannerMiddleware(), "forgecli.middleware.defaults"),
 
@@ -95,7 +95,7 @@ def inspect_cmd(
 
         (SymbolLookupMiddleware(), "forgecli.middleware.defaults"),
 
-        (GraphifyMiddleware(), "forgecli.middleware.graphify_adapter"),
+        (ForgeGraphMiddleware(), "forgecli.middleware.forgegraph_adapter"),
 
         (SemanticRetrievalMiddleware(), "forgecli.middleware.defaults"),
 
@@ -123,17 +123,17 @@ def inspect_cmd(
 
 
 
-    from forgecli.middleware.caveman_adapter import CavemanAdapterMiddleware
-    from forgecli.middleware.ponytail_adapter import PonytailAdapterMiddleware
+    from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
+    from forgecli.middleware.promptforge_adapter import PromptForgeAdapterMiddleware
     from forgecli.resilience.middleware import ResilienceMiddleware
 
 
 
     adapters = [
 
-        (CavemanAdapterMiddleware(), "forgecli.middleware.caveman_adapter"),
+        (ResponseForgeAdapterMiddleware(), "forgecli.middleware.responseforge_adapter"),
 
-        (PonytailAdapterMiddleware(), "forgecli.middleware.ponytail_adapter"),
+        (PromptForgeAdapterMiddleware(), "forgecli.middleware.promptforge_adapter"),
 
         (ResilienceMiddleware(), "forgecli.resilience.middleware"),
 
@@ -197,18 +197,18 @@ def inspect_cmd(
 
 
 
-    console.print("  [bold]Graphify Status[/bold]")
+    console.print("  [bold]ForgeGraph Status[/bold]")
 
     console.print()
 
 
 
     try:
-        from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
-        graph = ForgeRepositoryGraph(root=cwd)
+        from forgecli.graph.local_engine import LocalCodeGraph
+        graph = LocalCodeGraph(root=cwd)
         is_installed = _run_async(graph._client.is_installed())
         if is_installed:
-            console.print("    [green]Available[/green] — built-in + external graphifyy binary detected")
+            console.print("    [green]Available[/green] — built-in + external forgegraphy binary detected")
         else:
             console.print("    [green]Available[/green] — built-in native builder")
 
@@ -220,7 +220,7 @@ def inspect_cmd(
         except Exception:
             console.print("    [dim]Graph not built yet. Run [cyan]forge graph build[/cyan][/dim]")
     except Exception:
-        console.print("    [dim]Graphify backend not available.[/dim]")
+        console.print("    [dim]ForgeGraph backend not available.[/dim]")
 
 
 
@@ -250,7 +250,7 @@ def inspect_cmd(
 
         p_intensity = settings.prompt_optimizer.intensity if settings.prompt_optimizer.enabled else "off"
 
-        c_intensity = settings.caveman.intensity if settings.caveman.enabled else "off"
+        c_intensity = settings.responseforge.intensity if settings.responseforge.enabled else "off"
 
         o_intensity = settings.output_optimization.intensity if settings.output_optimization.enabled else "off"
 
@@ -280,9 +280,9 @@ def inspect_cmd(
 
 
 
-    console.print(f"    Ponytail (prompt)  : {modes.get(p_intensity, p_intensity)}")
+    console.print(f"    PromptForge (prompt)  : {modes.get(p_intensity, p_intensity)}")
 
-    console.print(f"    Caveman (output)   : {modes.get(c_intensity, c_intensity)}")
+    console.print(f"    ResponseForge (output)   : {modes.get(c_intensity, c_intensity)}")
 
     console.print(f"    Output opt         : {modes.get(o_intensity, o_intensity)}")
 

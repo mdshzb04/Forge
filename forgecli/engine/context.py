@@ -167,9 +167,9 @@ class EngineContext:
 
 
 
-    caveman_optimized_request: Any = None
+    responseforge_optimized_request: Any = None
 
-    caveman_optimized_notes: tuple[str, ...] = ()
+    responseforge_optimized_notes: tuple[str, ...] = ()
 
 
 
@@ -241,7 +241,7 @@ class EngineContext:
 
             "retrieval_match_count": len(self.retrieval.matched_nodes) if self.retrieval else 0,
 
-            "caveman_optimized_notes": list(self.caveman_optimized_notes),
+            "responseforge_optimized_notes": list(self.responseforge_optimized_notes),
 
             "optimized_notes": list(self.optimized_notes),
 

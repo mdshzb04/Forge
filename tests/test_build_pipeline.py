@@ -315,23 +315,23 @@ def test_apply_unified_diff_with_git(tmp_path: Path) -> None:
 
 
 
-def test_ponytail_stage_uses_ruleset() -> None:
+def test_promptforge_stage_uses_ruleset() -> None:
 
-    from forgecli.build.optimize import ponytail_optimization
-    from forgecli.optimizer.ponytail import (
+    from forgecli.build.optimize import promptforge_optimization
+    from forgecli.optimizer.promptforge import (
         Intensity,
-        PonytailRulesetOptimizer,
+        PromptForgeRulesetOptimizer,
     )
 
 
 
-    optimizer = PonytailRulesetOptimizer(intensity=Intensity.FULL)
+    optimizer = PromptForgeRulesetOptimizer(intensity=Intensity.FULL)
 
     context = BuildContext(prompt="add a foo", root=Path("/tmp"))
 
     context.extras["optimizer"] = optimizer
 
-    out = asyncio.run(ponytail_optimization(context))
+    out = asyncio.run(promptforge_optimization(context))
 
     assert out.optimized_request is not None
 
@@ -341,15 +341,15 @@ def test_ponytail_stage_uses_ruleset() -> None:
 
 
 
-def test_ponytail_stage_works_without_optimizer() -> None:
+def test_promptforge_stage_works_without_optimizer() -> None:
 
-    from forgecli.build.optimize import ponytail_optimization
+    from forgecli.build.optimize import promptforge_optimization
 
 
 
     context = BuildContext(prompt="add a foo", root=Path("/tmp"))
 
-    out = asyncio.run(ponytail_optimization(context))
+    out = asyncio.run(promptforge_optimization(context))
 
     assert out.optimized_request is not None
 
@@ -370,12 +370,12 @@ def test_ponytail_stage_works_without_optimizer() -> None:
 def test_forgegraph_retrieval_uses_snapshot(tmp_path: Path) -> None:
 
     from forgecli.build.retrieval import forgegraph_retrieval
-    from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
+    from forgecli.graph.local_engine import LocalCodeGraph
     from forgecli.graph.repository import GraphEdge, GraphNode, GraphSnapshot
 
 
 
-    graph = ForgeRepositoryGraph(root=tmp_path)
+    graph = LocalCodeGraph(root=tmp_path)
 
     snapshot = GraphSnapshot(
 

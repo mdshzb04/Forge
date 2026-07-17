@@ -1,4 +1,4 @@
-"""Build pipeline: ForgeGraph retrieval -> Ponytail -> LLM -> diff -> apply -> test -> summary.
+"""Build pipeline: ForgeGraph retrieval -> PromptForge -> LLM -> diff -> apply -> test -> summary.
 
 Each stage is a small async function that takes a :class:`BuildContext` and
 mutates it, returning the same context. The :class:`BuildPipeline` runs the
@@ -104,9 +104,9 @@ class BuildContext:
 
     retrieval: str = ""                                      
 
-    caveman_optimized_request: Any = None
+    responseforge_optimized_request: Any = None
 
-    caveman_optimized_notes: tuple[str, ...] = ()
+    responseforge_optimized_notes: tuple[str, ...] = ()
 
     optimized_request: Any = None
 

@@ -88,9 +88,9 @@ def test_cli_config_shows_help_and_values(tmp_path: Path, monkeypatch) -> None:
 
     assert "Forge Configuration" in result.output
 
-    assert "Ponytail Profile : lite" in result.output
+    assert "PromptForge Profile : lite" in result.output
 
-    assert "Caveman Profile  : lite" in result.output
+    assert "ResponseForge Profile  : lite" in result.output
 
     assert "Output Profile   : lite" in result.output
 
@@ -116,7 +116,7 @@ def test_cli_config_updates_profiles(tmp_path: Path, monkeypatch) -> None:
 
     result = runner.invoke(
 
-        app, ["config", "--ponytail", "ultra", "--caveman", "full", "--output", "ultra"]
+        app, ["config", "--promptforge", "ultra", "--responseforge", "full", "--output", "ultra"]
 
     )
 
@@ -140,9 +140,9 @@ def test_cli_config_updates_profiles(tmp_path: Path, monkeypatch) -> None:
 
     assert data["prompt_optimizer"]["enabled"] is True
 
-    assert data["caveman"]["intensity"] == "full"
+    assert data["responseforge"]["intensity"] == "full"
 
-    assert data["caveman"]["enabled"] is True
+    assert data["responseforge"]["enabled"] is True
 
     assert data["output_optimization"]["intensity"] == "ultra"
 
@@ -156,9 +156,9 @@ def test_cli_config_updates_profiles(tmp_path: Path, monkeypatch) -> None:
 
     assert result.exit_code == 0
 
-    assert "Ponytail Profile : ultra" in result.output
+    assert "PromptForge Profile : ultra" in result.output
 
-    assert "Caveman Profile  : full" in result.output
+    assert "ResponseForge Profile  : full" in result.output
 
     assert "Output Profile   : ultra" in result.output
 
@@ -184,15 +184,15 @@ def test_cli_config_invalid_fallback(tmp_path: Path, monkeypatch) -> None:
 
     result = runner.invoke(
 
-        app, ["config", "--ponytail", "invalid", "--caveman", "wrong", "--output", "bad"]
+        app, ["config", "--promptforge", "invalid", "--responseforge", "wrong", "--output", "bad"]
 
     )
 
     assert result.exit_code == 0
 
-    assert "Invalid Ponytail mode" in result.output
+    assert "Invalid PromptForge mode" in result.output
 
-    assert "Invalid Caveman mode" in result.output
+    assert "Invalid ResponseForge mode" in result.output
 
     assert "Invalid Output mode" in result.output
 
@@ -210,7 +210,7 @@ def test_cli_config_invalid_fallback(tmp_path: Path, monkeypatch) -> None:
 
     assert data["prompt_optimizer"]["intensity"] == "lite"
 
-    assert data["caveman"]["intensity"] == "lite"
+    assert data["responseforge"]["intensity"] == "lite"
 
     assert data["output_optimization"]["intensity"] == "lite"
 

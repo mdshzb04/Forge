@@ -28,7 +28,7 @@ from forgecli.build.diff_extract import diff_extraction
 
 from forgecli.build.llm import llm_call
 
-from forgecli.build.optimize import ponytail_optimization
+from forgecli.build.optimize import promptforge_optimization
 
 from forgecli.build.retrieval import forgegraph_retrieval
 
@@ -36,7 +36,7 @@ from forgecli.build.summarize import summarize
 
 from forgecli.build.test_run import run_tests
 
-from forgecli.optimizer.ponytail import PromptOptimizer
+from forgecli.optimizer.promptforge import PromptOptimizer
 
 from forgecli.providers.base import Provider
 
@@ -72,7 +72,7 @@ def default_pipeline(
 
         ("forgegraph-retrieval", _stage_with(forgegraph_retrieval, graph=graph)),
 
-        ("ponytail-optimize", _stage_with(ponytail_optimization, optimizer=optimizer)),
+        ("promptforge-optimize", _stage_with(promptforge_optimization, optimizer=optimizer)),
 
         ("llm", _stage_with(llm_call, provider=provider)),
 

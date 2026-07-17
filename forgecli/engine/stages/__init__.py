@@ -12,7 +12,7 @@ functions.
 
 
 
-from forgecli.engine.stages.caveman_optimizer import CavemanOptimizerStage
+from forgecli.engine.stages.responseforge_optimizer import ResponseForgeOptimizerStage
 from forgecli.engine.stages.context_optimizer import ContextOptimizerStage
 from forgecli.engine.stages.execution_engine_stage import ExecutionEngineStage
 from forgecli.engine.stages.git_engine import GitEngineStage
@@ -24,7 +24,7 @@ from forgecli.engine.stages.validation_engine import ValidationEngineStage
 
 __all__ = [
 
-    "CavemanOptimizerStage",
+    "ResponseForgeOptimizerStage",
 
     "ContextOptimizerStage",
 

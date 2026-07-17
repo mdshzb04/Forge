@@ -60,9 +60,9 @@ class TestUnifiedPipeline:
 
         assert "ResponseOptimizerMiddleware" in names
 
-        assert "PonytailAdapterMiddleware" in names
+        assert "PromptForgeAdapterMiddleware" in names
 
-        assert "CavemanAdapterMiddleware" in names
+        assert "ResponseForgeAdapterMiddleware" in names
 
         assert "ResilienceMiddleware" in names
 
@@ -174,7 +174,7 @@ class TestUnifiedPipeline:
 
 
 
-    def test_pipeline_with_ponytail_caveman_enabled(self, tmp_path: Path) -> None:
+    def test_pipeline_with_promptforge_responseforge_enabled(self, tmp_path: Path) -> None:
 
         from forgecli.runtime.pipeline_runner import build_default_pipeline
 
@@ -182,9 +182,9 @@ class TestUnifiedPipeline:
 
             repo_root=tmp_path,
 
-            ponytail_intensity="ultra",
+            promptforge_intensity="ultra",
 
-            caveman_intensity="full",
+            responseforge_intensity="full",
 
         )
 
@@ -192,9 +192,9 @@ class TestUnifiedPipeline:
 
         names = [type(s).__name__ for s in stages]
 
-        assert "PonytailAdapterMiddleware" in names
+        assert "PromptForgeAdapterMiddleware" in names
 
-        assert "CavemanAdapterMiddleware" in names
+        assert "ResponseForgeAdapterMiddleware" in names
 
 
 
@@ -309,7 +309,7 @@ class TestDiagnosticCommands:
         import subprocess
         import sys
 
-        for topic in ["pipeline", "ponytail", "caveman", "graphify", "mcp", "daemon"]:
+        for topic in ["pipeline", "promptforge", "responseforge", "forgegraph", "mcp", "daemon"]:
 
             result = subprocess.run(
 
@@ -446,7 +446,7 @@ class TestMiddlewareDefaults:
             ContextOptimizerMiddleware,
             ConversationMiddleware,
             DependencyGraphMiddleware,
-            GraphifyMiddleware,
+            ForgeGraphMiddleware,
             HistoryCompressorMiddleware,
             PolicyMiddleware,
             PromptOptimizerMiddleware,
@@ -470,7 +470,7 @@ class TestMiddlewareDefaults:
 
             RepositoryPlannerMiddleware, DependencyGraphMiddleware, SymbolLookupMiddleware,
 
-            GraphifyMiddleware, SemanticRetrievalMiddleware, StreamingMiddleware,
+            ForgeGraphMiddleware, SemanticRetrievalMiddleware, StreamingMiddleware,
 
             ProviderMiddleware, ResponseOptimizerMiddleware,
 
@@ -495,7 +495,7 @@ class TestMiddlewareDefaults:
             ContextOptimizerMiddleware,
             ConversationMiddleware,
             DependencyGraphMiddleware,
-            GraphifyMiddleware,
+            ForgeGraphMiddleware,
             HistoryCompressorMiddleware,
             PolicyMiddleware,
             PromptOptimizerMiddleware,
@@ -564,7 +564,7 @@ class TestMiddlewareDefaults:
 
             RepositoryPlannerMiddleware(), DependencyGraphMiddleware(), SymbolLookupMiddleware(),
 
-            GraphifyMiddleware(), SemanticRetrievalMiddleware(), StreamingMiddleware(),
+            ForgeGraphMiddleware(), SemanticRetrievalMiddleware(), StreamingMiddleware(),
 
             ProviderMiddleware(), ResponseOptimizerMiddleware(),
 

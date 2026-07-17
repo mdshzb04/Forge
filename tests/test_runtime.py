@@ -60,7 +60,7 @@ def test_prepare_runtime_is_fast_and_cached(tmp_path: Path, monkeypatch) -> None
 
 
 
-def test_prepare_runtime_applies_caveman_injection(tmp_path: Path, monkeypatch) -> None:
+def test_prepare_runtime_applies_responseforge_injection(tmp_path: Path, monkeypatch) -> None:
 
     monkeypatch.setenv("FORGECLI_DATA_DIR", str(tmp_path / "data"))
 

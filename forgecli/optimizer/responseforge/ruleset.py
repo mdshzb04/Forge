@@ -1,14 +1,14 @@
-"""Self-contained Python implementation of the Caveman ruleset.
+"""Self-contained Python implementation of the ResponseForge ruleset.
 
-The ruleset mirrors the behavior described on https://github.com/JuliusBrussee/caveman.
+The ruleset mirrors the behavior described on https://github.com/JuliusBrussee/responseforge.
 It does not shell out to anything; it rewrites the system message of a
 :class:`ChatRequest` to bias the model toward token-efficient output.
 
-The five intensity levels match the official Caveman project:
+The five intensity levels match the official ResponseForge project:
 
 * ``off``    - pass-through (handled by the composite, not this class).
 * ``lite``   - concise communication; drop filler words and pleasantries.
-* ``full``   - full caveman: fragments, [thing][action][reason] pattern.
+* ``full``   - full responseforge: fragments, [thing][action][reason] pattern.
 * ``ultra``  - maximum compression; grunt-level communication.
 * ``wenyan`` - Classical Chinese literary style for max semantic density.
 
@@ -20,20 +20,20 @@ tests can pin it.
 
 from __future__ import annotations
 
-from forgecli.optimizer.caveman import (
-    CavemanIntensity,
-    CavemanPromptOptimizer,
+from forgecli.optimizer.responseforge import (
+    ResponseForgeIntensity,
+    ResponseForgePromptOptimizer,
     OptimizedRequest,
     _clone_request,
     _ensure_user_message,
 )
 from forgecli.providers.base import ChatMessage, ChatRequest, Role
 
-_CAVEMAN_GUIDANCE: dict[CavemanIntensity, str] = {
+_CAVEMAN_GUIDANCE: dict[ResponseForgeIntensity, str] = {
 
-    CavemanIntensity.OFF: "",
+    ResponseForgeIntensity.OFF: "",
 
-    CavemanIntensity.LITE: (
+    ResponseForgeIntensity.LITE: (
 
         "CAVEMAN (lite): keep responses brief. "
 
@@ -45,7 +45,7 @@ _CAVEMAN_GUIDANCE: dict[CavemanIntensity, str] = {
 
     ),
 
-    CavemanIntensity.FULL: (
+    ResponseForgeIntensity.FULL: (
 
         "CAVEMAN (full): adopt a direct, fragment-based speech pattern. "
 
@@ -67,7 +67,7 @@ _CAVEMAN_GUIDANCE: dict[CavemanIntensity, str] = {
 
     ),
 
-    CavemanIntensity.ULTRA: (
+    ResponseForgeIntensity.ULTRA: (
 
         "CAVEMAN (ultra): apply maximum communication compression.\n\n"
 
@@ -85,7 +85,7 @@ _CAVEMAN_GUIDANCE: dict[CavemanIntensity, str] = {
 
     ),
 
-    CavemanIntensity.WENYAN: (
+    ResponseForgeIntensity.WENYAN: (
 
         "CAVEMAN (wenyan): format the response in Classical Chinese style "
 
@@ -109,49 +109,49 @@ _CAVEMAN_GUIDANCE: dict[CavemanIntensity, str] = {
 
 
 
-class CavemanRulesetOptimizer(CavemanPromptOptimizer):
+class ResponseForgeRulesetOptimizer(ResponseForgePromptOptimizer):
 
-    """Rewrite system messages to apply the Caveman ruleset."""
-
-
-
-    name = "caveman.ruleset"
+    """Rewrite system messages to apply the ResponseForge ruleset."""
 
 
 
-    def __init__(self, *, intensity: CavemanIntensity = CavemanIntensity.LITE) -> None:
+    name = "responseforge.ruleset"
 
-        self._intensity = CavemanIntensity.parse(intensity)
+
+
+    def __init__(self, *, intensity: ResponseForgeIntensity = ResponseForgeIntensity.LITE) -> None:
+
+        self._intensity = ResponseForgeIntensity.parse(intensity)
 
 
 
     @property
 
-    def intensity(self) -> CavemanIntensity:
+    def intensity(self) -> ResponseForgeIntensity:
 
         return self._intensity
 
 
 
-    def set_intensity(self, intensity: CavemanIntensity | str) -> None:
+    def set_intensity(self, intensity: ResponseForgeIntensity | str) -> None:
 
-        self._intensity = CavemanIntensity.parse(intensity)
+        self._intensity = ResponseForgeIntensity.parse(intensity)
 
 
 
     async def optimize_chat(self, request: ChatRequest) -> OptimizedRequest:
 
-        if self._intensity is CavemanIntensity.OFF:
+        if self._intensity is ResponseForgeIntensity.OFF:
 
             return OptimizedRequest(
 
                 request=request,
 
-                notes=("caveman off",),
+                notes=("responseforge off",),
 
-                intensity=CavemanIntensity.OFF,
+                intensity=ResponseForgeIntensity.OFF,
 
-                source="caveman-ruleset",
+                source="responseforge-ruleset",
 
             )
 
@@ -169,11 +169,11 @@ class CavemanRulesetOptimizer(CavemanPromptOptimizer):
 
                 request=request,
 
-                notes=("no user message; caveman passthrough",),
+                notes=("no user message; responseforge passthrough",),
 
                 intensity=self._intensity,
 
-                source="caveman-ruleset",
+                source="responseforge-ruleset",
 
             )
 
@@ -191,7 +191,7 @@ class CavemanRulesetOptimizer(CavemanPromptOptimizer):
 
             intensity=self._intensity,
 
-            source="caveman-ruleset",
+            source="responseforge-ruleset",
 
         )
 
@@ -207,7 +207,7 @@ def _rewrite_messages(
 
 ) -> list[ChatMessage]:
 
-    """Insert Caveman guidance at the head of the conversation.
+    """Insert ResponseForge guidance at the head of the conversation.
 
     Rules:
     * If the first message is a system message, prepend the guidance
@@ -245,25 +245,25 @@ def _rewrite_messages(
 
 
 
-def _build_notes(intensity: CavemanIntensity) -> tuple[str, ...]:
+def _build_notes(intensity: ResponseForgeIntensity) -> tuple[str, ...]:
 
-    notes: list[str] = [f"caveman intensity={intensity.value}"]
+    notes: list[str] = [f"responseforge intensity={intensity.value}"]
 
-    if intensity is CavemanIntensity.FULL:
+    if intensity is ResponseForgeIntensity.FULL:
 
-        notes.append("caveman full mode \u2014 fragments + [thing][action][reason]")
+        notes.append("responseforge full mode \u2014 fragments + [thing][action][reason]")
 
-    elif intensity is CavemanIntensity.ULTRA:
+    elif intensity is ResponseForgeIntensity.ULTRA:
 
-        notes.append("caveman ultra \u2014 maximum compression")
+        notes.append("responseforge ultra \u2014 maximum compression")
 
-    elif intensity is CavemanIntensity.WENYAN:
+    elif intensity is ResponseForgeIntensity.WENYAN:
 
-        notes.append("caveman wenyan \u2014 classical Chinese literary style")
+        notes.append("responseforge wenyan \u2014 classical Chinese literary style")
 
-    elif intensity is CavemanIntensity.LITE:
+    elif intensity is ResponseForgeIntensity.LITE:
 
-        notes.append("caveman lite \u2014 concise, no filler")
+        notes.append("responseforge lite \u2014 concise, no filler")
 
     return tuple(notes)
 
@@ -273,7 +273,7 @@ def _build_notes(intensity: CavemanIntensity) -> tuple[str, ...]:
 
 __all__ = [
 
-    "CavemanRulesetOptimizer",
+    "ResponseForgeRulesetOptimizer",
 
 ]
 

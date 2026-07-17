@@ -19,7 +19,7 @@ from datetime import date
 from pathlib import Path
 
 from forgecli.core.context import AppContext
-from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
+from forgecli.graph.local_engine import LocalCodeGraph
 from forgecli.utils.fs import ensure_dir
 
 _INTRO_TEMPLATE = """\
@@ -50,7 +50,7 @@ def generate_docs(context: AppContext, *, output: Path | None = None) -> Path:
 
 
 
-    graph = ForgeRepositoryGraph(root=root)
+    graph = LocalCodeGraph(root=root)
 
     snapshot = graph._cached
 

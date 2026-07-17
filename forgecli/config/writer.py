@@ -98,11 +98,23 @@ def update_config(
 
     clear_model: bool = False,
 
-    ponytail: str | None = None,
+    promptforge: str | None = None,
 
-    caveman: str | None = None,
+    responseforge: str | None = None,
 
     output_optimization: str | None = None,
+
+    loop_engineering_pattern: str | None = None,
+
+    claude_usd_limit: float | None = None,
+
+    cursor_usd_limit: float | None = None,
+
+    codex_usd_limit: float | None = None,
+
+    antigravity_usd_limit: float | None = None,
+
+    loop_engineering_enabled: bool | None = None,
 
 ) -> Path:
 
@@ -172,27 +184,27 @@ def update_config(
 
 
 
-    if ponytail is not None:
+    if promptforge is not None:
 
         if "prompt_optimizer" not in data:
 
             data["prompt_optimizer"] = {}
 
-        data["prompt_optimizer"]["intensity"] = ponytail
+        data["prompt_optimizer"]["intensity"] = promptforge
 
-        data["prompt_optimizer"]["enabled"] = ponytail != "off"
+        data["prompt_optimizer"]["enabled"] = promptforge != "off"
 
 
 
-    if caveman is not None:
+    if responseforge is not None:
 
-        if "caveman" not in data:
+        if "responseforge" not in data:
 
-            data["caveman"] = {}
+            data["responseforge"] = {}
 
-        data["caveman"]["intensity"] = caveman
+        data["responseforge"]["intensity"] = responseforge
 
-        data["caveman"]["enabled"] = caveman != "off"
+        data["responseforge"]["enabled"] = responseforge != "off"
 
 
 
@@ -205,6 +217,58 @@ def update_config(
         data["output_optimization"]["intensity"] = output_optimization
 
         data["output_optimization"]["enabled"] = output_optimization != "off"
+
+
+
+    if any(
+
+        value is not None
+
+        for value in (
+
+            loop_engineering_pattern,
+
+            claude_usd_limit,
+
+            cursor_usd_limit,
+
+            codex_usd_limit,
+
+            antigravity_usd_limit,
+
+            loop_engineering_enabled,
+
+        )
+
+    ):
+
+        if "loop_engineering" not in data:
+
+            data["loop_engineering"] = {}
+
+        if loop_engineering_pattern is not None:
+
+            data["loop_engineering"]["pattern"] = loop_engineering_pattern
+
+        if claude_usd_limit is not None:
+
+            data["loop_engineering"]["claude_usd_limit"] = claude_usd_limit
+
+        if cursor_usd_limit is not None:
+
+            data["loop_engineering"]["cursor_usd_limit"] = cursor_usd_limit
+
+        if codex_usd_limit is not None:
+
+            data["loop_engineering"]["codex_usd_limit"] = codex_usd_limit
+
+        if antigravity_usd_limit is not None:
+
+            data["loop_engineering"]["antigravity_usd_limit"] = antigravity_usd_limit
+
+        if loop_engineering_enabled is not None:
+
+            data["loop_engineering"]["enabled"] = loop_engineering_enabled
 
 
 

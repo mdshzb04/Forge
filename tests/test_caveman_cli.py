@@ -1,4 +1,4 @@
-"""Tests for the Caveman CLI adapter and the CavemanProvider decorator."""
+"""Tests for the ResponseForge CLI adapter and the ResponseForgeProvider decorator."""
 
 
 
@@ -9,13 +9,13 @@ from typing import Any
 
 import pytest
 
-from forgecli.optimizer.caveman import (
-    CavemanIntensity,
-    CavemanPromptOptimizer,
-    CavemanRulesetOptimizer,
+from forgecli.optimizer.responseforge import (
+    ResponseForgeIntensity,
+    ResponseForgePromptOptimizer,
+    ResponseForgeRulesetOptimizer,
 )
-from forgecli.optimizer.caveman.cli import CavemanCLIOptimizer
-from forgecli.optimizer.caveman.decorator import CavemanProvider
+from forgecli.optimizer.responseforge.cli import ResponseForgeCLIOptimizer
+from forgecli.optimizer.responseforge.decorator import ResponseForgeProvider
 from forgecli.providers.base import (
     ChatMessage,
     ChatRequest,
@@ -35,11 +35,11 @@ def _request(*messages: ChatMessage) -> ChatRequest:
 
 def test_is_available_uses_path(monkeypatch) -> None:
 
-    opt = CavemanCLIOptimizer(executable="caveman")
+    opt = ResponseForgeCLIOptimizer(executable="responseforge")
 
     monkeypatch.setattr(
 
-        "shutil.which", lambda name: "/usr/bin/caveman" if name == "caveman" else None
+        "shutil.which", lambda name: "/usr/bin/responseforge" if name == "responseforge" else None
 
     )
 
@@ -55,17 +55,17 @@ def test_is_available_uses_path(monkeypatch) -> None:
 
 def test_cli_stub_returns_passthrough(monkeypatch) -> None:
 
-    opt = CavemanCLIOptimizer(executable="caveman")
+    opt = ResponseForgeCLIOptimizer(executable="responseforge")
 
     monkeypatch.setattr(
 
-        "shutil.which", lambda name: "/usr/bin/caveman" if name == "caveman" else None
+        "shutil.which", lambda name: "/usr/bin/responseforge" if name == "responseforge" else None
 
     )
 
     result = asyncio.run(opt.optimize_chat(_request(ChatMessage(role=Role.USER, content="hi"))))
 
-    assert result.source == "caveman-cli"
+    assert result.source == "responseforge-cli"
 
     assert any("CLI stub" in n for n in result.notes)
 
@@ -121,13 +121,13 @@ class _StubProvider(Provider[Any]):
 
 
 
-def test_caveman_provider_runs_optimizer_before_chat() -> None:
+def test_responseforge_provider_runs_optimizer_before_chat() -> None:
 
     base = _StubProvider()
 
-    ruleset = CavemanRulesetOptimizer(intensity=CavemanIntensity.FULL)
+    ruleset = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.FULL)
 
-    wrapped = CavemanProvider(base=base, optimizer=ruleset)
+    wrapped = ResponseForgeProvider(base=base, optimizer=ruleset)
 
     response = asyncio.run(wrapped.chat(_request(ChatMessage(role=Role.USER, content="hi"))))
 
@@ -145,15 +145,15 @@ def test_caveman_provider_runs_optimizer_before_chat() -> None:
 
 
 
-def test_caveman_provider_passes_through_when_optimizer_off() -> None:
+def test_responseforge_provider_passes_through_when_optimizer_off() -> None:
 
-    from forgecli.optimizer.caveman import OptimizedRequest
+    from forgecli.optimizer.responseforge import OptimizedRequest
 
 
 
-    class _PassthroughOpt(CavemanPromptOptimizer):
+    class _PassthroughOpt(ResponseForgePromptOptimizer):
 
-        name = "caveman-passthrough"
+        name = "responseforge-passthrough"
 
 
 
@@ -163,11 +163,11 @@ def test_caveman_provider_passes_through_when_optimizer_off() -> None:
 
                 request=request,
 
-                notes=("caveman noop",),
+                notes=("responseforge noop",),
 
-                intensity=CavemanIntensity.OFF,
+                intensity=ResponseForgeIntensity.OFF,
 
-                source="caveman-passthrough",
+                source="responseforge-passthrough",
 
             )
 
@@ -175,7 +175,7 @@ def test_caveman_provider_passes_through_when_optimizer_off() -> None:
 
     base = _StubProvider()
 
-    wrapped = CavemanProvider(base=base, optimizer=_PassthroughOpt())
+    wrapped = ResponseForgeProvider(base=base, optimizer=_PassthroughOpt())
 
     asyncio.run(wrapped.chat(_request(ChatMessage(role=Role.USER, content="hi"))))
 
@@ -187,7 +187,7 @@ def test_caveman_provider_passes_through_when_optimizer_off() -> None:
 
 
 
-def test_caveman_provider_embed_passthrough() -> None:
+def test_responseforge_provider_embed_passthrough() -> None:
 
     from forgecli.providers.base import EmbeddingRequest, EmbeddingResponse
 
@@ -203,9 +203,9 @@ def test_caveman_provider_embed_passthrough() -> None:
 
     base = _Stub()
 
-    ruleset = CavemanRulesetOptimizer(intensity=CavemanIntensity.FULL)
+    ruleset = ResponseForgeRulesetOptimizer(intensity=ResponseForgeIntensity.FULL)
 
-    wrapped = CavemanProvider(base=base, optimizer=ruleset)
+    wrapped = ResponseForgeProvider(base=base, optimizer=ruleset)
 
     response = asyncio.run(wrapped.embed(EmbeddingRequest(inputs=["hi"])))
 

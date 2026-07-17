@@ -42,11 +42,7 @@ from forgecli.providers.mock import MockProvider, MockProviderConfig
 from forgecli.providers.router import ModelRouter
 from forgecli.providers.router_state import load_state
 
-prompt_optimizer_cls = importlib.import_module(
-
-    "forgecli.optimizer." + "".join(["p", "o", "n", "y", "t", "a", "i", "l"])
-
-).PromptOptimizer
+prompt_optimizer_cls = importlib.import_module("forgecli.optimizer.promptforge").PromptOptimizer
 
 
 

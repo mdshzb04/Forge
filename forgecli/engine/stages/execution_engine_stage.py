@@ -79,23 +79,23 @@ class ExecutionEngineStage:
 
         if (
 
-            context.engine.caveman_optimized_request is not None
+            context.engine.responseforge_optimized_request is not None
 
             and context.engine.optimized_request is not None
 
         ):
 
-            build_ctx.optimized_request = _merge_caveman_request(
+            build_ctx.optimized_request = _merge_responseforge_request(
 
-                context.engine.caveman_optimized_request,
+                context.engine.responseforge_optimized_request,
 
                 context.engine.optimized_request,
 
             )
 
-        elif context.engine.caveman_optimized_request is not None:
+        elif context.engine.responseforge_optimized_request is not None:
 
-            build_ctx.optimized_request = context.engine.caveman_optimized_request
+            build_ctx.optimized_request = context.engine.responseforge_optimized_request
 
         retries = int(context.engine.extras.get("retries", 0))
 
@@ -151,27 +151,27 @@ class ExecutionEngineStage:
 
 
 
-def _merge_caveman_request(
+def _merge_responseforge_request(
 
-    caveman_req: ChatRequest,
+    responseforge_req: ChatRequest,
 
-    ponytail_req: ChatRequest,
+    promptforge_req: ChatRequest,
 
 ) -> ChatRequest:
 
-    """Merge caveman and ponytail system prompts into one request."""
+    """Merge responseforge and promptforge system prompts into one request."""
 
-    caveman_sys = [m for m in caveman_req.messages if m.role is Role.SYSTEM]
+    responseforge_sys = [m for m in responseforge_req.messages if m.role is Role.SYSTEM]
 
-    ponytail_sys = [m for m in ponytail_req.messages if m.role is Role.SYSTEM]
+    promptforge_sys = [m for m in promptforge_req.messages if m.role is Role.SYSTEM]
 
-    other_messages = [m for m in ponytail_req.messages if m.role is not Role.SYSTEM]
+    other_messages = [m for m in promptforge_req.messages if m.role is not Role.SYSTEM]
 
 
 
     merged_sys_content = "\n\n".join(
 
-        m.content for m in [*caveman_sys, *ponytail_sys] if m.content.strip()
+        m.content for m in [*responseforge_sys, *promptforge_sys] if m.content.strip()
 
     )
 
@@ -183,5 +183,5 @@ def _merge_caveman_request(
 
     ]
 
-    return ponytail_req.model_copy(update={"messages": merged_messages})
+    return promptforge_req.model_copy(update={"messages": merged_messages})
 

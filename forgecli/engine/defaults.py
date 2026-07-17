@@ -20,7 +20,7 @@ from typing import Any
 
 from forgecli.engine.execution import Stage, StageRegistry
 from forgecli.engine.stages import (
-    CavemanOptimizerStage,
+    ResponseForgeOptimizerStage,
     ContextOptimizerStage,
     ExecutionEngineStage,
     GitEngineStage,
@@ -40,7 +40,7 @@ def default_registry(
 
     optimizer: Any = None,
 
-    caveman_optimizer: Any = None,
+    responseforge_optimizer: Any = None,
 
     graph: Any = None,
 
@@ -62,7 +62,7 @@ def default_registry(
 
     * ``provider`` → :class:`ExecutionEngineStage`
     * ``optimizer`` → :class:`ContextOptimizerStage`
-    * ``caveman_optimizer`` → :class:`CavemanOptimizerStage`
+    * ``responseforge_optimizer`` → :class:`ResponseForgeOptimizerStage`
     * ``graph`` → :class:`RepositoryAnalyzerStage`
     * ``classifier`` → :class:`IntentAnalyzerStage`
     * ``router`` → :class:`ModelRouterStage`
@@ -88,7 +88,7 @@ def default_registry(
 
         RepositoryAnalyzerStage(graph=graph),
 
-        CavemanOptimizerStage(optimizer=caveman_optimizer),
+        ResponseForgeOptimizerStage(optimizer=responseforge_optimizer),
 
         ContextOptimizerStage(optimizer=optimizer),
 

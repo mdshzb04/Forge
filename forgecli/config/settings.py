@@ -135,7 +135,7 @@ class OptimizerSection(BaseModel):
 
 class PromptOptimizerSection(BaseModel):
 
-    """Ponytail prompt-optimizer settings."""
+    """PromptForge prompt-optimizer settings."""
 
 
 
@@ -149,7 +149,7 @@ class PromptOptimizerSection(BaseModel):
 
     backend: str = "ruleset"
 
-    binary: str = "ponytail"
+    binary: str = "promptforge"
 
     timeout_seconds: float = 30.0
 
@@ -157,9 +157,9 @@ class PromptOptimizerSection(BaseModel):
 
 
 
-class CavemanSection(BaseModel):
+class ResponseForgeSection(BaseModel):
 
-    """Caveman token-optimizer settings."""
+    """ResponseForge token-optimizer settings."""
 
 
 
@@ -173,7 +173,7 @@ class CavemanSection(BaseModel):
 
     backend: str = "ruleset"
 
-    binary: str = "caveman"
+    binary: str = "responseforge"
 
     timeout_seconds: float = 30.0
 
@@ -195,6 +195,34 @@ class OutputOptimizationSection(BaseModel):
 
     intensity: str = "lite"
 
+
+
+
+class LoopEngineeringSection(BaseModel):
+
+    """Loop-engineering budget and orchestration settings."""
+
+
+
+    model_config = ConfigDict(extra="allow")
+
+
+
+    enabled: bool = True
+
+    pattern: str = "plan -> run -> audit -> tighten"
+
+    claude_usd_limit: float = 5.0
+
+    cursor_usd_limit: float = 5.0
+
+    codex_usd_limit: float = 5.0
+
+    antigravity_usd_limit: float = 5.0
+
+    budget_currency: str = "USD"
+
+    enforce_low_token_mode: bool = True
 
 
 
@@ -375,14 +403,12 @@ class ForgeSettings(BaseSettings):
 
     prompt_optimizer: PromptOptimizerSection = Field(default_factory=PromptOptimizerSection)
 
-    caveman: CavemanSection = Field(default_factory=CavemanSection)
+    responseforge: ResponseForgeSection = Field(default_factory=ResponseForgeSection)
 
     output_optimization: OutputOptimizationSection = Field(
-
         default_factory=OutputOptimizationSection
-
     )
-
+    loop_engineering: LoopEngineeringSection = Field(default_factory=LoopEngineeringSection)
     graph: GraphSection = Field(default_factory=GraphSection)
 
     memory: MemorySection = Field(default_factory=MemorySection)
@@ -413,7 +439,7 @@ class ForgeSettings(BaseSettings):
 
         "prompt_optimizer",
 
-        "caveman",
+        "responseforge",
 
         "output_optimization",
 

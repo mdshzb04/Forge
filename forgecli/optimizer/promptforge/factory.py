@@ -5,14 +5,14 @@
 from __future__ import annotations
 
 from forgecli.config.settings import ForgeSettings
-from forgecli.optimizer.ponytail import (
+from forgecli.optimizer.promptforge import (
     CompositeOptimizer,
     Intensity,
-    PonytailCLIOptimizer,
-    PonytailRulesetOptimizer,
+    PromptForgeCLIOptimizer,
+    PromptForgeRulesetOptimizer,
     PromptOptimizer,
 )
-from forgecli.optimizer.ponytail.state import OptimizerState
+from forgecli.optimizer.promptforge.state import OptimizerState
 
 
 def build_optimizer(
@@ -30,7 +30,7 @@ def build_optimizer(
     backend asks for it and the binary is available.
     """
 
-    ruleset = PonytailRulesetOptimizer(intensity=state.intensity)
+    ruleset = PromptForgeRulesetOptimizer(intensity=state.intensity)
 
 
 
@@ -44,7 +44,7 @@ def build_optimizer(
 
             binary = settings.prompt_optimizer.binary
 
-        external = PonytailCLIOptimizer(executable=binary)
+        external = PromptForgeCLIOptimizer(executable=binary)
 
     elif state.backend == "ruleset":
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from forgecli.optimizer.ponytail import Intensity
+from forgecli.optimizer.promptforge import Intensity
 
 
 @dataclass
@@ -27,7 +27,7 @@ class OptimizerState:
 
     backend: str = "ruleset"
 
-    binary: str = "ponytail"
+    binary: str = "promptforge"
 
 
 

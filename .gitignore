@@ -62,3 +62,4 @@ forgecli.toml
 **/out/
 **/dist/
 
+.forge-graph/

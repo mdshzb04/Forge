@@ -191,8 +191,8 @@ def _load_optimizer_state(paths: ProjectPaths):
 
     """Read the persisted optimizer state from ``data_dir/optimizer.json``."""
 
-    from forgecli.optimizer.ponytail import Intensity
-    from forgecli.optimizer.ponytail.state import OptimizerState
+    from forgecli.optimizer.promptforge import Intensity
+    from forgecli.optimizer.promptforge.state import OptimizerState
 
 
 
@@ -255,15 +255,15 @@ def _build_container(
     """Register default services in the DI container."""
 
     from forgecli.core.container import Container
-    from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
+    from forgecli.graph.local_engine import LocalCodeGraph
     from forgecli.graph.graph import CodeGraph
     from forgecli.graph.indexer import Indexer
     from forgecli.graph.repository import RepositoryGraph
     from forgecli.memory.store import MemoryStore
     from forgecli.optimizer.chunker import Chunker
     from forgecli.optimizer.optimizer import ContextOptimizer
-    from forgecli.optimizer.ponytail import PromptOptimizer
-    from forgecli.optimizer.ponytail.factory import build_optimizer
+    from forgecli.optimizer.promptforge import PromptOptimizer
+    from forgecli.optimizer.promptforge.factory import build_optimizer
     from forgecli.optimizer.ranker import Ranker
     from forgecli.optimizer.summarizer import Summarizer
     from forgecli.prompts.loader import PromptLoader
@@ -284,6 +284,7 @@ def _build_container(
     container.register_instance(ProjectPaths, paths)
 
     container.register_instance(CodeGraph, CodeGraph())
+    container.register_instance(LocalCodeGraph, LocalCodeGraph(paths.cwd))
 
 
 
@@ -323,9 +324,9 @@ def _build_container(
 
     container.register(
 
-        RepositoryGraph,  # type: ignore[type-abstract]
+        RepositoryGraph,
 
-        lambda _c: ForgeRepositoryGraph(root=paths.cwd),
+        lambda _c: LocalCodeGraph(paths.cwd),
 
     )
 

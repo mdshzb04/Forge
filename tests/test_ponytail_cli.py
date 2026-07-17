@@ -1,4 +1,4 @@
-"""Tests for the Ponytail CLI adapter and the OptimizedProvider decorator."""
+"""Tests for the PromptForge CLI adapter and the OptimizedProvider decorator."""
 
 
 
@@ -11,13 +11,13 @@ from unittest.mock import patch
 
 import pytest
 
-from forgecli.optimizer.ponytail import (
+from forgecli.optimizer.promptforge import (
     Intensity,
-    PonytailCLIOptimizer,
-    PonytailRulesetOptimizer,
+    PromptForgeCLIOptimizer,
+    PromptForgeRulesetOptimizer,
     PromptOptimizer,
 )
-from forgecli.optimizer.ponytail.decorator import OptimizedProvider
+from forgecli.optimizer.promptforge.decorator import OptimizedProvider
 from forgecli.providers.base import (
     ChatMessage,
     ChatRequest,
@@ -37,11 +37,11 @@ def _request(*messages: ChatMessage) -> ChatRequest:
 
 def test_is_available_uses_path(monkeypatch) -> None:
 
-    opt = PonytailCLIOptimizer(executable="ponytail")
+    opt = PromptForgeCLIOptimizer(executable="promptforge")
 
     monkeypatch.setattr(
 
-        "shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None
+        "shutil.which", lambda name: "/usr/bin/promptforge" if name == "promptforge" else None
 
     )
 
@@ -57,11 +57,11 @@ def test_is_available_uses_path(monkeypatch) -> None:
 
 def test_optimize_chat_pipes_json_through_subprocess(monkeypatch) -> None:
 
-    opt = PonytailCLIOptimizer(executable="ponytail")
+    opt = PromptForgeCLIOptimizer(executable="promptforge")
 
     monkeypatch.setattr(
 
-        "shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None
+        "shutil.which", lambda name: "/usr/bin/promptforge" if name == "promptforge" else None
 
     )
 
@@ -125,7 +125,7 @@ def test_optimize_chat_pipes_json_through_subprocess(monkeypatch) -> None:
 
     result = asyncio.run(opt.optimize_chat(_request(ChatMessage(role=Role.USER, content="hi"))))
 
-    assert captured["args"][0] == "/usr/bin/ponytail"
+    assert captured["args"][0] == "/usr/bin/promptforge"
 
     assert captured["args"][1] == "optimize"
 
@@ -143,11 +143,11 @@ def test_optimize_chat_pipes_json_through_subprocess(monkeypatch) -> None:
 
 def test_optimize_chat_raises_on_nonzero_exit(monkeypatch) -> None:
 
-    opt = PonytailCLIOptimizer(executable="ponytail")
+    opt = PromptForgeCLIOptimizer(executable="promptforge")
 
     monkeypatch.setattr(
 
-        "shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None
+        "shutil.which", lambda name: "/usr/bin/promptforge" if name == "promptforge" else None
 
     )
 
@@ -177,7 +177,7 @@ def test_optimize_chat_raises_on_nonzero_exit(monkeypatch) -> None:
 
     monkeypatch.setattr("asyncio.create_subprocess_exec", fake_exec)
 
-    with pytest.raises(Exception, match="ponytail"):
+    with pytest.raises(Exception, match="promptforge"):
 
         asyncio.run(opt.optimize_chat(_request(ChatMessage(role=Role.USER, content="hi"))))
 
@@ -187,11 +187,11 @@ def test_optimize_chat_raises_on_nonzero_exit(monkeypatch) -> None:
 
 def test_optimize_chat_raises_on_invalid_json(monkeypatch) -> None:
 
-    opt = PonytailCLIOptimizer(executable="ponytail")
+    opt = PromptForgeCLIOptimizer(executable="promptforge")
 
     monkeypatch.setattr(
 
-        "shutil.which", lambda name: "/usr/bin/ponytail" if name == "ponytail" else None
+        "shutil.which", lambda name: "/usr/bin/promptforge" if name == "promptforge" else None
 
     )
 
@@ -281,7 +281,7 @@ def test_optimized_provider_runs_optimizer_before_chat() -> None:
 
     base = _StubProvider()
 
-    ruleset = PonytailRulesetOptimizer(intensity=Intensity.FULL)
+    ruleset = PromptForgeRulesetOptimizer(intensity=Intensity.FULL)
 
     wrapped = OptimizedProvider(base=base, optimizer=ruleset)
 
@@ -297,7 +297,7 @@ def test_optimized_provider_runs_optimizer_before_chat() -> None:
 
     assert sent.messages[0].role is Role.SYSTEM
 
-    assert "Ponytail (full)" in sent.messages[0].content
+    assert "PromptForge (full)" in sent.messages[0].content
 
 
 
@@ -305,7 +305,7 @@ def test_optimized_provider_runs_optimizer_before_chat() -> None:
 
 def test_optimized_provider_passes_through_when_optimizer_off() -> None:
 
-    from forgecli.optimizer.ponytail import OptimizedRequest
+    from forgecli.optimizer.promptforge import OptimizedRequest
 
 
 
@@ -361,7 +361,7 @@ def test_optimized_provider_embed_passthrough() -> None:
 
     base = _Stub()
 
-    ruleset = PonytailRulesetOptimizer(intensity=Intensity.FULL)
+    ruleset = PromptForgeRulesetOptimizer(intensity=Intensity.FULL)
 
     wrapped = OptimizedProvider(base=base, optimizer=ruleset)  # type: ignore[arg-type]
 

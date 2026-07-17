@@ -1,4 +1,4 @@
-"""Caveman output optimizer middleware adapter."""
+"""ResponseForge output optimizer middleware adapter."""
 
 
 
@@ -8,10 +8,10 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
 from forgecli.middleware.base import Middleware
-from forgecli.optimizer.caveman import (
-    CavemanCompositeOptimizer,
-    CavemanIntensity,
-    CavemanRulesetOptimizer,
+from forgecli.optimizer.responseforge import (
+    ResponseForgeCompositeOptimizer,
+    ResponseForgeIntensity,
+    ResponseForgeRulesetOptimizer,
 )
 from forgecli.providers.base import ChatMessage, ChatRequest, Role
 
@@ -23,25 +23,25 @@ if TYPE_CHECKING:
 
 
 
-class CavemanAdapterMiddleware(Middleware):
+class ResponseForgeAdapterMiddleware(Middleware):
 
-    """Pipeline middleware that applies Caveman output conciseness optimizations."""
+    """Pipeline middleware that applies ResponseForge output conciseness optimizations."""
 
 
 
     def __init__(self, intensity: str = "lite") -> None:
 
-        """Initialize the CavemanAdapterMiddleware.
+        """Initialize the ResponseForgeAdapterMiddleware.
 
         Args:
             intensity: The optimization intensity (off, lite, full, ultra, wenyan).
         """
 
-        parsed_intensity = CavemanIntensity.parse(intensity)
+        parsed_intensity = ResponseForgeIntensity.parse(intensity)
 
-        ruleset = CavemanRulesetOptimizer()
+        ruleset = ResponseForgeRulesetOptimizer()
 
-        self._optimizer = CavemanCompositeOptimizer(intensity=parsed_intensity, ruleset=ruleset)
+        self._optimizer = ResponseForgeCompositeOptimizer(intensity=parsed_intensity, ruleset=ruleset)
 
 
 
@@ -49,7 +49,7 @@ class CavemanAdapterMiddleware(Middleware):
 
     def priority(self) -> int:
 
-        """Priority ordering value (runs after ponytail, before model call)."""
+        """Priority ordering value (runs after promptforge, before model call)."""
 
         return 580
 
@@ -65,7 +65,7 @@ class CavemanAdapterMiddleware(Middleware):
 
     ) -> ResponseContext:
 
-        """Intercept and optimize the output instructions using Caveman.
+        """Intercept and optimize the output instructions using ResponseForge.
 
         Args:
             request: The RequestContext object.
@@ -128,11 +128,11 @@ class CavemanAdapterMiddleware(Middleware):
 
 
 
-        request.metadata["caveman_optimized"] = True
+        request.metadata["responseforge_optimized"] = True
 
-        request.metadata["caveman_source"] = optimized.source
+        request.metadata["responseforge_source"] = optimized.source
 
-        request.metadata["caveman_notes"] = optimized.notes
+        request.metadata["responseforge_notes"] = optimized.notes
 
 
 

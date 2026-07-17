@@ -1509,7 +1509,7 @@ def _build_prompt_sequences(
 
             f"You are a senior engineer working on a project to {goal}. "
 
-            f"The project uses {stack_line}. Apply the Ponytail ruleset: "
+            f"The project uses {stack_line}. Apply the PromptForge ruleset: "
 
             f"ship the smallest correct change, reuse existing helpers, prefer "
 

@@ -27,7 +27,7 @@ Forge provides convenience wrappers to prepare optimized context and automatical
 
 ## 2. Configuration Command (`forge config`)
 
-The `config` command allows users to customize their optimization profiles for both the **Ponytail** and **Caveman** engines. Settings are persisted automatically in your project's local `forgecli.toml` file.
+The `config` command allows users to customize their optimization profiles for both the **PromptForge** and **ResponseForge** engines. Settings are persisted automatically in your project's local `forgecli.toml` file.
 
 ### View Active Configuration
 To view your currently active profiles:
@@ -38,16 +38,16 @@ forge config
 *Output:*
 ```
   Forge Configuration
-  Ponytail Profile : lite
-  Caveman Profile  : lite
+  PromptForge Profile : lite
+  ResponseForge Profile  : lite
 ```
 
 ### Toggle Intensities
-You can configure both profiles using the `--ponytail` / `-p` and `--caveman` / `-c` flags:
+You can configure both profiles using the `--promptforge` / `-p` and `--responseforge` / `-c` flags:
 
 ```bash
 # Configure both to "full" mode (Highly recommended for speed and token savings)
-forge config --ponytail full --caveman full
+forge config --promptforge full --responseforge full
 
 # Configure both to "ultra" mode (Maximum token savings, minimal feedback)
 forge config -p ultra -c ultra
@@ -59,7 +59,7 @@ forge config -p off -c off
 ### Available Intensities
 * **`off`**: Disables the optimizer.
 * **`lite`** (Default): Standard, balanced optimization rules.
-* **`full`**: Strict YAGNI (Ponytail) and concise fragment-only messaging (Caveman).
+* **`full`**: Strict YAGNI (PromptForge) and concise fragment-only messaging (ResponseForge).
 * **`ultra`**: Aggressive context pruning and extreme brevity.
 
 ---

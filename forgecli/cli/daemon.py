@@ -62,8 +62,8 @@ def _get_graph():
 
     if _forge_repo_graph_cls is None:
 
-        from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
-        _forge_repo_graph_cls = ForgeRepositoryGraph
+        from forgecli.graph.local_engine import LocalCodeGraph
+        _forge_repo_graph_cls = LocalCodeGraph
 
     return _forge_repo_graph_cls
 

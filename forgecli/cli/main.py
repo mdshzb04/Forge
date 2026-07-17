@@ -81,7 +81,7 @@ app.command(
 
     "inspect",
 
-    help="Display the active pipeline, provider, Graphify status, and optimization stages.",
+    help="Display the active pipeline, provider, ForgeGraph status, and optimization stages.",
 
 )(inspect_cmd)
 
@@ -97,7 +97,7 @@ app.command(
 
     "profile",
 
-    help="View or set optimization profiles (Ponytail, Caveman).",
+    help="View or set optimization profiles (PromptForge, ResponseForge).",
 
 )(commands_diagnostics.profile_cmd)
 
@@ -174,181 +174,188 @@ def mcp_cmd() -> None:
 
 
 @app.command("config", help="Configure Forge settings, including optimization profiles.")
-
 def config_cmd(
-
-    ponytail: str = typer.Option(
-
+    promptforge: str = typer.Option(
         None,
-
-        "--ponytail",
-
+        "--promptforge",
         "-p",
-
-        help="Configure Ponytail optimization profile (off | lite | full | ultra).",
-
+        help="Configure PromptForge optimization profile (off | lite | full | ultra).",
     ),
-
-    caveman: str = typer.Option(
-
+    responseforge: str = typer.Option(
         None,
-
-        "--caveman",
-
+        "--responseforge",
         "-c",
-
-        help="Configure Caveman optimization profile (off | lite | full | ultra).",
-
+        help="Configure ResponseForge optimization profile (off | lite | full | ultra).",
     ),
-
     output: str = typer.Option(
-
         None,
-
         "--output",
-
         "-o",
-
         help="Configure Output optimization profile (off | lite | full | ultra).",
-
     ),
-
+    loop_pattern: str = typer.Option(
+        None,
+        "--loop-pattern",
+        help="Set the loop-engineering pattern string used in prompts.",
+    ),
+    claude_usd_limit: float = typer.Option(
+        None,
+        "--claude-usd-limit",
+        help="Set a USD usage cap for Claude Code.",
+    ),
+    cursor_usd_limit: float = typer.Option(
+        None,
+        "--cursor-usd-limit",
+        help="Set a USD usage cap for Cursor.",
+    ),
+    codex_usd_limit: float = typer.Option(
+        None,
+        "--codex-usd-limit",
+        help="Set a USD usage cap for Codex.",
+    ),
+    antigravity_usd_limit: float = typer.Option(
+        None,
+        "--antigravity-usd-limit",
+        help="Set a USD usage cap for Antigravity.",
+    ),
+    loop_enabled: bool | None = typer.Option(
+        None,
+        "--loop-enabled/--no-loop-enabled",
+        help="Enable or disable loop-engineering prompts and caps.",
+    ),
 ) -> None:
-
     """Configure Forge settings, including optimization profiles."""
 
     from forgecli.cli.ui import get_console, info, success
     from forgecli.config.loader import ConfigLoader
     from forgecli.config.writer import update_config
 
-
-
     loader = ConfigLoader()
-
     try:
-
         settings = loader.load()
-
     except Exception:
-
         from forgecli.config.settings import ForgeSettings
-
-
 
         settings = ForgeSettings()
 
-
-
-    if ponytail is None and caveman is None and output is None:
-
+    if (
+        promptforge is None
+        and responseforge is None
+        and output is None
+        and loop_pattern is None
+        and claude_usd_limit is None
+        and cursor_usd_limit is None
+        and codex_usd_limit is None
+        and antigravity_usd_limit is None
+        and loop_enabled is None
+    ):
         p_val = settings.prompt_optimizer.intensity
-
         if not settings.prompt_optimizer.enabled or p_val not in {"off", "lite", "full", "ultra"}:
-
             p_val = "off" if not settings.prompt_optimizer.enabled else "lite"
 
-
-
-        c_val = settings.caveman.intensity
-
-        if not settings.caveman.enabled or c_val not in {"off", "lite", "full", "ultra"}:
-
-            c_val = "off" if not settings.caveman.enabled else "lite"
-
-
+        c_val = settings.responseforge.intensity
+        if not settings.responseforge.enabled or c_val not in {"off", "lite", "full", "ultra"}:
+            c_val = "off" if not settings.responseforge.enabled else "lite"
 
         o_val = settings.output_optimization.intensity
-
-        if not settings.output_optimization.enabled or o_val not in {
-
-            "off",
-
-            "lite",
-
-            "full",
-
-            "ultra",
-
-        }:
-
+        if not settings.output_optimization.enabled or o_val not in {"off", "lite", "full", "ultra"}:
             o_val = "off" if not settings.output_optimization.enabled else "lite"
 
-
-
+        loop = settings.loop_engineering
         console = get_console()
-
         console.print()
-
         console.print("  [bold cyan]Forge Configuration[/bold cyan]")
-
-        console.print(f"  Ponytail Profile : [white]{p_val}[/white]")
-
-        console.print(f"  Caveman Profile  : [white]{c_val}[/white]")
-
+        console.print(f"  PromptForge Profile : [white]{p_val}[/white]")
+        console.print(f"  ResponseForge Profile  : [white]{c_val}[/white]")
         console.print(f"  Output Profile   : [white]{o_val}[/white]")
-
+        console.print(f"  Loop Pattern     : [white]{loop.pattern}[/white]")
+        console.print(f"  Claude USD Limit : [white]{loop.claude_usd_limit}[/white]")
+        console.print(f"  Cursor USD Limit : [white]{loop.cursor_usd_limit}[/white]")
+        console.print(f"  Codex USD Limit  : [white]{loop.codex_usd_limit}[/white]")
+        console.print(f"  Antigravity USD  : [white]{loop.antigravity_usd_limit}[/white]")
         console.print()
-
         return
 
-
-
-
-
-    if ponytail is not None:
-
-        val = ponytail.lower().strip()
-
+    if promptforge is not None:
+        val = promptforge.lower().strip()
         if val not in {"off", "lite", "full", "ultra"}:
-
-            info(f"Invalid Ponytail mode '{ponytail}'. Falling back to 'lite'.")
-
-            ponytail = "lite"
-
+            info(f"Invalid PromptForge mode '{promptforge}'. Falling back to 'lite'.")
+            promptforge = "lite"
         else:
+            promptforge = val
 
-            ponytail = val
-
-
-
-    if caveman is not None:
-
-        val = caveman.lower().strip()
-
+    if responseforge is not None:
+        val = responseforge.lower().strip()
         if val not in {"off", "lite", "full", "ultra"}:
-
-            info(f"Invalid Caveman mode '{caveman}'. Falling back to 'lite'.")
-
-            caveman = "lite"
-
+            info(f"Invalid ResponseForge mode '{responseforge}'. Falling back to 'lite'.")
+            responseforge = "lite"
         else:
-
-            caveman = val
-
-
+            responseforge = val
 
     if output is not None:
-
         val = output.lower().strip()
-
         if val not in {"off", "lite", "full", "ultra"}:
-
             info(f"Invalid Output mode '{output}'. Falling back to 'lite'.")
-
             output = "lite"
-
         else:
-
             output = val
 
-
-
-    path = update_config(ponytail=ponytail, caveman=caveman, output_optimization=output)
+    path = update_config(
+        promptforge=promptforge,
+        responseforge=responseforge,
+        output_optimization=output,
+        loop_engineering_pattern=loop_pattern,
+        claude_usd_limit=claude_usd_limit,
+        cursor_usd_limit=cursor_usd_limit,
+        codex_usd_limit=codex_usd_limit,
+        antigravity_usd_limit=antigravity_usd_limit,
+        loop_engineering_enabled=loop_enabled,
+    )
 
     success(f"Config updated in [white]{path}[/white]")
 
 
+@app.command("loop", help="Scaffold and run the Forge-native loop engineering workflow.")
+def loop_cmd(
+    path: Path = typer.Option(".", "--path", "-p", help="Project root."),
+    refresh: bool = typer.Option(False, "--refresh", help="Refresh the prepared Forge context."),
+    tool: str = typer.Option(
+        "claude",
+        "--tool",
+        help="Preferred loop tool: claude | cursor | codex | antigravity.",
+    ),
+    task: str = typer.Option(
+        "",
+        "--task",
+        help="Optional short task label to store in the loop state.",
+    ),
+) -> None:
+    """Scaffold loop files, write the budget config, and print the workflow state."""
+    from datetime import datetime, timezone
 
+    from forgecli.cli.ui import get_console, success
+    from forgecli.loop import build_loop_context, ensure_loop_scaffold, record_loop_run, summarize_loop_files
+
+    context = build_loop_context(path.resolve(), force_prepare=refresh)
+    files = ensure_loop_scaffold(context["prepared"].root)
+
+    now = datetime.now(timezone.utc)
+    record_loop_run(
+        context["prepared"].root,
+        tool=tool,
+        task_status="scaffolded" if not task else f"task:{task}",
+        iteration=1,
+        started_at=now,
+        finished_at=now,
+    )
+
+    success(f"Loop scaffolded in {files['root']}")
+    console = get_console()
+    console.print()
+    console.print("  [bold cyan]Forge Loop[/bold cyan]")
+    for key, value in summarize_loop_files(context["prepared"].root).items():
+        console.print(f"  {key:>12} : [white]{value}[/white]")
+    console.print()
 
 
 def _version_callback(value: bool) -> None:
@@ -440,7 +447,7 @@ def main(
 
         "    [cyan]forge mcp[/cyan]          Start the stdio Model Context Protocol (MCP) server\n"
 
-        "    [cyan]forge config[/cyan]       Configure Ponytail, Caveman, and Output optimization profiles\n"
+        "    [cyan]forge config[/cyan]       Configure PromptForge, ResponseForge, and Output optimization profiles\n"
 
         "    [cyan]forge profile[/cyan]      View or set optimization profiles\n"
 

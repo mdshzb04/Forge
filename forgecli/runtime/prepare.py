@@ -138,9 +138,9 @@ def _build_enriched_context(root: Path) -> str:
     return compressor.compress_all(raw)
 
 
-def get_ponytail_instructions(settings) -> str:
-    from forgecli.optimizer.ponytail import Intensity
-    from forgecli.optimizer.ponytail.ruleset import _INTENSITY_GUIDANCE
+def get_promptforge_instructions(settings) -> str:
+    from forgecli.optimizer.promptforge import Intensity
+    from forgecli.optimizer.promptforge.ruleset import _INTENSITY_GUIDANCE
     enabled = settings.prompt_optimizer.enabled
     intensity_str = settings.prompt_optimizer.intensity
     if not enabled or intensity_str == "off":
@@ -152,17 +152,38 @@ def get_ponytail_instructions(settings) -> str:
     return _INTENSITY_GUIDANCE.get(intensity, "")
 
 
-def get_caveman_instructions(settings) -> str:
-    from forgecli.optimizer.caveman import CavemanIntensity
-    from forgecli.optimizer.caveman.ruleset import _CAVEMAN_GUIDANCE
-    enabled = settings.caveman.enabled
-    intensity_str = settings.caveman.intensity
+
+
+def get_loop_engineering_instructions(settings) -> str:
+    loop = getattr(settings, "loop_engineering", None)
+    if loop is None:
+        return ""
+    if not loop.enabled:
+        return ""
+    lines = [
+        "Loop engineering policy:",
+        f"- Pattern: {loop.pattern}",
+        f"- Claude Code budget: {loop.budget_currency} {loop.claude_usd_limit:.2f}",
+        f"- Cursor budget: {loop.budget_currency} {loop.cursor_usd_limit:.2f}",
+        f"- Codex budget: {loop.budget_currency} {loop.codex_usd_limit:.2f}",
+        f"- Antigravity budget: {loop.budget_currency} {loop.antigravity_usd_limit:.2f}",
+    ]
+    if loop.enforce_low_token_mode:
+        lines.append("- Prefer low-token edits, compact diffs, and narrow context.")
+    return "\n".join(lines)
+
+
+def get_responseforge_instructions(settings) -> str:
+    from forgecli.optimizer.responseforge import ResponseForgeIntensity
+    from forgecli.optimizer.responseforge.ruleset import _CAVEMAN_GUIDANCE
+    enabled = settings.responseforge.enabled
+    intensity_str = settings.responseforge.intensity
     if not enabled or intensity_str == "off":
         return ""
     try:
-        intensity = CavemanIntensity.parse(intensity_str)
+        intensity = ResponseForgeIntensity.parse(intensity_str)
     except ValueError:
-        intensity = CavemanIntensity.LITE
+        intensity = ResponseForgeIntensity.LITE
     return _CAVEMAN_GUIDANCE.get(intensity, "")
 
 
@@ -174,20 +195,21 @@ def build_merged_context(repo_context: str, repo_root: Path | None = None) -> st
         from forgecli.config.settings import ForgeSettings
         settings = ForgeSettings()
 
-    ponytail_guidance = get_ponytail_instructions(settings)
-    caveman_guidance = get_caveman_instructions(settings)
+    promptforge_guidance = get_promptforge_instructions(settings)
+    responseforge_guidance = get_responseforge_instructions(settings)
+    loop_engineering_guidance = get_loop_engineering_instructions(settings)
 
     blocks = []
-    if ponytail_guidance:
+    if promptforge_guidance:
         blocks.append(
             "=== SYSTEM INSTRUCTION: IMPLEMENTATION STYLE (PONYTAIL) ===\n"
-            f"{ponytail_guidance}\n"
+            f"{promptforge_guidance}\n"
             "==========================================================="
         )
-    if caveman_guidance:
+    if responseforge_guidance:
         blocks.append(
             "=== SYSTEM INSTRUCTION: RESPOND STYLE (CAVEMAN) ===\n"
-            f"{caveman_guidance}\n"
+            f"{responseforge_guidance}\n"
             "==================================================="
         )
 

@@ -1,4 +1,4 @@
-"""Ponytail prompt optimizer middleware adapter."""
+"""PromptForge prompt optimizer middleware adapter."""
 
 
 
@@ -8,7 +8,7 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
 from forgecli.middleware.base import Middleware
-from forgecli.optimizer.ponytail import CompositeOptimizer, Intensity, PonytailRulesetOptimizer
+from forgecli.optimizer.promptforge import CompositeOptimizer, Intensity, PromptForgeRulesetOptimizer
 from forgecli.providers.base import ChatMessage, ChatRequest, Role
 
 if TYPE_CHECKING:
@@ -19,15 +19,15 @@ if TYPE_CHECKING:
 
 
 
-class PonytailAdapterMiddleware(Middleware):
+class PromptForgeAdapterMiddleware(Middleware):
 
-    """Pipeline middleware that applies Ponytail prompt ruleset optimizations."""
+    """Pipeline middleware that applies PromptForge prompt ruleset optimizations."""
 
 
 
     def __init__(self, intensity: str = "lite") -> None:
 
-        """Initialize the PonytailAdapterMiddleware.
+        """Initialize the PromptForgeAdapterMiddleware.
 
         Args:
             intensity: The optimization intensity (off, lite, full, ultra).
@@ -35,7 +35,7 @@ class PonytailAdapterMiddleware(Middleware):
 
         parsed_intensity = Intensity.parse(intensity)
 
-        ruleset = PonytailRulesetOptimizer()
+        ruleset = PromptForgeRulesetOptimizer()
 
         self._optimizer = CompositeOptimizer(intensity=parsed_intensity, ruleset=ruleset)
 
@@ -61,7 +61,7 @@ class PonytailAdapterMiddleware(Middleware):
 
     ) -> ResponseContext:
 
-        """Intercept and optimize the prompt using Ponytail.
+        """Intercept and optimize the prompt using PromptForge.
 
         Args:
             request: The RequestContext object.
@@ -128,11 +128,11 @@ class PonytailAdapterMiddleware(Middleware):
 
 
 
-        request.metadata["ponytail_optimized"] = True
+        request.metadata["promptforge_optimized"] = True
 
-        request.metadata["ponytail_source"] = optimized.source
+        request.metadata["promptforge_source"] = optimized.source
 
-        request.metadata["ponytail_notes"] = optimized.notes
+        request.metadata["promptforge_notes"] = optimized.notes
 
 
 

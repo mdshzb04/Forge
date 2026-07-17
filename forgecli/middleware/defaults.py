@@ -471,7 +471,7 @@ class ConversationMiddleware(Middleware):
 
 class PromptOptimizerMiddleware(Middleware):
 
-    """Applies Ponytail prompt ruleset optimization to the request."""
+    """Applies PromptForge prompt ruleset optimization to the request."""
 
 
 
@@ -479,13 +479,13 @@ class PromptOptimizerMiddleware(Middleware):
 
         try:
 
-            from forgecli.middleware.ponytail_adapter import PonytailAdapterMiddleware
+            from forgecli.middleware.promptforge_adapter import PromptForgeAdapterMiddleware
 
-            self._impl = PonytailAdapterMiddleware(intensity=intensity)
+            self._impl = PromptForgeAdapterMiddleware(intensity=intensity)
 
         except Exception:
 
-            logger.debug("PromptOptimizerMiddleware: Ponytail adapter unavailable, using pass-through")
+            logger.debug("PromptOptimizerMiddleware: PromptForge adapter unavailable, using pass-through")
 
             self._impl = None
 
@@ -596,7 +596,7 @@ class SymbolLookupMiddleware(Middleware):
 
 
 
-class GraphifyMiddleware(Middleware):
+class ForgeGraphMiddleware(Middleware):
 
     """Queries the RepositoryGraph to enrich context with structural nodes."""
 
@@ -612,13 +612,13 @@ class GraphifyMiddleware(Middleware):
 
             try:
 
-                from forgecli.graph.backend_forgegraph import ForgeRepositoryGraph
+                from forgecli.graph.local_engine import LocalCodeGraph
 
-                self._graph = ForgeRepositoryGraph(root=Path.cwd())
+                self._graph = LocalCodeGraph(root=Path.cwd())
 
             except Exception:
 
-                logger.debug("GraphifyMiddleware: graph backend unavailable, using pass-through")
+                logger.debug("ForgeGraphMiddleware: graph backend unavailable, using pass-through")
 
                 self._graph = None
 
@@ -650,9 +650,9 @@ class GraphifyMiddleware(Middleware):
 
         try:
 
-            from forgecli.middleware.graphify_adapter import GraphifyAdapterMiddleware
+            from forgecli.middleware.forgegraph_adapter import ForgeGraphAdapterMiddleware
 
-            adapter = GraphifyAdapterMiddleware(graph=self._graph)
+            adapter = ForgeGraphAdapterMiddleware(graph=self._graph)
 
             return await adapter(request, call_next)
 

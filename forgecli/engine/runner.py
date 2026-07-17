@@ -29,7 +29,7 @@ def run_engine(
 
     optimizer: Any = None,
 
-    caveman_optimizer: Any = None,
+    responseforge_optimizer: Any = None,
 
     graph: Any = None,
 
@@ -47,9 +47,9 @@ def run_engine(
 
     skip_graph: bool = False,
 
-    skip_ponytail: bool = False,
+    skip_promptforge: bool = False,
 
-    skip_caveman: bool = False,
+    skip_responseforge: bool = False,
 
     pipeline_names: tuple[str, ...] | None = None,
 
@@ -84,15 +84,15 @@ def run_engine(
 
 
 
-    if not skip_caveman and caveman_optimizer is not None:
+    if not skip_responseforge and responseforge_optimizer is not None:
 
-        engine_ctx.extras["caveman_optimizer"] = caveman_optimizer
+        engine_ctx.extras["responseforge_optimizer"] = responseforge_optimizer
 
     if not skip_graph and graph is not None:
 
         engine_ctx.extras["graph"] = graph
 
-    if not skip_ponytail and optimizer is not None:
+    if not skip_promptforge and optimizer is not None:
 
         engine_ctx.extras["optimizer"] = optimizer
 
@@ -116,9 +116,9 @@ def run_engine(
 
         provider=provider,
 
-        optimizer=optimizer if not skip_ponytail else None,
+        optimizer=optimizer if not skip_promptforge else None,
 
-        caveman_optimizer=caveman_optimizer if not skip_caveman else None,
+        responseforge_optimizer=responseforge_optimizer if not skip_responseforge else None,
 
         graph=graph if not skip_graph else None,
 

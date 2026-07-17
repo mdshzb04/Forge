@@ -12,7 +12,7 @@ The package is split into focused modules:
 * :mod:`forgecli.platform.paths`    — config / data / cache dirs
 * :mod:`forgecli.platform.shell`    — shell adapter (no POSIX-only
   hardcoding)
-* :mod:`forgecli.platform.deps`     — git / graphify / ponytail / python /
+* :mod:`forgecli.platform.deps`     — git / forgegraph / promptforge / python /
   node / package-manager detection
 * :mod:`forgecli.platform.update`   — PyPI update check + version
 
@@ -39,9 +39,9 @@ from forgecli.platform.deps import (
     find_executable,
     has_forgegraph,
     has_git,
-    has_graphify,
+    has_forgegraph,
     has_node,
-    has_ponytail,
+    has_promptforge,
     has_python,
     install_hint,
 )
@@ -96,11 +96,11 @@ __all__ = [
 
     "has_git",
 
-    "has_graphify",
+    "has_forgegraph",
 
     "has_node",
 
-    "has_ponytail",
+    "has_promptforge",
 
     "has_python",
 

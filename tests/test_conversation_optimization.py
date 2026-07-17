@@ -21,10 +21,10 @@ from forgecli.graph.repository import (
     RepositoryGraph,
 )
 from forgecli.memory.middleware import HistoryCompressionMiddleware
-from forgecli.middleware.caveman_adapter import CavemanAdapterMiddleware
+from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
 from forgecli.middleware.context import RequestContext, ResponseContext
-from forgecli.middleware.graphify_adapter import GraphifyAdapterMiddleware
-from forgecli.middleware.ponytail_adapter import PonytailAdapterMiddleware
+from forgecli.middleware.forgegraph_adapter import ForgeGraphAdapterMiddleware
+from forgecli.middleware.promptforge_adapter import PromptForgeAdapterMiddleware
 from forgecli.runtime_core.context import RuntimeContext
 from forgecli.runtime_core.request import AIRequest, FileContext
 from forgecli.runtime_core.response import AIResponse
@@ -216,9 +216,9 @@ async def test_history_compression_middleware() -> None:
 
 @pytest.mark.asyncio
 
-async def test_ponytail_adapter_middleware() -> None:
+async def test_promptforge_adapter_middleware() -> None:
 
-    middleware = PonytailAdapterMiddleware(intensity="lite")
+    middleware = PromptForgeAdapterMiddleware(intensity="lite")
 
     assert middleware.priority == 600
 
@@ -266,7 +266,7 @@ async def test_ponytail_adapter_middleware() -> None:
 
 
 
-    assert req_ctx.metadata.get("ponytail_optimized") is True
+    assert req_ctx.metadata.get("promptforge_optimized") is True
 
 
 
@@ -278,9 +278,9 @@ async def test_ponytail_adapter_middleware() -> None:
 
 @pytest.mark.asyncio
 
-async def test_caveman_adapter_middleware() -> None:
+async def test_responseforge_adapter_middleware() -> None:
 
-    middleware = CavemanAdapterMiddleware(intensity="lite")
+    middleware = ResponseForgeAdapterMiddleware(intensity="lite")
 
     assert middleware.priority == 580
 
@@ -328,7 +328,7 @@ async def test_caveman_adapter_middleware() -> None:
 
 
 
-    assert req_ctx.metadata.get("caveman_optimized") is True
+    assert req_ctx.metadata.get("responseforge_optimized") is True
 
 
 
@@ -398,7 +398,7 @@ class FakeRepositoryGraph(RepositoryGraph):
 
 @pytest.mark.asyncio
 
-async def test_graphify_adapter_middleware() -> None:
+async def test_forgegraph_adapter_middleware() -> None:
 
 
 
@@ -424,7 +424,7 @@ async def test_graphify_adapter_middleware() -> None:
 
         graph = FakeRepositoryGraph(available=True, snapshot=snapshot)
 
-        middleware = GraphifyAdapterMiddleware(graph)
+        middleware = ForgeGraphAdapterMiddleware(graph)
 
         assert middleware.priority == 400
 
@@ -482,7 +482,7 @@ async def test_graphify_adapter_middleware() -> None:
 
         assert req_ctx.ai_request.attached_files[0].content == "def helper_func(): pass"
 
-        assert req_ctx.metadata.get("graphify_queried") is True
+        assert req_ctx.metadata.get("forgegraph_queried") is True
 
-        assert req_ctx.metadata.get("graphify_matched_nodes_count") == 1
+        assert req_ctx.metadata.get("forgegraph_matched_nodes_count") == 1
 

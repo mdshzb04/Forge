@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from forgecli.middleware.base import Middleware
 from forgecli.middleware.builder import PipelineBuilder
-from forgecli.middleware.caveman_adapter import CavemanAdapterMiddleware
+from forgecli.middleware.responseforge_adapter import ResponseForgeAdapterMiddleware
 from forgecli.middleware.context import RequestContext, ResponseContext
 from forgecli.middleware.decorators import middleware
 from forgecli.middleware.defaults import (
@@ -18,7 +18,7 @@ from forgecli.middleware.defaults import (
     CachingMiddleware,
     ConversationMiddleware,
     DependencyGraphMiddleware,
-    GraphifyMiddleware,
+    ForgeGraphMiddleware,
     HistoryCompressorMiddleware,
     PolicyMiddleware,
     PromptOptimizerMiddleware,
@@ -35,10 +35,10 @@ from forgecli.middleware.exceptions import (
     ShortCircuitException,
 )
 from forgecli.middleware.executor import PipelineExecutor
-from forgecli.middleware.graphify_adapter import GraphifyAdapterMiddleware
+from forgecli.middleware.forgegraph_adapter import ForgeGraphAdapterMiddleware
 from forgecli.middleware.middleware_manager import MiddlewareManager
 from forgecli.middleware.pipeline import MiddlewarePipeline
-from forgecli.middleware.ponytail_adapter import PonytailAdapterMiddleware
+from forgecli.middleware.promptforge_adapter import PromptForgeAdapterMiddleware
 from forgecli.middleware.registration import (
     get_registered_middleware_types,
     register_middleware_type,
@@ -50,11 +50,11 @@ __all__ = [
 
     "AuthenticationMiddleware",
     "CachingMiddleware",
-    "CavemanAdapterMiddleware",
+    "ResponseForgeAdapterMiddleware",
     "ConversationMiddleware",
     "DependencyGraphMiddleware",
-    "GraphifyAdapterMiddleware",
-    "GraphifyMiddleware",
+    "ForgeGraphAdapterMiddleware",
+    "ForgeGraphMiddleware",
     "HistoryCompressorMiddleware",
     "Middleware",
     "MiddlewareError",
@@ -65,7 +65,7 @@ __all__ = [
     "PipelineError",
     "PipelineExecutor",
     "PolicyMiddleware",
-    "PonytailAdapterMiddleware",
+    "PromptForgeAdapterMiddleware",
     "PromptOptimizerMiddleware",
     "ProviderMiddleware",
     "RepositoryPlannerMiddleware",

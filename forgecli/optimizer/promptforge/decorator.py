@@ -1,8 +1,8 @@
-"""A :class:`Provider` decorator that runs a :class:`CavemanPromptOptimizer`
+"""A :class:`Provider` decorator that runs a :class:`PromptOptimizer`
 on every chat request before delegating to the wrapped provider.
 
 The decorator is transparent for every other operation (``stream``,
-``embed``, ``list_models``) \u2014 those either pass through unchanged or
+``embed``, ``list_models``) — those either pass through unchanged or
 inherit the base behaviour.
 """
 
@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from typing import Any
 
-from forgecli.optimizer.caveman import CavemanPromptOptimizer, OptimizedRequest
+from forgecli.optimizer.promptforge import OptimizedRequest, PromptOptimizer
 from forgecli.providers.base import (
     ChatRequest,
     ChatResponse,
@@ -25,13 +25,13 @@ from forgecli.providers.base import (
 )
 
 
-class CavemanProvider(Provider[Any]):
+class OptimizedProvider(Provider[Any]):
 
-    """Wrap a :class:`Provider` so every chat call is caveman-optimized."""
+    """Wrap a :class:`Provider` so every chat call is pre-optimized."""
 
 
 
-    name = "caveman-provider"
+    name = "optimized"
 
 
 
@@ -41,9 +41,13 @@ class CavemanProvider(Provider[Any]):
 
         base: Provider[Any],
 
-        optimizer: CavemanPromptOptimizer,
+        optimizer: PromptOptimizer,
 
     ) -> None:
+
+
+
+
 
         super().__init__(base.config)
 
@@ -63,7 +67,7 @@ class CavemanProvider(Provider[Any]):
 
     @property
 
-    def optimizer(self) -> CavemanPromptOptimizer:
+    def optimizer(self) -> PromptOptimizer:
 
         return self._optimizer
 
@@ -89,6 +93,8 @@ class CavemanProvider(Provider[Any]):
 
     async def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:
 
+
+
         return await self._base.embed(request)
 
 
@@ -107,5 +113,5 @@ class CavemanProvider(Provider[Any]):
 
 
 
-__all__ = ["CavemanProvider"]
+__all__ = ["OptimizedProvider"]
 

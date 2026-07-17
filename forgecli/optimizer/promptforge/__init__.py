@@ -1,14 +1,14 @@
-"""Ponytail prompt-optimizer integration.
+"""PromptForge prompt-optimizer integration.
 
-ForgeCLI integrates the [Ponytail](https://ponytail.dev/) ruleset
+ForgeCLI integrates the [PromptForge](https://promptforge.dev/) ruleset
 behind a small :class:`PromptOptimizer` interface and applies it
 transparently to every chat call. Two implementations are shipped:
 
-* :class:`PonytailRulesetOptimizer` — a self-contained Python
-  implementation of the Ponytail "ladder" (lite / full / ultra).
+* :class:`PromptForgeRulesetOptimizer` — a self-contained Python
+  implementation of the PromptForge "ladder" (lite / full / ultra).
   Always available, no external dependencies.
-* :class:`PonytailCLIOptimizer` — an optional adapter that shells out
-  to an external ``ponytail`` binary if one is on ``PATH``.
+* :class:`PromptForgeCLIOptimizer` — an optional adapter that shells out
+  to an external ``promptforge`` binary if one is on ``PATH``.
 
 The :class:`CompositeOptimizer` picks between them at runtime.
 """
@@ -27,7 +27,7 @@ from forgecli.providers.base import ChatMessage, ChatRequest
 class Intensity(str, Enum):
     """How aggressively to optimize prompts.
 
-    The semantics match the Ponytail commands exactly:
+    The semantics match the PromptForge commands exactly:
 
     * ``off``   - no rewriting; pass prompts through unchanged.
     * ``lite``  - default; appends a one-line hint naming the lazier
@@ -107,7 +107,7 @@ class CompositeOptimizer(PromptOptimizer):
     def _sync_ruleset_intensity(self) -> None:
         """Propagate the composite's intensity to the ruleset, if compatible."""
         ruleset = self._ruleset
-        if isinstance(ruleset, PonytailRulesetOptimizer):
+        if isinstance(ruleset, PromptForgeRulesetOptimizer):
             ruleset.set_intensity(self._intensity)
 
     @property
@@ -118,7 +118,7 @@ class CompositeOptimizer(PromptOptimizer):
         self._intensity = Intensity.parse(intensity)
         # Keep the ruleset in sync so its output reflects the new level
         # when we fall back to it.
-        if isinstance(self._ruleset, PonytailRulesetOptimizer):
+        if isinstance(self._ruleset, PromptForgeRulesetOptimizer):
             self._ruleset.set_intensity(self._intensity)
 
     async def optimize_chat(self, request: ChatRequest) -> OptimizedRequest:
@@ -170,12 +170,12 @@ __all__ = [
     "Intensity",
     "OptimizedProvider",
     "OptimizedRequest",
-    "PonytailCLIOptimizer",
-    "PonytailRulesetOptimizer",
+    "PromptForgeCLIOptimizer",
+    "PromptForgeRulesetOptimizer",
     "PromptOptimizer",
 ]
 
 # Re-export the two concrete implementations and the decorator.
-from forgecli.optimizer.ponytail.cli import PonytailCLIOptimizer  # noqa: E402
-from forgecli.optimizer.ponytail.decorator import OptimizedProvider  # noqa: E402
-from forgecli.optimizer.ponytail.ruleset import PonytailRulesetOptimizer  # noqa: E402
+from forgecli.optimizer.promptforge.cli import PromptForgeCLIOptimizer  # noqa: E402
+from forgecli.optimizer.promptforge.decorator import OptimizedProvider  # noqa: E402
+from forgecli.optimizer.promptforge.ruleset import PromptForgeRulesetOptimizer  # noqa: E402

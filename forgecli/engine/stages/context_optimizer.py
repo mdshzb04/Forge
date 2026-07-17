@@ -1,7 +1,7 @@
 """Stage 3 — Context Optimizer.
 
-Applies the Ponytail ruleset to the user prompt. Wraps
-:func:`forgecli.build.optimize.ponytail_optimization`.
+Applies the PromptForge ruleset to the user prompt. Wraps
+:func:`forgecli.build.optimize.promptforge_optimization`.
 """
 
 
@@ -11,14 +11,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from forgecli.build import BuildContext
-from forgecli.build.optimize import ponytail_optimization as _build_optimize
+from forgecli.build.optimize import promptforge_optimization as _build_optimize
 from forgecli.engine.execution import StageContext, StageResult, StageStatus
-from forgecli.optimizer.ponytail import PromptOptimizer
+from forgecli.optimizer.promptforge import PromptOptimizer
 
 
 class ContextOptimizerStage:
 
-    """Optimize the prompt using Ponytail rules."""
+    """Optimize the prompt using PromptForge rules."""
 
 
 

@@ -1,8 +1,8 @@
-"""A :class:`Provider` decorator that runs a :class:`PromptOptimizer`
+"""A :class:`Provider` decorator that runs a :class:`ResponseForgePromptOptimizer`
 on every chat request before delegating to the wrapped provider.
 
 The decorator is transparent for every other operation (``stream``,
-``embed``, ``list_models``) — those either pass through unchanged or
+``embed``, ``list_models``) \u2014 those either pass through unchanged or
 inherit the base behaviour.
 """
 
@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from typing import Any
 
-from forgecli.optimizer.ponytail import OptimizedRequest, PromptOptimizer
+from forgecli.optimizer.responseforge import ResponseForgePromptOptimizer, OptimizedRequest
 from forgecli.providers.base import (
     ChatRequest,
     ChatResponse,
@@ -25,13 +25,13 @@ from forgecli.providers.base import (
 )
 
 
-class OptimizedProvider(Provider[Any]):
+class ResponseForgeProvider(Provider[Any]):
 
-    """Wrap a :class:`Provider` so every chat call is pre-optimized."""
+    """Wrap a :class:`Provider` so every chat call is responseforge-optimized."""
 
 
 
-    name = "optimized"
+    name = "responseforge-provider"
 
 
 
@@ -41,13 +41,9 @@ class OptimizedProvider(Provider[Any]):
 
         base: Provider[Any],
 
-        optimizer: PromptOptimizer,
+        optimizer: ResponseForgePromptOptimizer,
 
     ) -> None:
-
-
-
-
 
         super().__init__(base.config)
 
@@ -67,7 +63,7 @@ class OptimizedProvider(Provider[Any]):
 
     @property
 
-    def optimizer(self) -> PromptOptimizer:
+    def optimizer(self) -> ResponseForgePromptOptimizer:
 
         return self._optimizer
 
@@ -93,8 +89,6 @@ class OptimizedProvider(Provider[Any]):
 
     async def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:
 
-
-
         return await self._base.embed(request)
 
 
@@ -113,5 +107,5 @@ class OptimizedProvider(Provider[Any]):
 
 
 
-__all__ = ["OptimizedProvider"]
+__all__ = ["ResponseForgeProvider"]
 

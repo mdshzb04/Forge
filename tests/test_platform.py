@@ -24,9 +24,8 @@ from forgecli.platform import (
     find_executable,
     has_forgegraph,
     has_git,
-    has_graphify,
     has_node,
-    has_ponytail,
+    has_promptforge,
     has_python,
     install_hint,
     is_linux,
@@ -409,7 +408,7 @@ def test_have_function_booleans_are_consistent() -> None:
 
         (has_git, "git"),
 
-        (has_ponytail, "ponytail"),
+        (has_promptforge, "promptforge"),
 
         (has_node, "node"),
 
@@ -423,15 +422,11 @@ def test_have_function_booleans_are_consistent() -> None:
 
 
 
-    expected_forge = (
-
-        find_executable("forgegraph") is not None or find_executable("graphify") is not None
-
-    )
+    expected_forge = find_executable("forgegraph") is not None
 
     assert has_forgegraph() == expected_forge
 
-    assert has_graphify() == expected_forge
+    assert has_forgegraph() == expected_forge
 
 
 

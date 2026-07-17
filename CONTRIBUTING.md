@@ -90,7 +90,7 @@ mypy forgecli
 
 Forge consists of two main pillars:
 1. **`forgecli.runtime`**: Orchestrates runtime environments, command wrappers, daemon processing, and MCP standard input/output configurations.
-2. **`forgecli.optimizer`**: Contains token compression, Ponytail (YAGNI pruning rules), and Caveman (brevity prompts) components.
+2. **`forgecli.optimizer`**: Contains token compression, PromptForge (YAGNI pruning rules), and ResponseForge (brevity prompts) components.
 
 Ensure any changes respect this separation of concerns.
 
